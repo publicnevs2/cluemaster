@@ -1,16 +1,16 @@
 class Clue {
   final String code;
-  final String type; // 'text' oder 'image'
+  final String type; // 'text', 'image' oder 'audio'
   final String content;
   final String? description;
-  bool solved; // ✅ hinzugefügt
+  bool solved;
 
   Clue({
     required this.code,
     required this.type,
     required this.content,
     this.description,
-    this.solved = false, // ✅ Default-Wert
+    this.solved = false,
   });
 
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
@@ -19,7 +19,7 @@ class Clue {
       type: json['type'],
       content: json['content'],
       description: json['description'],
-      solved: json['solved'] ?? false, // ✅ optional lesen
+      solved: json['solved'] ?? false,
     );
   }
 
@@ -28,7 +28,7 @@ class Clue {
       'type': type,
       'content': content,
       if (description != null) 'description': description,
-      'solved': solved, // ✅ immer schreiben
+      'solved': solved,
     };
   }
 }
