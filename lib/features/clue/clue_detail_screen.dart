@@ -1,23 +1,143 @@
 import 'dart:io';
+import 'package:clue_master/core/services/clue_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import '../../data/models/clue.dart';
 
-class ClueDetailScreen extends StatelessWidget {
+// Wir wandeln den Bildschirm in ein StatefulWidget um, damit er sich den Zustand des Rätsels merken kann.
+class ClueDetailScreen extends StatefulWidget {
   final Clue clue;
   const ClueDetailScreen({super.key, required this.clue});
 
+  @override
+  State<ClueDetailScreen> createState() => _ClueDetailScreenState();
+}
+
+class _ClueDetailScreenState extends State<ClueDetailScreen> {
+  // Zustandsvariablen für das Rätsel
+  final _answerController = TextEditingController();
+  bool _isRiddleSolved = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Wenn der Hinweis kein Rätsel ist, gilt er sofort als gelöst.
+    if (!widget.clue.isRiddle) {
+      _isRiddleSolved = true;
+    }
+  }
+  
+  void _checkAnswer() {
+    final correctAnswer = widget.clue.answer?.trim().toLowerCase();
+    final userAnswer = _answerController.text.trim().toLowerCase();
+
+    if (correctAnswer == userAnswer) {
+      setState(() {
+        _isRiddleSolved = true;
+        _errorMessage = null;
+        widget.clue.solved = true; // Markiere den Hinweis als endgültig gelöst
+        // Optional: Speichere den gelösten Status sofort.
+        // Dies erfordert Zugriff auf den ClueService.
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Richtig! Gut gemacht!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = 'Leider falsch. Versuch es nochmal!';
+      });
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Hinweis')),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Der eigentliche Hinweis-Inhalt wird immer angezeigt.
+                      _buildContent(),
+                      
+                      // Der RÄTSEL-TEIL wird nur angezeigt, wenn es ein Rätsel ist.
+                      if (widget.clue.isRiddle)
+                        _buildRiddleSection(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Text('(C) Sven Kompe 2025', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Diese Methode baut den Rätsel-Teil der UI
+  Widget _buildRiddleSection() {
+    if (_isRiddleSolved) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text('Rätsel gelöst!', style: TextStyle(fontSize: 18, color: Colors.green, fontWeight: FontWeight.bold)),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        children: [
+          const Divider(height: 30),
+          Text(
+            widget.clue.question!,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _answerController,
+            decoration: InputDecoration(
+              hintText: 'Deine Antwort',
+              errorText: _errorMessage,
+              border: const OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _checkAnswer(),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _checkAnswer,
+            child: const Text('Antwort prüfen'),
+          )
+        ],
+      ),
+    );
+  }
+
+  // Diese Methode baut den Hinweis-Inhalt (Bild, Video etc.)
   Widget _buildContent() {
-    switch (clue.type) {
+    switch (widget.clue.type) {
       case 'text':
         return Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text(clue.content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center),
+          child: Text(widget.clue.content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center),
         );
       case 'image':
         Widget imageWidget;
-        String path = clue.content;
+        String path = widget.clue.content;
         if (path.startsWith('file://')) {
           path = path.replaceFirst('file://', '');
           imageWidget = Image.file(File(path));
@@ -29,41 +149,25 @@ class ClueDetailScreen extends StatelessWidget {
           child: Column(
             children: [
               imageWidget,
-              if (clue.description != null) ...[
+              if (widget.clue.description != null) ...[
                 const SizedBox(height: 12),
-                Text(clue.description!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
+                Text(widget.clue.description!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
               ],
             ],
           ),
         );
       case 'audio':
-        return AudioPlayerWidget(path: clue.content, description: clue.description);
+        return AudioPlayerWidget(path: widget.clue.content, description: widget.clue.description);
       case 'video':
-        return VideoPlayerWidget(path: clue.content, description: clue.description);
+        return VideoPlayerWidget(path: widget.clue.content, description: widget.clue.description);
       default:
         return const Center(child: Text('Unbekannter Hinweistyp'));
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Hinweis')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(child: Center(child: SingleChildScrollView(child: _buildContent()))),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: Text('(C) Sven Kompe 2025', style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
+
+// Die Widgets für Audio und Video bleiben unverändert.
 class AudioPlayerWidget extends StatefulWidget {
   final String path;
   final String? description;
@@ -171,9 +275,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     final videoFile = File(widget.path.replaceFirst('file://', ''));
     _controller = VideoPlayerController.file(videoFile);
     _initializeVideoPlayerFuture = _controller.initialize();
-    // Die Endlosschleife wird hier auf 'false' gesetzt.
     _controller.setLooping(false); 
-    // Wir fügen einen Listener hinzu, um das UI neu zu zeichnen, wenn sich der Status ändert (z.B. von Play zu Pause).
     _controller.addListener(() {
       setState(() {});
     });
@@ -196,7 +298,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             future: _initializeVideoPlayerFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                // Das Video wird in einen Container mit maximaler Höhe gepackt.
                 return Container(
                   constraints: const BoxConstraints(maxHeight: 400),
                   child: AspectRatio(
@@ -213,7 +314,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           FloatingActionButton(
             onPressed: () {
               setState(() {
-                // Wenn das Video am Ende ist, spule zurück und spiele ab.
                 if (_controller.value.position == _controller.value.duration) {
                   _controller.seekTo(Duration.zero);
                   _controller.play();
@@ -224,7 +324,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                 }
               });
             },
-            // Das Icon ändert sich jetzt je nach Zustand (Play, Pause, Replay).
             child: Icon(
               _controller.value.position == _controller.value.duration
                   ? Icons.replay

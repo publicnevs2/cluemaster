@@ -32,6 +32,11 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _descriptionController = TextEditingController();
   String _type = 'text';
 
+  // Controller und Status für Rätsel
+  final _questionController = TextEditingController();
+  final _answerController = TextEditingController();
+  bool _isRiddle = false;
+
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   final _imagePicker = ImagePicker();
@@ -40,10 +45,17 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   void initState() {
     super.initState();
     if (widget.existingClue != null) {
-      _codeController.text = widget.existingClue!.code;
-      _type = widget.existingClue!.type;
-      _contentController.text = widget.existingClue!.content;
-      _descriptionController.text = widget.existingClue!.description ?? '';
+      final clue = widget.existingClue!;
+      _codeController.text = clue.code;
+      _type = clue.type;
+      _contentController.text = clue.content;
+      _descriptionController.text = clue.description ?? '';
+      
+      if (clue.isRiddle) {
+        _isRiddle = true;
+        _questionController.text = clue.question!;
+        _answerController.text = clue.answer!;
+      }
     }
   }
 
@@ -52,8 +64,30 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _codeController.dispose();
     _contentController.dispose();
     _descriptionController.dispose();
+    _questionController.dispose();
+    _answerController.dispose();
     _audioRecorder.dispose();
     super.dispose();
+  }
+  
+  void _save() {
+    if (_formKey.currentState!.validate()) {
+      final clue = Clue(
+        code: _codeController.text.trim(),
+        type: _type,
+        content: _contentController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        question: _isRiddle ? _questionController.text.trim() : null,
+        answer: _isRiddle ? _answerController.text.trim() : null,
+      );
+      // Beim Speichern wird der alte Code entfernt, falls er sich geändert hat,
+      // und der neue Code als Schlüssel verwendet.
+      final updatedMap = {clue.code: clue};
+      widget.onSave(updatedMap);
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _scanQrCode() async {
@@ -116,23 +150,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     });
   }
 
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      final clue = Clue(
-        code: _codeController.text.trim(),
-        type: _type,
-        content: _contentController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-      );
-      final updatedMap = Map<String, Clue>.from(widget.existingClue != null
-          ? {widget.codeToEdit!: clue}
-          : {clue.code: clue});
-      widget.onSave(updatedMap);
-      Navigator.pop(context);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +243,37 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               decoration: const InputDecoration(labelText: 'Beschreibung (optional)'),
               maxLines: 2,
             ),
+            
+            const Divider(height: 40),
+            CheckboxListTile(
+              title: const Text('Rätsel zu diesem Hinweis hinzufügen'),
+              value: _isRiddle,
+              onChanged: (value) {
+                setState(() {
+                  _isRiddle = value ?? false;
+                });
+              },
+            ),
+            if (_isRiddle) ...[
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _questionController,
+                decoration: const InputDecoration(
+                  labelText: 'Frage zum Hinweis',
+                  hintText: 'z.B. Wie viele Vögel siehst du?',
+                ),
+                validator: (value) => (_isRiddle && (value == null || value.isEmpty)) ? 'Frage erforderlich' : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _answerController,
+                decoration: const InputDecoration(
+                  labelText: 'Korrekte Antwort',
+                  hintText: 'z.B. 3',
+                ),
+                validator: (value) => (_isRiddle && (value == null || value.isEmpty)) ? 'Antwort erforderlich' : null,
+              ),
+            ],
           ],
         ),
       ),
