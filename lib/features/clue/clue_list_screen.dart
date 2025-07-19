@@ -1,8 +1,18 @@
+// ============================================================
+// Datei: lib/features/clue/clue_list_screen.dart
+// ============================================================
+
+// ============================================================
+// SECTION: Imports
+// ============================================================
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import 'clue_detail_screen.dart';
 
+// ============================================================
+// SECTION: ClueListScreen Widget
+// ============================================================
 class ClueListScreen extends StatefulWidget {
   const ClueListScreen({super.key});
 
@@ -10,71 +20,76 @@ class ClueListScreen extends StatefulWidget {
   State<ClueListScreen> createState() => _ClueListScreenState();
 }
 
+// ============================================================
+// SECTION: State & Controller
+// ============================================================
 class _ClueListScreenState extends State<ClueListScreen> {
   final ClueService _clueService = ClueService();
   Map<String, Clue> _clues = {};
-  Set<String> _viewedCodes = {};
 
+// ============================================================
+// SECTION: Lifecycle
+// ============================================================
   @override
   void initState() {
     super.initState();
     _loadClues();
   }
 
+// ============================================================
+// SECTION: Helper-Methoden
+// ============================================================
   Future<void> _loadClues() async {
     final loaded = await _clueService.loadClues();
-    setState(() {
-      _clues = loaded;
-    });
+    setState(() => _clues = loaded);
   }
 
+// ============================================================
+// SECTION: Build-Method (UI-Aufbau)
+// ============================================================
   @override
   Widget build(BuildContext context) {
-    final codes = _clues.keys.toList()..sort();
-    final total = codes.length;
-    final solved = _viewedCodes.length;
+    // Nur die Hinweise, die als solved markiert sind
+    final solvedEntries = _clues.entries
+        .where((entry) => entry.value.solved)
+        .toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Meine Clues')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Gelöst: $solved von $total',
-                style: const TextStyle(fontSize: 18)),
-          ),
-          Expanded(
-            child: ListView.separated(
+      appBar: AppBar(title: const Text('Gefundene Hinweise')),
+      body: solvedEntries.isEmpty
+          ? const Center(child: Text('Keine gefundenen Hinweise.'))
+          : ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: codes.length,
+              itemCount: solvedEntries.length,
               separatorBuilder: (_, __) => const Divider(),
               itemBuilder: (context, index) {
-                final code = codes[index];
-                final clue = _clues[code]!;
+                final code = solvedEntries[index].key;
+                final clue = solvedEntries[index].value;
 
                 return ListTile(
-                  title: Text('$code (${clue.type})'),
-                  subtitle: Text(clue.content),
-                  trailing: _viewedCodes.contains(code)
-                      ? const Icon(Icons.check_circle, color: Colors.green)
-                      : const Icon(Icons.radio_button_unchecked),
-                  onTap: () async {
-                    await Navigator.push(
+                  leading: Icon(
+                    clue.type == 'text' ? Icons.text_snippet : Icons.image,
+                    color: Colors.green,
+                  ),
+                  title: Text('Code: $code'),
+                  subtitle: Text(
+                    clue.type == 'text'
+                        ? clue.content
+                        : (clue.description ?? 'Bildhinweis'),
+                  ),
+                  trailing: const Icon(Icons.check_circle, color: Colors.green),
+                  onTap: () {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ClueDetailScreen(clue: clue),
                       ),
                     );
-                    setState(() {
-                      _viewedCodes.add(code);
-                    });
                   },
                 );
               },
             ),
-          ),
-        ],
-      ),
     );
   }
 }

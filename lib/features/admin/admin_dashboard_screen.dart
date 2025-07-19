@@ -1,8 +1,18 @@
+// ============================================================
+// Datei: lib/features/admin/admin_dashboard_screen.dart
+// ============================================================
+
+// ============================================================
+// SECTION: Imports
+// ============================================================
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import 'admin_editor_screen.dart';
 
+// ============================================================
+// SECTION: AdminDashboardScreen Widget
+// ============================================================
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -10,21 +20,33 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
+// ============================================================
+// SECTION: State & Controller
+// ============================================================
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final ClueService _clueService = ClueService();
   Map<String, Clue> _clues = {};
 
+// ============================================================
+// SECTION: Lifecycle
+// ============================================================
   @override
   void initState() {
     super.initState();
     _loadClues();
   }
 
+// ============================================================
+// SECTION: Helper-Methoden
+// ============================================================
+
+  /// Lädt alle Clues neu aus der JSON-Datei
   Future<void> _loadClues() async {
     final loaded = await _clueService.loadClues();
     setState(() => _clues = loaded);
   }
 
+  /// Löscht einen einzelnen Clue
   Future<void> _deleteClue(String code) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -40,10 +62,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (confirm == true) {
       _clues.remove(code);
       await _clueService.saveClues(_clues);
-      await _loadClues(); // 🔄 update
+      await _loadClues();
     }
   }
 
+  /// Öffnet den Editor zum Bearbeiten oder Hinzufügen eines Clues
   Future<void> _openEditor({String? codeToEdit}) async {
     await Navigator.push(
       context,
@@ -51,8 +74,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         builder: (_) => AdminEditorScreen(
           codeToEdit: codeToEdit,
           existingClue: codeToEdit != null ? _clues[codeToEdit] : null,
-          onSave: (Map<String, Clue> updatedMap) async {
+          onSave: (updatedMap) async {
+            // Map zusammenführen und bei Umbenennung alten Eintrag löschen
             final merged = Map<String, Clue>.from(_clues)..addAll(updatedMap);
+            if (codeToEdit != null && updatedMap.keys.first != codeToEdit) {
+              merged.remove(codeToEdit);
+            }
             await _clueService.saveClues(merged);
             await _loadClues();
           },
@@ -61,12 +88,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  /// ============================================================
+  /// SECTION: Reset-Funktion
+  /// Setzt alle 'solved' Flags in den Clues auf false zurück
+  /// ============================================================
+  Future<void> _resetSolvedFlags() async {
+    final resetMap = _clues.map((code, clue) {
+      clue.solved = false;
+      return MapEntry(code, clue);
+    });
+    await _clueService.saveClues(resetMap);
+    await _loadClues();
+  }
+
+// ============================================================
+// SECTION: Build-Method (UI-Aufbau)
+// ============================================================
   @override
   Widget build(BuildContext context) {
     final codes = _clues.keys.toList()..sort();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Dashboard')),
+      appBar: AppBar(
+        title: const Text('Admin Dashboard'),
+        actions: [
+          // Reset-Button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Alle als offen markieren',
+            onPressed: () async {
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Zurücksetzen'),
+                  content: const Text('Alle Hinweise als ungelöst markieren?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('OK')),
+                  ],
+                ),
+              );
+              if (ok == true) await _resetSolvedFlags();
+            },
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () => _openEditor(),
@@ -78,7 +144,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final clue = _clues[code]!;
           return ListTile(
             title: Text(code),
-            subtitle: Text(clue.type),
+            subtitle: Text('${clue.type}${clue.solved ? ' (gefunden)' : ''}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

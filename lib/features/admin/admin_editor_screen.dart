@@ -1,3 +1,10 @@
+// ============================================================
+// Datei: lib/features/admin/admin_editor_screen.dart
+// ============================================================
+
+// ============================================================
+// SECTION: Imports
+// ============================================================
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,6 +14,9 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../data/models/clue.dart';
 
+// ============================================================
+// SECTION: AdminEditorScreen Widget
+// ============================================================
 class AdminEditorScreen extends StatefulWidget {
   final String? codeToEdit;
   final Clue? existingClue;
@@ -23,14 +33,19 @@ class AdminEditorScreen extends StatefulWidget {
   State<AdminEditorScreen> createState() => _AdminEditorScreenState();
 }
 
+// ============================================================
+// SECTION: State & Controller
+// ============================================================
 class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   final _contentController = TextEditingController();
   final _descriptionController = TextEditingController();
-
   String _type = 'text';
 
+// ============================================================
+// SECTION: Lifecycle
+// ============================================================
   @override
   void initState() {
     super.initState();
@@ -42,19 +57,46 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
+  @override
+  void dispose() {
+    _codeController.dispose();
+    _contentController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+// ============================================================
+// SECTION: Helper-Methoden
+// ============================================================
+
+  /// Wählt ein Bild aus der Galerie und kopiert es in App-Verzeichnis
+  Future<void> _pickFromGallery() async {
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image != null) {
-      final dir = await getApplicationDocumentsDirectory();
-      final fileName = image.name;
-      final newPath = '${dir.path}/$fileName';
-      await File(image.path).copy(newPath);
-      setState(() {
-        _contentController.text = 'file://$newPath';
-      });
+      await _saveImageFile(image);
     }
   }
 
+  /// Nimmt ein Foto mit der Kamera auf und kopiert es in App-Verzeichnis
+  Future<void> _pickFromCamera() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (image != null) {
+      await _saveImageFile(image);
+    }
+  }
+
+  /// Gemeinsame Logik: Bild-Datei kopieren und Pfad ins Content-Feld schreiben
+  Future<void> _saveImageFile(XFile image) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName = DateTime.now().millisecondsSinceEpoch.toString() + '_' + image.name;
+    final newPath = '${dir.path}/$fileName';
+    await File(image.path).copy(newPath);
+    setState(() {
+      _contentController.text = 'file://$newPath';
+    });
+  }
+
+  /// Speichert neuen oder bearbeiteten Clue
   void _save() {
     if (_formKey.currentState!.validate()) {
       final clue = Clue(
@@ -73,14 +115,9 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _codeController.dispose();
-    _contentController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
+// ============================================================
+// SECTION: Build-Method (UI-Aufbau)
+// ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,7 +133,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Code-Feld: Nur alphanumerisch + optional Uppercase-Formatter
+            // Code-Feld
             TextFormField(
               controller: _codeController,
               decoration: const InputDecoration(labelText: 'Code'),
@@ -116,6 +153,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               ],
             ),
             const SizedBox(height: 16),
+
+            // Typ-Auswahl
             DropdownButtonFormField<String>(
               value: _type,
               items: const [
@@ -128,40 +167,42 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               decoration: const InputDecoration(labelText: 'Typ'),
             ),
             const SizedBox(height: 16),
+
+            // Bild-Optionen: Galerie oder Kamera
             if (_type == 'image') ...[
               Row(
                 children: [
                   ElevatedButton.icon(
-                    onPressed: _pickImage,
+                    onPressed: _pickFromGallery,
                     icon: const Icon(Icons.photo_library),
-                    label: const Text('Bild wählen'),
+                    label: const Text('Galerie'),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _contentController.text.isEmpty
-                          ? 'Kein Bild ausgewählt'
-                          : _contentController.text,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  ElevatedButton.icon(
+                    onPressed: _pickFromCamera,
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Kamera'),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
             ],
+
+            // Content-Feld (Text oder Pfad)
             TextFormField(
               controller: _contentController,
               decoration: InputDecoration(
                 labelText:
                     _type == 'text' ? 'Textinhalt' : 'Pfad zum Bild',
               ),
-              validator: (value) => value == null || value.isEmpty
-                  ? 'Inhalt erforderlich'
-                  : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Inhalt erforderlich' : null,
               maxLines: _type == 'text' ? 3 : 1,
               readOnly: _type == 'image',
             ),
             const SizedBox(height: 16),
+
+            // Beschreibung (optional)
             TextFormField(
               controller: _descriptionController,
               decoration:
@@ -175,7 +216,10 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   }
 }
 
-/// Wandelt alle eingegebenen Zeichen in Großbuchstaben um
+/// ============================================================
+/// SECTION: Text Formatter
+/// Wandelt alle Zeichen in Großbuchstaben um
+/// ============================================================
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
