@@ -1,0 +1,19 @@
+{
+  "codeA": {
+    "type": "text",
+    "content": "Gehe zum Brunnen hinter der Kapelle."
+  },
+  "codeB": {
+    "type": "image",
+    "content": "assets/images/image1.jpg",
+    "description": "Dies ist ein Hinweistext unter dem Bild."
+  },
+  "codeC": {
+    "type": "text",
+    "content": "Suche die alte Holzbrücke am Fluss."
+  },
+  "code65D": {
+    "type": "image",
+    "content": "assets/images/image2.jpg"
+  }
+}
