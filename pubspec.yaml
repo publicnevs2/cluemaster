@@ -19,12 +19,19 @@ dependencies:
   just_audio: ^0.9.0
   audio_session: ^0.1.0
 
+  # NEUES PAKET FÜR QR-CODES
+  mobile_scanner: ^5.1.1
+
+  # NEUES PAKET FÜR VIDEOS
+  video_player: ^2.8.6
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
 
-# HIER IST DIE MAGIE: Dieser Block zwingt Flutter, die richtigen Versionen zu nehmen.
+# Dieser Block verhindert, dass der Fehler von letztem Mal wieder auftritt
 dependency_overrides:
   record_linux: 1.1.1
   record_platform_interface: 1.3.0

@@ -1,6 +1,6 @@
 class Clue {
   final String code;
-  final String type; // 'text', 'image' oder 'audio'
+  final String type; // 'text', 'image', 'audio' oder 'video'
   final String content;
   final String? description;
   bool solved;

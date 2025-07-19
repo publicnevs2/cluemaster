@@ -1,21 +1,12 @@
-// ============================================================
-// Datei: lib/features/home/home_screen.dart
-// ============================================================
-
-// ============================================================
-// SECTION: Imports
-// ============================================================
+import 'package:clue_master/features/shared/qr_scanner_screen.dart'; // NEUER IMPORT
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import '../clue/clue_detail_screen.dart';
 import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
-import '../../main.dart'; // für routeObserver
+import '../../main.dart';
 
-// ============================================================
-// SECTION: HomeScreen Widget
-// ============================================================
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -23,9 +14,6 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// ============================================================
-// SECTION: State & Controller
-// ============================================================
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final TextEditingController _codeController = TextEditingController();
   final ClueService _clueService = ClueService();
@@ -34,9 +22,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Map<String, String> _normalizedMap = {};
   String? _errorText;
 
-// ============================================================
-// SECTION: Lifecycle & RouteAware
-// ============================================================
   @override
   void initState() {
     super.initState();
@@ -54,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void didPopNext() {
-    // Bei Rückkehr: neu laden, damit Location- und solved-Flags aktuell sind
     _loadClues();
   }
 
@@ -65,9 +49,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     super.dispose();
   }
 
-// ============================================================
-// SECTION: Helper-Methoden
-// ============================================================
   Future<void> _loadClues() async {
     final loaded = await _clueService.loadClues();
     setState(() {
@@ -78,26 +59,24 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  Future<void> _submitCode() async {
-    final input = _codeController.text.trim();
+  // Die Funktion kann jetzt optional einen gescannten Code direkt verarbeiten
+  Future<void> _submitCode([String? scannedCode]) async {
+    // Wenn ein gescannter Code übergeben wird, nutze ihn. Ansonsten nimm den aus dem Textfeld.
+    final input = scannedCode ?? _codeController.text.trim();
     final norm = input.toLowerCase();
 
-    // 1) Nur alphanumerisch erlaubt?
     if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(input)) {
       setState(() => _errorText = 'Nur Buchstaben (A–Z) und Zahlen erlaubt');
       return;
     }
 
-    // 2) Case-insensitive Lookup
     if (_normalizedMap.containsKey(norm)) {
       final originalCode = _normalizedMap[norm]!;
       final clue = _clues[originalCode]!;
 
-      // 3) solved-Flag setzen und speichern
       clue.solved = true;
       await _clueService.saveClues(_clues);
 
-      // 4) Navigieren und Fehler zurücksetzen
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ClueDetailScreen(clue: clue)),
@@ -109,9 +88,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-// ============================================================
-// SECTION: Build-Method (UI-Aufbau)
-// ============================================================
+  // NEUE FUNKTION zum Scannen für den Spieler
+  Future<void> _scanAndSubmit() async {
+    // Öffnet die Scanner-Seite
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
+
+    // Wenn ein Code zurückkommt, wird er direkt an die Logik übergeben
+    if (code != null && code.isNotEmpty) {
+      _submitCode(code);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 controller: _codeController,
                 textAlign: TextAlign.center,
                 decoration: InputDecoration(
-                  hintText: 'z. B. codeA',
+                  hintText: 'z. B. CODEA',
                   errorText: _errorText,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
@@ -163,7 +153,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 onSubmitted: (_) => _submitCode(),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: _submitCode, child: const Text('Los!')),
+              ElevatedButton(onPressed: () => _submitCode(), child: const Text('Los!')),
+              
+              // NEUE UI-ELEMENTE für die "oder"-Option
+              const SizedBox(height: 12),
+              const Text('oder'),
+              TextButton.icon(
+                onPressed: _scanAndSubmit,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('QR-Code scannen'),
+              ),
             ],
           ),
         ),

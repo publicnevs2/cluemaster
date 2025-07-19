@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,9 +32,9 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _descriptionController = TextEditingController();
   String _type = 'text';
 
-  // NEU: Für Audio-Aufnahme
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
+  final _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -51,24 +52,43 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _codeController.dispose();
     _contentController.dispose();
     _descriptionController.dispose();
-    _audioRecorder.dispose(); // Wichtig!
+    _audioRecorder.dispose();
     super.dispose();
   }
 
+  Future<void> _scanQrCode() async {
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _codeController.text = result;
+      });
+    }
+  }
+
   Future<void> _pickFromGallery() async {
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       await _saveMediaFile(image.path, image.name);
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final video = await _imagePicker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      await _saveMediaFile(video.path, video.name);
     }
   }
 
   Future<void> _pickFromCamera() async {
-    final image = await ImagePicker().pickImage(source: ImageSource.camera);
+    final image = await _imagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
       await _saveMediaFile(image.path, image.name);
     }
   }
-  
+
   Future<void> _toggleRecording() async {
     final isRecording = await _audioRecorder.isRecording();
     if (isRecording) {
@@ -80,7 +100,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     } else {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
-        // Temporärer Pfad für die Aufnahme
         await _audioRecorder.start(const RecordConfig(), path: '${dir.path}/temp_audio');
         setState(() => _isRecording = true);
       }
@@ -137,11 +156,15 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) return 'Nur Buchstaben und Zahlen erlaubt';
                 return null;
               },
-              readOnly: widget.codeToEdit != null,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 UpperCaseTextFormatter(),
               ],
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Code per QR-Scan setzen'),
+              onPressed: _scanQrCode,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -149,12 +172,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               items: const [
                 DropdownMenuItem(value: 'text', child: Text('Text')),
                 DropdownMenuItem(value: 'image', child: Text('Bild')),
-                DropdownMenuItem(value: 'audio', child: Text('Audio')), // NEU
+                DropdownMenuItem(value: 'audio', child: Text('Audio')),
+                DropdownMenuItem(value: 'video', child: Text('Video')),
               ],
               onChanged: (value) {
                 setState(() {
                   _type = value!;
-                  _contentController.clear(); // Inhalt bei Typwechsel leeren
+                  _contentController.clear();
                 });
               },
               decoration: const InputDecoration(labelText: 'Typ'),
@@ -179,6 +203,14 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               ),
               const SizedBox(height: 16),
             ],
+            if (_type == 'video') ...[
+              ElevatedButton.icon(
+                onPressed: _pickVideo,
+                icon: const Icon(Icons.video_library),
+                label: const Text('Video aus Galerie wählen'),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _contentController,
               decoration: InputDecoration(
@@ -186,7 +218,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               ),
               validator: (value) => value == null || value.isEmpty ? 'Inhalt erforderlich' : null,
               maxLines: _type == 'text' ? 3 : 1,
-              readOnly: _type == 'image' || _type == 'audio',
+              readOnly: _type == 'image' || _type == 'audio' || _type == 'video',
             ),
             const SizedBox(height: 16),
             TextFormField(
