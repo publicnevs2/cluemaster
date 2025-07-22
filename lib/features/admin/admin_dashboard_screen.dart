@@ -53,7 +53,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Löschen bestätigen'),
-        content: Text('Hinweis "$code" wirklich löschen?'),
+        content: Text('Station "$code" wirklich löschen?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -140,7 +140,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 context: context,
                 builder: (_) => AlertDialog(
                   title: const Text('Zurücksetzen'),
-                  content: const Text('Alle Hinweise als ungelöst markieren?'),
+                  content: const Text('Alle Stationen als ungelöst markieren?'),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(context, false),
@@ -166,21 +166,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final code = codes[i];
           final clue = _clues[code]!;
 
-          // ============================================================
-          // VERBESSERUNG: Aussagekräftigerer Text für den Untertitel.
-          // ============================================================
-          String subtitleText = 'Typ: ${clue.type}';
-          if (clue.isRiddle) {
-            subtitleText += ' (Rätsel)';
-          }
+          // KORREKTUR: Der Untertitel wurde an das neue Datenmodell angepasst.
+          // 'clue.type' wurde zu 'clue.riddleType'.
+          // Die Prüfung auf 'isRiddle' ist nicht mehr nötig, da jede Station ein Rätsel ist.
+          String subtitleText = 'Rätsel-Typ: ${clue.riddleType}';
           if (clue.solved) {
             subtitleText += ' - Gefunden';
           }
-          // ============================================================
 
           return ListTile(
             title: Text(code),
-            subtitle: Text(subtitleText), // Hier wird der neue Text verwendet.
+            subtitle: Text(subtitleText),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

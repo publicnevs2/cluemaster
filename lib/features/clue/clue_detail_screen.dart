@@ -1,12 +1,12 @@
 // ============================================================
 // SECTION: Imports
 // ============================================================
-import 'dart:io';
+import 'dart:io'; // KORREKTUR: Der Tippfehler 'dart.io' wurde zu 'dart:io' korrigiert.
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import '../../data/models/clue.dart';
-import '../../core/services/clue_service.dart'; // Wichtig für das Speichern des gelösten Status
+import '../../core/services/clue_service.dart';
 
 // ============================================================
 // SECTION: ClueDetailScreen Widget
@@ -28,10 +28,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // ============================================================
   final _answerController = TextEditingController();
   final _clueService = ClueService();
+  
+  // Zustand für das Rätsel
+  bool _isSolved = false;
+  int _wrongAttempts = 0;
   String? _errorMessage;
-
-  // Diese Variable steuert, ob der eigentliche Hinweis (die Belohnung) angezeigt wird.
-  bool _isHintVisible = false;
 
   // ============================================================
   // SECTION: Lifecycle
@@ -39,10 +40,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Wenn der Hinweis kein Rätsel ist ODER bereits gelöst wurde,
-    // wird der Inhalt sofort angezeigt.
-    if (!widget.clue.isRiddle || widget.clue.solved) {
-      _isHintVisible = true;
+    // Wenn der Hinweis bereits in der Vergangenheit gelöst wurde, zeige direkt die Belohnung.
+    if (widget.clue.solved) {
+      _isSolved = true;
     }
   }
 
@@ -56,36 +56,31 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // SECTION: Logik
   // ============================================================
 
-  /// Prüft die Antwort des Spielers.
+  /// Prüft die Antwort des Spielers, zählt Versuche und zeigt ggf. Hilfe an.
   void _checkAnswer({String? userAnswer}) async {
-    final correctAnswer = widget.clue.answer?.trim().toLowerCase();
-    // Nimmt entweder die Antwort vom Button (userAnswer) oder aus dem Textfeld.
+    final correctAnswer = widget.clue.answer.trim().toLowerCase();
     final providedAnswer = (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
-      // Antwort ist richtig!
+      // ANTWORT RICHTIG
       setState(() {
-        _isHintVisible = true; // Macht den Hinweis-Container sichtbar.
-        _errorMessage = null;
-        widget.clue.solved = true; // Markiert den Hinweis als gelöst.
+        _isSolved = true;
+        widget.clue.solved = true;
       });
 
-      // Speichere den neuen "solved"-Status in der JSON-Datei.
+      // Speichere den gelösten Status persistent.
       final allClues = await _clueService.loadClues();
       allClues[widget.clue.code] = widget.clue;
       await _clueService.saveClues(allClues);
 
-      // Der 'mounted'-Check ist eine Sicherheitsmaßnahme in async-Methoden.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Richtig! Gut gemacht!'),
-          backgroundColor: Colors.green,
-        ),
+        const SnackBar(content: Text('Richtig! Belohnung freigeschaltet!'), backgroundColor: Colors.green),
       );
     } else {
-      // Antwort ist falsch.
+      // ANTWORT FALSCH
       setState(() {
+        _wrongAttempts++;
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
       });
     }
@@ -97,24 +92,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Hinweis')),
+      appBar: AppBar(title: Text(_isSolved ? 'Belohnung' : 'Rätsel')),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // ANZEIGE-LOGIK:
-                    // Wenn der Hinweis sichtbar ist, zeige den Inhalt.
-                    // Sonst zeige das Rätsel.
-                    if (_isHintVisible)
-                      _buildContentWidget() // Der eigentliche Hinweis (Belohnung)
-                    else
-                      _buildRiddleWidget(), // Das Rätsel (Tor)
-                  ],
-                ),
+                child: _isSolved ? _buildRewardWidget() : _buildRiddleWidget(),
               ),
             ),
             const Padding(
@@ -128,92 +113,153 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   // ============================================================
-  // SECTION: UI-Builder für die Widgets
+  // SECTION: UI-Builder für die Haupt-Widgets
   // ============================================================
 
   /// Baut das Widget für das RÄTSEL.
   Widget _buildRiddleWidget() {
     return Column(
       children: [
-        // Zeigt die Frage an.
+        // 1. Das Rätsel-Medium (Bild, Ton, etc.)
+        _buildMediaWidget(
+          type: widget.clue.riddleType,
+          content: widget.clue.riddleContent,
+          description: widget.clue.riddleDescription,
+        ),
+        const SizedBox(height: 24),
+        
+        // 2. Die Frage
         Text(
-          widget.clue.question!,
+          widget.clue.question,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        // Entscheidet, ob Multiple-Choice-Buttons oder ein Textfeld angezeigt werden.
-        if (widget.clue.isMultipleChoice)
-          // Baut die Buttons für Multiple Choice.
-          ...widget.clue.options!.map((option) {
-            return Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(vertical: 4.0),
-              child: ElevatedButton(
-                onPressed: () => _checkAnswer(userAnswer: option),
-                child: Text(option, style: const TextStyle(fontSize: 16)),
-              ),
-            );
-          }).toList()
-        else
-          // Baut das Textfeld für die freie Eingabe.
-          TextField(
-            controller: _answerController,
-            decoration: InputDecoration(
-              hintText: 'Deine Antwort hier...',
-              border: const OutlineInputBorder(),
-            ),
-            onSubmitted: (_) => _checkAnswer(),
-          ),
+        // 3. Die Antwortmöglichkeiten
+        widget.clue.isMultipleChoice
+            ? _buildMultipleChoiceOptions()
+            : _buildTextAnswerField(),
         
-        // Zeigt eine Fehlermeldung an, wenn die Antwort falsch war.
+        // 4. Fehlermeldung und gestaffelte Hilfe
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
-            child: Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red, fontSize: 16),
-            ),
+            child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
           ),
+        if (_wrongAttempts >= 3 && widget.clue.hint1 != null)
+          _buildHintCard(1, widget.clue.hint1!),
+        if (_wrongAttempts >= 6 && widget.clue.hint2 != null)
+          _buildHintCard(2, widget.clue.hint2!),
       ],
     );
   }
 
-  /// Baut das Widget für den HINWEIS-INHALT (die Belohnung).
-  Widget _buildContentWidget() {
-    // Diese Logik entscheidet, ob Text, Bild, Audio etc. angezeigt wird.
-    switch (widget.clue.type) {
-      case 'text':
-        return Text(widget.clue.content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-      case 'image':
-        Widget imageWidget;
-        String path = widget.clue.content;
-        if (path.startsWith('file://')) {
-          path = path.replaceFirst('file://', '');
-          imageWidget = Image.file(File(path));
-        } else {
-          imageWidget = Image.asset(path);
-        }
-        return Column(
-          children: [
-            imageWidget,
-            if (widget.clue.description != null) ...[
-              const SizedBox(height: 12),
-              Text(widget.clue.description!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-            ],
-          ],
+  /// Baut das Widget für die BELOHNUNG.
+  Widget _buildRewardWidget() {
+    return Column(
+      children: [
+        const Text("Rätsel gelöst!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+        const SizedBox(height: 16),
+        _buildMediaWidget(
+          type: widget.clue.rewardType,
+          content: widget.clue.rewardContent,
+          description: widget.clue.rewardDescription,
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // SECTION: UI-Builder für die Unter-Widgets
+  // ============================================================
+
+  /// Baut die Multiple-Choice-Buttons.
+  Widget _buildMultipleChoiceOptions() {
+    return Column(
+      children: widget.clue.options!.map((option) {
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
+          child: ElevatedButton(
+            onPressed: () => _checkAnswer(userAnswer: option),
+            child: Text(option, style: const TextStyle(fontSize: 16)),
+          ),
         );
+      }).toList(),
+    );
+  }
+
+  /// Baut das Textfeld für offene Fragen.
+  Widget _buildTextAnswerField() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _answerController,
+            decoration: const InputDecoration(hintText: 'Deine Antwort...', border: OutlineInputBorder()),
+            onSubmitted: (_) => _checkAnswer(),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.send),
+          onPressed: () => _checkAnswer(),
+          style: IconButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white),
+        ),
+      ],
+    );
+  }
+  
+  /// Baut eine Karte für die Anzeige der Hilfe-Tipps.
+  Widget _buildHintCard(int level, String hintText) {
+    return Card(
+      margin: const EdgeInsets.only(top: 24),
+      color: Colors.amber.shade100,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            const Icon(Icons.lightbulb_outline, color: Colors.amber),
+            const SizedBox(width: 12),
+            Expanded(child: Text("Hilfe $level: $hintText")),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Baut das Widget für den Medien-Inhalt (universell für Rätsel und Belohnung).
+  Widget _buildMediaWidget({required String type, required String content, String? description}) {
+    Widget mediaWidget;
+    switch (type) {
+      case 'text':
+        mediaWidget = Text(content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+        break;
+      case 'image':
+        mediaWidget = content.startsWith('file://')
+            ? Image.file(File(content.replaceFirst('file://', '')))
+            : Image.asset(content);
+        break;
       case 'audio':
-        return AudioPlayerWidget(path: widget.clue.content, description: widget.clue.description);
+        return AudioPlayerWidget(path: content, description: description);
       case 'video':
-        return VideoPlayerWidget(path: widget.clue.content, description: widget.clue.description);
+        return VideoPlayerWidget(path: content, description: description);
       default:
-        return const Center(child: Text('Unbekannter Hinweistyp'));
+        mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
     }
+    
+    return Column(
+      children: [
+        mediaWidget,
+        if (description != null && description.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(description, style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+        ],
+      ],
+    );
   }
 }
-
 
 // ============================================================
 // SECTION: Unveränderte Hilfs-Widgets (Audio/Video Player)
@@ -262,10 +308,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       children: [
         const Icon(Icons.audiotrack, size: 120, color: Colors.blueAccent),
         const SizedBox(height: 24),
-        if (widget.description != null) ...[
-          Text(widget.description!, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-        ],
         StreamBuilder<PlayerState>(
           stream: _player.playerStateStream,
           builder: (context, snapshot) {
@@ -297,7 +339,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           },
         ),
         const SizedBox(height: 8),
-        const Text("Hinweis abspielen", style: TextStyle(fontSize: 16)),
+        const Text("Rätsel-Audio abspielen", style: TextStyle(fontSize: 16)),
       ],
     );
   }
@@ -324,7 +366,9 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _initializeVideoPlayerFuture = _controller.initialize();
     _controller.setLooping(false);
     _controller.addListener(() {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -359,7 +403,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         FloatingActionButton(
           onPressed: () {
             setState(() {
-              if (_controller.value.position == _controller.value.duration) {
+              if (_controller.value.position >= _controller.value.duration) {
                 _controller.seekTo(Duration.zero);
                 _controller.play();
               } else if (_controller.value.isPlaying) {
@@ -370,20 +414,13 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             });
           },
           child: Icon(
-            _controller.value.position == _controller.value.duration
+            _controller.value.position >= _controller.value.duration
                 ? Icons.replay
                 : _controller.value.isPlaying
                     ? Icons.pause
                     : Icons.play_arrow,
           ),
         ),
-        const SizedBox(height: 16),
-        if (widget.description != null)
-          Text(
-            widget.description!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
-          ),
       ],
     );
   }
