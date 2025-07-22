@@ -3,14 +3,13 @@
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../data/models/clue.dart';
-import '../../data/models/hunt.dart'; // NEU: Import für das Hunt-Modell
+import '../../data/models/hunt.dart';
 import 'clue_detail_screen.dart';
 
 // ============================================================
 // SECTION: ClueListScreen Widget
 // ============================================================
 class ClueListScreen extends StatefulWidget {
-  // NEU: Der Screen erwartet jetzt die aktuelle Jagd.
   final Hunt hunt;
 
   const ClueListScreen({super.key, required this.hunt});
@@ -28,7 +27,6 @@ class _ClueListScreenState extends State<ClueListScreen> {
   // ============================================================
   @override
   Widget build(BuildContext context) {
-    // Die Hinweise werden direkt aus der übergebenen Jagd gefiltert.
     final solvedEntries =
         widget.hunt.clues.entries.where((entry) => entry.value.solved).toList()
           ..sort((a, b) => a.key.compareTo(b.key));
@@ -55,10 +53,12 @@ class _ClueListScreenState extends State<ClueListScreen> {
                   trailing:
                       const Icon(Icons.check_circle, color: Colors.green),
                   onTap: () {
+                    // KORREKTUR: Wir übergeben jetzt die aktuelle Jagd (hunt)
+                    // zusammen mit dem Hinweis (clue) an den Detail-Bildschirm.
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ClueDetailScreen(clue: clue),
+                        builder: (_) => ClueDetailScreen(hunt: widget.hunt, clue: clue),
                       ),
                     );
                   },

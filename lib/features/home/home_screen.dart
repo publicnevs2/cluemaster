@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       if (!mounted) return;
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ClueDetailScreen(clue: clue)),
+        MaterialPageRoute(builder: (_) => ClueDetailScreen(hunt: widget.hunt, clue: clue)),
       );
       _codeController.clear();
       setState(() => _errorText = null);
@@ -136,8 +136,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             icon: const Icon(Icons.list),
             tooltip: 'Gefundene Hinweise',
             onPressed: () {
-              // KORREKTUR: Wir übergeben die aktuelle Jagd an den ClueListScreen,
-              // damit er weiß, welche gelösten Hinweise er anzeigen soll.
+              // KORREKTUR: Wir übergeben die aktuelle Jagd an den ClueListScreen.
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => ClueListScreen(hunt: widget.hunt)),

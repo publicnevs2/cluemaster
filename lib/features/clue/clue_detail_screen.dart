@@ -2,6 +2,7 @@
 // SECTION: Imports
 // ============================================================
 import 'dart:io';
+import 'package:clue_master/data/models/hunt.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
@@ -12,8 +13,11 @@ import '../../core/services/clue_service.dart';
 // SECTION: ClueDetailScreen Widget
 // ============================================================
 class ClueDetailScreen extends StatefulWidget {
+  // NEU: Der Screen benötigt jetzt die Information über die gesamte Jagd.
+  final Hunt hunt;
   final Clue clue;
-  const ClueDetailScreen({super.key, required this.clue});
+
+  const ClueDetailScreen({super.key, required this.hunt, required this.clue});
 
   @override
   State<ClueDetailScreen> createState() => _ClueDetailScreenState();
@@ -28,11 +32,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // ============================================================
   final _answerController = TextEditingController();
   final _clueService = ClueService();
-  
-  // NEU: ScrollController, um die Ansicht automatisch nach unten zu scrollen.
   final _scrollController = ScrollController();
 
-  // Zustand für das Rätsel
   bool _isSolved = false;
   int _wrongAttempts = 0;
   String? _errorMessage;
@@ -51,7 +52,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   void dispose() {
     _answerController.dispose();
-    _scrollController.dispose(); // Wichtig: Controller hier freigeben.
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -59,7 +60,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // SECTION: Logik
   // ============================================================
 
-  /// Prüft die Antwort des Spielers, zählt Versuche und zeigt ggf. Hilfe an.
+  /// Prüft die Antwort und speichert den Fortschritt korrekt.
   void _checkAnswer({String? userAnswer}) async {
     final correctAnswer = widget.clue.answer?.trim().toLowerCase();
     final providedAnswer = (userAnswer ?? _answerController.text).trim().toLowerCase();
@@ -71,9 +72,21 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         widget.clue.solved = true;
       });
 
-      final allClues = await _clueService.loadClues();
-      allClues[widget.clue.code] = widget.clue;
-      await _clueService.saveClues(allClues);
+      // ============================================================
+      // KORREKTUR: Die Speicherlogik wurde repariert.
+      // ============================================================
+      // 1. Lade die aktuelle Liste aller Jagden.
+      final allHunts = await _clueService.loadHunts();
+      // 2. Finde den Index der Jagd, die wir gerade spielen.
+      final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
+
+      if (huntIndex != -1) {
+        // 3. Aktualisiere den spezifischen Hinweis in der korrekten Jagd.
+        allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
+        // 4. Speichere die gesamte aktualisierte Liste aller Jagden.
+        await _clueService.saveHunts(allHunts);
+      }
+      // ============================================================
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +99,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
       });
 
-      // NEU: Scrolle automatisch nach unten, damit die Hilfe sichtbar wird.
       Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -111,7 +123,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                controller: _scrollController, // Controller hier zuweisen.
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
@@ -142,10 +154,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  // ============================================================
-  // SECTION: UI-Builder für die Haupt-Widgets
-  // ============================================================
-
+  // ... (Der Rest der Datei, alle _build... Methoden und die Player-Widgets, bleiben unverändert)
   Widget _buildRiddleWidget() {
     return Column(
       children: [
@@ -190,10 +199,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       ),
     );
   }
-
-  // ============================================================
-  // SECTION: UI-Builder für die Unter-Widgets
-  // ============================================================
 
   Widget _buildMultipleChoiceOptions() {
     return Column(
@@ -277,9 +282,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 }
 
-// ============================================================
-// SECTION: Unveränderte Hilfs-Widgets (Audio/Video Player)
-// ============================================================
 class AudioPlayerWidget extends StatefulWidget {
   final String path;
   final String? description;
@@ -399,7 +401,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // KORREKTUR: Das Video wird jetzt zentriert, was besonders bei Hochkant-Videos wichtig ist.
         Center(
           child: FutureBuilder(
             future: _initializeVideoPlayerFuture,
