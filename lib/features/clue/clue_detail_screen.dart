@@ -29,6 +29,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   final _answerController = TextEditingController();
   final _clueService = ClueService();
   
+  // NEU: ScrollController, um die Ansicht automatisch nach unten zu scrollen.
+  final _scrollController = ScrollController();
+
   // Zustand für das Rätsel
   bool _isSolved = false;
   int _wrongAttempts = 0;
@@ -40,8 +43,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Wenn der Hinweis bereits in der Vergangenheit gelöst wurde,
-    // wird der Status direkt auf "gelöst" gesetzt.
     if (widget.clue.solved) {
       _isSolved = true;
     }
@@ -50,6 +51,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   void dispose() {
     _answerController.dispose();
+    _scrollController.dispose(); // Wichtig: Controller hier freigeben.
     super.dispose();
   }
 
@@ -83,6 +85,17 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         _wrongAttempts++;
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
       });
+
+      // NEU: Scrolle automatisch nach unten, damit die Hilfe sichtbar wird.
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
@@ -98,22 +111,18 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController, // Controller hier zuweisen.
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    // 1. Der Hinweis (Bild, Text etc.) wird immer angezeigt.
                     _buildMediaWidget(
                       type: widget.clue.type,
                       content: widget.clue.content,
                       description: widget.clue.description,
                     ),
                     const SizedBox(height: 16),
-
-                    // 2. Wenn es ein Rätsel gibt, wird der Rätsel-Teil angezeigt.
                     if (widget.clue.isRiddle) ...[
                       const Divider(height: 24, thickness: 1),
-                      // Wenn das Rätsel gelöst ist, zeige die Belohnung.
-                      // Sonst zeige das Rätsel selbst.
                       if (_isSolved)
                         _buildRewardWidget()
                       else
@@ -137,7 +146,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // SECTION: UI-Builder für die Haupt-Widgets
   // ============================================================
 
-  /// Baut das Widget für das ungelöste RÄTSEL.
   Widget _buildRiddleWidget() {
     return Column(
       children: [
@@ -147,12 +155,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-
-        // Zeigt entweder Multiple-Choice-Buttons oder ein Textfeld an.
         widget.clue.isMultipleChoice
             ? _buildMultipleChoiceOptions()
             : _buildTextAnswerField(),
-        
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
@@ -166,7 +171,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  /// Baut das Widget für die BELOHNUNG nach dem Lösen.
   Widget _buildRewardWidget() {
     return Card(
       color: Colors.green.shade100,
@@ -395,21 +399,24 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        FutureBuilder(
-          future: _initializeVideoPlayerFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return Container(
-                constraints: const BoxConstraints(maxHeight: 400),
-                child: AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: VideoPlayer(_controller),
-                ),
-              );
-            } else {
-              return const Center(child: CircularProgressIndicator());
-            }
-          },
+        // KORREKTUR: Das Video wird jetzt zentriert, was besonders bei Hochkant-Videos wichtig ist.
+        Center(
+          child: FutureBuilder(
+            future: _initializeVideoPlayerFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return Container(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  ),
+                );
+              } else {
+                return const Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
         ),
         const SizedBox(height: 24),
         FloatingActionButton(
