@@ -17,12 +17,15 @@ class AdminEditorScreen extends StatefulWidget {
   final String? codeToEdit;
   final Clue? existingClue;
   final Function(Map<String, Clue>) onSave;
+  // NEU: Nimmt die Liste der existierenden Codes entgegen.
+  final List<String> existingCodes;
 
   const AdminEditorScreen({
     super.key,
     this.codeToEdit,
     this.existingClue,
     required this.onSave,
+    this.existingCodes = const [], // Standardwert ist eine leere Liste.
   });
 
   @override
@@ -33,24 +36,16 @@ class AdminEditorScreen extends StatefulWidget {
 // SECTION: State-Klasse
 // ============================================================
 class _AdminEditorScreenState extends State<AdminEditorScreen> {
-  // ============================================================
-  // SECTION: State & Controller
-  // ============================================================
+  // ... (alle Controller und initState/dispose bleiben unverändert)
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
-
-  // --- Allgemeine Controller ---
   final _codeController = TextEditingController();
-
-  // --- HINWEIS Controller ---
   String _type = 'text';
   final _contentController = TextEditingController();
   final _descriptionController = TextEditingController();
-
-  // --- RÄTSEL Controller ---
-  bool _isRiddle = false; // Steuert die Sichtbarkeit des Rätsel-Abschnitts
+  bool _isRiddle = false;
   final _questionController = TextEditingController();
   final _answerController = TextEditingController();
   final _option1Controller = TextEditingController();
@@ -61,9 +56,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _hint2Controller = TextEditingController();
   final _rewardTextController = TextEditingController();
 
-  // ============================================================
-  // SECTION: Lifecycle-Methoden
-  // ============================================================
   @override
   void initState() {
     super.initState();
@@ -73,7 +65,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _type = clue.type;
       _contentController.text = clue.content;
       _descriptionController.text = clue.description ?? '';
-
       if (clue.isRiddle) {
         _isRiddle = true;
         _questionController.text = clue.question!;
@@ -81,7 +72,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         _hint1Controller.text = clue.hint1 ?? '';
         _hint2Controller.text = clue.hint2 ?? '';
         _rewardTextController.text = clue.rewardText ?? '';
-        
         if (clue.isMultipleChoice) {
           _option1Controller.text = clue.options![0];
           _option2Controller.text = clue.options!.length > 1 ? clue.options![1] : '';
@@ -94,7 +84,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
 
   @override
   void dispose() {
-    // Alle Controller freigeben
     _codeController.dispose();
     _contentController.dispose();
     _descriptionController.dispose();
@@ -128,8 +117,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         type: _type,
         content: _contentController.text.trim(),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-        
-        // Rätsel-Daten nur speichern, wenn die Checkbox aktiviert ist
         question: _isRiddle ? _questionController.text.trim() : null,
         answer: _isRiddle ? _answerController.text.trim() : null,
         options: _isRiddle && options.isNotEmpty ? options : null,
@@ -203,7 +190,23 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             TextFormField(
               controller: _codeController,
               decoration: const InputDecoration(labelText: 'Code der Station'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Code ist ein Pflichtfeld' : null,
+              // KORREKTUR: Validierung für Pflichtfeld und Duplikate
+              validator: (value) {
+                final code = value?.trim() ?? '';
+                if (code.isEmpty) {
+                  return 'Der Code ist ein Pflichtfeld.';
+                }
+                // Prüfe auf Duplikate, aber nur, wenn es ein neuer Code ist.
+                // Wenn wir einen Code bearbeiten, darf er sich selbst natürlich finden.
+                if (widget.codeToEdit == null && widget.existingCodes.contains(code)) {
+                  return 'Dieser Code existiert bereits in dieser Jagd.';
+                }
+                // Wenn wir einen Code umbenennen, prüfen wir, ob der neue Name schon existiert.
+                if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) {
+                  return 'Dieser Code existiert bereits in dieser Jagd.';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -264,9 +267,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     );
   }
 
-  // ============================================================
-  // SECTION: UI-Hilfsmethoden
-  // ============================================================
+  // ... (Restliche UI-Hilfsmethoden bleiben unverändert)
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

@@ -2,7 +2,7 @@
 // SECTION: Imports
 // ============================================================
 import 'package:flutter/material.dart';
-import 'features/home/hunt_selection_screen.dart'; // NEU: Importiere den neuen Auswahl-Bildschirm.
+import 'features/home/hunt_selection_screen.dart'; // Importiert den neuen Auswahl-Bildschirm.
 
 // ============================================================
 // SECTION: Route Observer
@@ -28,7 +28,7 @@ class ClueMasterApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      // KORREKTUR: Der Startbildschirm der App ist jetzt der HuntSelectionScreen.
+      // Der Startbildschirm der App ist jetzt der HuntSelectionScreen.
       home: const HuntSelectionScreen(),
       navigatorObservers: [routeObserver],
     );

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'admin_dashboard_screen.dart';
-import 'admin_change_password_screen.dart'; // NEU: Import für Passwort-Screen
+import 'admin_change_password_screen.dart';
 
 // ============================================================
 // SECTION: AdminHuntListScreen Widget
@@ -130,7 +130,6 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
       appBar: AppBar(
         title: const Text('Meine Schnitzeljagden'),
         actions: [
-          // NEU: Der Passwort-ändern-Button ist jetzt hier, da es eine globale Admin-Einstellung ist.
           IconButton(
             icon: const Icon(Icons.lock_outline),
             tooltip: 'Passwort ändern',
@@ -169,7 +168,7 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
                       ),
                     ],
                   ),
-                  onTap: () => _editHunt(hunt), // Man kann auch auf die ganze Zeile tippen.
+                  onTap: () => _editHunt(hunt),
                 );
               },
             ),
