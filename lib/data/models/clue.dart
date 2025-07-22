@@ -1,5 +1,5 @@
 // ============================================================
-// SECTION: Clue Klasse (Stark überarbeitet für Finetuning)
+// SECTION: Clue Klasse
 // ============================================================
 class Clue {
   // ============================================================
@@ -9,29 +9,28 @@ class Clue {
   bool solved;
 
   // ============================================================
-  // SECTION: Das RÄTSEL (Was der Spieler zuerst sieht)
+  // SECTION: HINWEIS (Was der Spieler immer sieht)
   // ============================================================
-  final String riddleType;      // Typ des Rätsel-Mediums: 'text', 'image', 'audio', 'video'
-  final String riddleContent;   // Inhalt des Rätsels: Text oder Dateipfad zum Medium
-  final String? riddleDescription; // Optionale Beschreibung für das Rätsel-Medium
-
-  final String question;        // Die Frage, die zum Rätsel-Medium gestellt wird
-  final String answer;          // Die korrekte Antwort auf die Frage
-
-  // Eigenschaften für Multiple-Choice
-  final bool isMultipleChoice;
-  final List<String>? options;
-
-  // NEU: Eigenschaften für die gestaffelte Hilfe
-  final String? hint1; // Hilfe nach 3 falschen Versuchen
-  final String? hint2; // Hilfe nach 6 falschen Versuchen
+  final String type; // 'text', 'image', 'audio', 'video'
+  final String content; // Der Inhalt des Hinweises (Text oder Dateipfad)
+  final String? description; // Optionale Beschreibung zum Hinweis
 
   // ============================================================
-  // SECTION: Die BELOHNUNG (Was der Spieler nach dem Lösen sieht)
+  // SECTION: OPTIONALES RÄTSEL
   // ============================================================
-  final String rewardType;      // Typ der Belohnung: 'text', 'image', 'audio', 'video'
-  final String rewardContent;   // Inhalt der Belohnung: Text oder Dateipfad
-  final String? rewardDescription; // Optionale Beschreibung für die Belohnung
+  final String? question; // Die Frage. Wenn dieses Feld leer ist, ist es kein Rätsel.
+  final String? answer;   // Die korrekte Antwort.
+  final List<String>? options; // Antwortmöglichkeiten für Multiple-Choice.
+
+  // NEU: Felder für die gestaffelte Hilfe
+  final String? hint1; // Hilfe nach 3 falschen Versuchen.
+  final String? hint2; // Hilfe nach 6 falschen Versuchen.
+
+  // ============================================================
+  // SECTION: BELOHNUNG (Was nach dem Lösen eines Rätsels angezeigt wird)
+  // ============================================================
+  // NEU: Ein einfacher Text, der als Belohnung dient.
+  final String? rewardText;
 
   // ============================================================
   // SECTION: Konstruktor
@@ -39,66 +38,61 @@ class Clue {
   Clue({
     required this.code,
     this.solved = false,
-    
-    // Rätsel-Teil
-    required this.riddleType,
-    required this.riddleContent,
-    this.riddleDescription,
-    required this.question,
-    required this.answer,
-    this.isMultipleChoice = false,
+    required this.type,
+    required this.content,
+    this.description,
+    this.question,
+    this.answer,
     this.options,
     this.hint1,
     this.hint2,
-
-    // Belohnungs-Teil
-    required this.rewardType,
-    required this.rewardContent,
-    this.rewardDescription,
+    this.rewardText,
   });
+
+  // ============================================================
+  // SECTION: Hilfs-Methoden (Getters)
+  // ============================================================
+
+  /// Prüft, ob dieser Hinweis ein Rätsel ist.
+  bool get isRiddle => question != null && question!.isNotEmpty && answer != null;
+
+  /// Prüft, ob das Rätsel ein Multiple-Choice-Rätsel ist.
+  bool get isMultipleChoice => isRiddle && options != null && options!.isNotEmpty;
 
   // ============================================================
   // SECTION: JSON-Konvertierung
   // ============================================================
 
+  /// Erstellt ein Clue-Objekt aus JSON-Daten.
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
     return Clue(
       code: code,
       solved: json['solved'] ?? false,
-      
-      riddleType: json['riddleType'],
-      riddleContent: json['riddleContent'],
-      riddleDescription: json['riddleDescription'],
+      type: json['type'],
+      content: json['content'],
+      description: json['description'],
       question: json['question'],
       answer: json['answer'],
-      isMultipleChoice: json['isMultipleChoice'] ?? false,
       options: json['options'] != null ? List<String>.from(json['options']) : null,
       hint1: json['hint1'],
       hint2: json['hint2'],
-
-      rewardType: json['rewardType'],
-      rewardContent: json['rewardContent'],
-      rewardDescription: json['rewardDescription'],
+      rewardText: json['rewardText'],
     );
   }
 
+  /// Wandelt das Clue-Objekt in ein JSON-Format um.
   Map<String, dynamic> toJson() {
     return {
       'solved': solved,
-      
-      'riddleType': riddleType,
-      'riddleContent': riddleContent,
-      if (riddleDescription != null) 'riddleDescription': riddleDescription,
-      'question': question,
-      'answer': answer,
-      'isMultipleChoice': isMultipleChoice,
+      'type': type,
+      'content': content,
+      if (description != null) 'description': description,
+      if (question != null) 'question': question,
+      if (answer != null) 'answer': answer,
       if (options != null) 'options': options,
       if (hint1 != null) 'hint1': hint1,
       if (hint2 != null) 'hint2': hint2,
-
-      'rewardType': rewardType,
-      'rewardContent': rewardContent,
-      if (rewardDescription != null) 'rewardDescription': rewardDescription,
+      if (rewardText != null) 'rewardText': rewardText,
     };
   }
 }

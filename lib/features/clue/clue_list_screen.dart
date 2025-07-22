@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
-import 'clue_detail_screen.dart'; // Dieser Import ist korrekt, wenn beide Dateien im selben Ordner liegen.
+import 'clue_detail_screen.dart';
 
 // ============================================================
 // SECTION: ClueListScreen Widget
@@ -67,20 +67,19 @@ class _ClueListScreenState extends State<ClueListScreen> {
                 // KORREKTUR: Die Anzeige wurde an das neue Clue-Modell angepasst.
                 return ListTile(
                   leading: Icon(
-                    // Zeigt das Icon basierend auf dem Typ des Rätsels an.
-                    clue.riddleType == 'text'
+                    // Zeigt das Icon basierend auf dem Typ des Hinweises an.
+                    clue.type == 'text'
                         ? Icons.text_snippet
                         : Icons.image,
                     color: Colors.green,
                   ),
                   title: Text('Code: $code'),
-                  // Zeigt die Frage des gelösten Rätsels als Zusammenfassung an.
-                  subtitle: Text(clue.question),
+                  // Zeigt entweder die Frage des Rätsels oder den Hinweis-Inhalt an.
+                  subtitle: Text(clue.isRiddle ? clue.question! : clue.content),
                   trailing:
                       const Icon(Icons.check_circle, color: Colors.green),
                   onTap: () {
-                    // Beim Tippen wird der Detail-Bildschirm geöffnet, der
-                    // jetzt direkt die Belohnung anzeigt, da der Hinweis gelöst ist.
+                    // Beim Tippen wird der Detail-Bildschirm geöffnet.
                     Navigator.push(
                       context,
                       MaterialPageRoute(

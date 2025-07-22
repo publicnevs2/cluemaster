@@ -167,9 +167,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final clue = _clues[code]!;
 
           // KORREKTUR: Der Untertitel wurde an das neue Datenmodell angepasst.
-          // 'clue.type' wurde zu 'clue.riddleType'.
-          // Die Prüfung auf 'isRiddle' ist nicht mehr nötig, da jede Station ein Rätsel ist.
-          String subtitleText = 'Rätsel-Typ: ${clue.riddleType}';
+          String subtitleText = 'Typ: ${clue.type}';
+          if (clue.isRiddle) {
+            subtitleText += ' (Rätsel)';
+          }
           if (clue.solved) {
             subtitleText += ' - Gefunden';
           }

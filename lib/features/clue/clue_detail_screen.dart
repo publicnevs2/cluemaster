@@ -1,7 +1,7 @@
 // ============================================================
 // SECTION: Imports
 // ============================================================
-import 'dart:io'; // KORREKTUR: Der Tippfehler 'dart.io' wurde zu 'dart:io' korrigiert.
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
@@ -40,7 +40,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Wenn der Hinweis bereits in der Vergangenheit gelöst wurde, zeige direkt die Belohnung.
+    // Wenn der Hinweis bereits in der Vergangenheit gelöst wurde,
+    // wird der Status direkt auf "gelöst" gesetzt.
     if (widget.clue.solved) {
       _isSolved = true;
     }
@@ -58,7 +59,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
   /// Prüft die Antwort des Spielers, zählt Versuche und zeigt ggf. Hilfe an.
   void _checkAnswer({String? userAnswer}) async {
-    final correctAnswer = widget.clue.answer.trim().toLowerCase();
+    final correctAnswer = widget.clue.answer?.trim().toLowerCase();
     final providedAnswer = (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
@@ -68,7 +69,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         widget.clue.solved = true;
       });
 
-      // Speichere den gelösten Status persistent.
       final allClues = await _clueService.loadClues();
       allClues[widget.clue.code] = widget.clue;
       await _clueService.saveClues(allClues);
@@ -92,14 +92,35 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isSolved ? 'Belohnung' : 'Rätsel')),
+      appBar: AppBar(title: const Text('Station')),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
-                child: _isSolved ? _buildRewardWidget() : _buildRiddleWidget(),
+                child: Column(
+                  children: [
+                    // 1. Der Hinweis (Bild, Text etc.) wird immer angezeigt.
+                    _buildMediaWidget(
+                      type: widget.clue.type,
+                      content: widget.clue.content,
+                      description: widget.clue.description,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 2. Wenn es ein Rätsel gibt, wird der Rätsel-Teil angezeigt.
+                    if (widget.clue.isRiddle) ...[
+                      const Divider(height: 24, thickness: 1),
+                      // Wenn das Rätsel gelöst ist, zeige die Belohnung.
+                      // Sonst zeige das Rätsel selbst.
+                      if (_isSolved)
+                        _buildRewardWidget()
+                      else
+                        _buildRiddleWidget(),
+                    ]
+                  ],
+                ),
               ),
             ),
             const Padding(
@@ -116,32 +137,22 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // SECTION: UI-Builder für die Haupt-Widgets
   // ============================================================
 
-  /// Baut das Widget für das RÄTSEL.
+  /// Baut das Widget für das ungelöste RÄTSEL.
   Widget _buildRiddleWidget() {
     return Column(
       children: [
-        // 1. Das Rätsel-Medium (Bild, Ton, etc.)
-        _buildMediaWidget(
-          type: widget.clue.riddleType,
-          content: widget.clue.riddleContent,
-          description: widget.clue.riddleDescription,
-        ),
-        const SizedBox(height: 24),
-        
-        // 2. Die Frage
         Text(
-          widget.clue.question,
+          widget.clue.question!,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
 
-        // 3. Die Antwortmöglichkeiten
+        // Zeigt entweder Multiple-Choice-Buttons oder ein Textfeld an.
         widget.clue.isMultipleChoice
             ? _buildMultipleChoiceOptions()
             : _buildTextAnswerField(),
         
-        // 4. Fehlermeldung und gestaffelte Hilfe
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
@@ -155,18 +166,24 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  /// Baut das Widget für die BELOHNUNG.
+  /// Baut das Widget für die BELOHNUNG nach dem Lösen.
   Widget _buildRewardWidget() {
-    return Column(
-      children: [
-        const Text("Rätsel gelöst!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
-        const SizedBox(height: 16),
-        _buildMediaWidget(
-          type: widget.clue.rewardType,
-          content: widget.clue.rewardContent,
-          description: widget.clue.rewardDescription,
+    return Card(
+      color: Colors.green.shade100,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text("Rätsel gelöst!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+            const SizedBox(height: 16),
+            Text(
+              widget.clue.rewardText ?? 'Sehr gut gemacht!',
+              style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -174,7 +191,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   // SECTION: UI-Builder für die Unter-Widgets
   // ============================================================
 
-  /// Baut die Multiple-Choice-Buttons.
   Widget _buildMultipleChoiceOptions() {
     return Column(
       children: widget.clue.options!.map((option) {
@@ -190,7 +206,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  /// Baut das Textfeld für offene Fragen.
   Widget _buildTextAnswerField() {
     return Row(
       children: [
@@ -202,16 +217,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        IconButton(
+        IconButton.filled(
           icon: const Icon(Icons.send),
           onPressed: () => _checkAnswer(),
-          style: IconButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, foregroundColor: Colors.white),
         ),
       ],
     );
   }
   
-  /// Baut eine Karte für die Anzeige der Hilfe-Tipps.
   Widget _buildHintCard(int level, String hintText) {
     return Card(
       margin: const EdgeInsets.only(top: 24),
@@ -229,7 +242,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  /// Baut das Widget für den Medien-Inhalt (universell für Rätsel und Belohnung).
   Widget _buildMediaWidget({required String type, required String content, String? description}) {
     Widget mediaWidget;
     switch (type) {
@@ -339,7 +351,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           },
         ),
         const SizedBox(height: 8),
-        const Text("Rätsel-Audio abspielen", style: TextStyle(fontSize: 16)),
+        const Text("Audio-Hinweis abspielen", style: TextStyle(fontSize: 16)),
       ],
     );
   }
