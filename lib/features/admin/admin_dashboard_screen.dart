@@ -1,14 +1,11 @@
 // ============================================================
-// Datei: lib/features/admin/admin_dashboard_screen.dart
-// ============================================================
-
-// ============================================================
 // SECTION: Imports
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import 'admin_editor_screen.dart';
+import 'admin_change_password_screen.dart'; // NEU: Import für den neuen Bildschirm.
 
 // ============================================================
 // SECTION: AdminDashboardScreen Widget
@@ -27,26 +24,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final ClueService _clueService = ClueService();
   Map<String, Clue> _clues = {};
 
-// ============================================================
-// SECTION: Lifecycle
-// ============================================================
+  // ============================================================
+  // SECTION: Lifecycle
+  // ============================================================
   @override
   void initState() {
     super.initState();
     _loadClues();
   }
 
-// ============================================================
-// SECTION: Helper-Methoden
-// ============================================================
+  // ============================================================
+  // SECTION: Helper-Methoden
+  // ============================================================
 
-  /// Lädt alle Clues neu aus der JSON-Datei
+  /// Lädt alle Clues neu aus der JSON-Datei.
   Future<void> _loadClues() async {
     final loaded = await _clueService.loadClues();
     setState(() => _clues = loaded);
   }
 
-  /// Löscht einen einzelnen Clue
+  /// Löscht einen einzelnen Clue nach Bestätigung.
   Future<void> _deleteClue(String code) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -54,8 +51,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         title: const Text('Löschen bestätigen'),
         content: Text('Hinweis "$code" wirklich löschen?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Abbrechen')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Löschen')),
         ],
       ),
     );
@@ -66,7 +67,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  /// Öffnet den Editor zum Bearbeiten oder Hinzufügen eines Clues
+  /// Öffnet den Editor zum Bearbeiten oder Hinzufügen eines Clues.
   Future<void> _openEditor({String? codeToEdit}) async {
     await Navigator.push(
       context,
@@ -75,7 +76,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           codeToEdit: codeToEdit,
           existingClue: codeToEdit != null ? _clues[codeToEdit] : null,
           onSave: (updatedMap) async {
-            // Map zusammenführen und bei Umbenennung alten Eintrag löschen
             final merged = Map<String, Clue>.from(_clues)..addAll(updatedMap);
             if (codeToEdit != null && updatedMap.keys.first != codeToEdit) {
               merged.remove(codeToEdit);
@@ -88,10 +88,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  /// ============================================================
-  /// SECTION: Reset-Funktion
-  /// Setzt alle 'solved' Flags in den Clues auf false zurück
-  /// ============================================================
+  /// Setzt alle 'solved' Flags in den Clues auf false zurück.
   Future<void> _resetSolvedFlags() async {
     final resetMap = _clues.map((code, clue) {
       clue.solved = false;
@@ -101,9 +98,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     await _loadClues();
   }
 
-// ============================================================
-// SECTION: Build-Method (UI-Aufbau)
-// ============================================================
+  // ============================================================
+  // SECTION: Build-Method (UI-Aufbau)
+  // ============================================================
   @override
   Widget build(BuildContext context) {
     final codes = _clues.keys.toList()..sort();
@@ -112,6 +109,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         actions: [
+          // ============================================================
+          // NEUER ABSCHNITT: Button zum Ändern des Passworts
+          // ============================================================
+          IconButton(
+            icon: const Icon(Icons.lock_outline),
+            tooltip: 'Passwort ändern',
+            onPressed: () {
+              // Navigiert zum neu erstellten Bildschirm.
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AdminChangePasswordScreen(),
+                ),
+              );
+            },
+          ),
+          // ============================================================
+
           // Reset-Button
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -123,8 +138,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   title: const Text('Zurücksetzen'),
                   content: const Text('Alle Hinweise als ungelöst markieren?'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('OK')),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Abbrechen')),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('OK')),
                   ],
                 ),
               );
@@ -148,8 +167,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => _openEditor(codeToEdit: code)),
-                IconButton(icon: const Icon(Icons.delete), onPressed: () => _deleteClue(code)),
+                IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _openEditor(codeToEdit: code)),
+                IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _deleteClue(code)),
               ],
             ),
           );
