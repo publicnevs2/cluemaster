@@ -12,7 +12,7 @@ class ClueListScreen extends StatefulWidget {
 class _ClueListScreenState extends State<ClueListScreen> {
   final ClueService _clueService = ClueService();
   Map<String, Clue> _clues = {};
-  Set<String> _viewedCodes = {};
+  final Set<String> _viewedCodes = {};
 
   @override
   void initState() {

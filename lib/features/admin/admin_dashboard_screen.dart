@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import 'admin_editor_screen.dart';
-import 'admin_change_password_screen.dart'; // NEU: Import für den neuen Bildschirm.
+import 'admin_change_password_screen.dart';
 
 // ============================================================
 // SECTION: AdminDashboardScreen Widget
@@ -40,11 +40,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   /// Lädt alle Clues neu aus der JSON-Datei.
   Future<void> _loadClues() async {
     final loaded = await _clueService.loadClues();
-    setState(() => _clues = loaded);
+    if (mounted) {
+      setState(() => _clues = loaded);
+    }
   }
 
   /// Löscht einen einzelnen Clue nach Bestätigung.
   Future<void> _deleteClue(String code) async {
+    if (!mounted) return;
+    
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -69,21 +73,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   /// Öffnet den Editor zum Bearbeiten oder Hinzufügen eines Clues.
   Future<void> _openEditor({String? codeToEdit}) async {
+    if (!mounted) return;
+
+    final onSaveCallback = (Map<String, Clue> updatedMap) async {
+      final merged = Map<String, Clue>.from(_clues)..addAll(updatedMap);
+      if (codeToEdit != null && updatedMap.keys.first != codeToEdit) {
+        merged.remove(codeToEdit);
+      }
+      await _clueService.saveClues(merged);
+      await _loadClues();
+    };
+
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AdminEditorScreen(
-          codeToEdit: codeToEdit,
-          existingClue: codeToEdit != null ? _clues[codeToEdit] : null,
-          onSave: (updatedMap) async {
-            final merged = Map<String, Clue>.from(_clues)..addAll(updatedMap);
-            if (codeToEdit != null && updatedMap.keys.first != codeToEdit) {
-              merged.remove(codeToEdit);
-            }
-            await _clueService.saveClues(merged);
-            await _loadClues();
-          },
-        ),
+        builder: (BuildContext context) {
+          return AdminEditorScreen(
+            codeToEdit: codeToEdit,
+            existingClue: codeToEdit != null ? _clues[codeToEdit] : null,
+            onSave: onSaveCallback,
+          );
+        },
       ),
     );
   }
@@ -109,14 +119,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         actions: [
-          // ============================================================
-          // NEUER ABSCHNITT: Button zum Ändern des Passworts
-          // ============================================================
           IconButton(
             icon: const Icon(Icons.lock_outline),
             tooltip: 'Passwort ändern',
             onPressed: () {
-              // Navigiert zum neu erstellten Bildschirm.
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -125,13 +131,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               );
             },
           ),
-          // ============================================================
-
-          // Reset-Button
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Alle als offen markieren',
             onPressed: () async {
+              if (!mounted) return;
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (_) => AlertDialog(
@@ -161,9 +165,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         itemBuilder: (_, i) {
           final code = codes[i];
           final clue = _clues[code]!;
+
+          // ============================================================
+          // VERBESSERUNG: Aussagekräftigerer Text für den Untertitel.
+          // ============================================================
+          String subtitleText = 'Typ: ${clue.type}';
+          if (clue.isRiddle) {
+            subtitleText += ' (Rätsel)';
+          }
+          if (clue.solved) {
+            subtitleText += ' - Gefunden';
+          }
+          // ============================================================
+
           return ListTile(
             title: Text(code),
-            subtitle: Text('${clue.type}${clue.solved ? ' (gefunden)' : ''}'),
+            subtitle: Text(subtitleText), // Hier wird der neue Text verwendet.
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

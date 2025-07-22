@@ -1,4 +1,7 @@
-import 'package:clue_master/features/shared/qr_scanner_screen.dart'; // NEUER IMPORT
+// ============================================================
+// SECTION: Imports
+// ============================================================
+import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
@@ -7,6 +10,9 @@ import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
 import '../../main.dart';
 
+// ============================================================
+// SECTION: HomeScreen Widget
+// ============================================================
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,7 +20,13 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+// ============================================================
+// SECTION: State-Klasse
+// ============================================================
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
+  // ============================================================
+  // SECTION: State & Controller
+  // ============================================================
   final TextEditingController _codeController = TextEditingController();
   final ClueService _clueService = ClueService();
 
@@ -22,6 +34,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Map<String, String> _normalizedMap = {};
   String? _errorText;
 
+  // ============================================================
+  // SECTION: Lifecycle
+  // ============================================================
   @override
   void initState() {
     super.initState();
@@ -37,6 +52,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  // Diese Methode wird aufgerufen, wenn der Spieler vom Detail-Screen zurückkehrt.
+  // Sie lädt die Hinweise neu, um den "gelöst"-Status zu aktualisieren.
   @override
   void didPopNext() {
     _loadClues();
@@ -49,6 +66,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     super.dispose();
   }
 
+  // ============================================================
+  // SECTION: Logik
+  // ============================================================
   Future<void> _loadClues() async {
     final loaded = await _clueService.loadClues();
     setState(() {
@@ -59,10 +79,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  // Die Funktion kann jetzt optional einen gescannten Code direkt verarbeiten
+  /// Sucht den Hinweis und navigiert zum Detail-Bildschirm.
   Future<void> _submitCode([String? scannedCode]) async {
-    // Wenn ein gescannter Code übergeben wird, nutze ihn. Ansonsten nimm den aus dem Textfeld.
     final input = scannedCode ?? _codeController.text.trim();
+    if (input.isEmpty) return;
+
     final norm = input.toLowerCase();
 
     if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(input)) {
@@ -74,9 +95,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       final originalCode = _normalizedMap[norm]!;
       final clue = _clues[originalCode]!;
 
-      clue.solved = true;
-      await _clueService.saveClues(_clues);
+      // ============================================================
+      // KORREKTUR: Die Logik, die den Hinweis als gelöst markiert,
+      // wurde hier entfernt. Das ist jetzt die alleinige Aufgabe
+      // des ClueDetailScreen, NACHDEM ein Rätsel gelöst wurde.
+      // ============================================================
+      // clue.solved = true; // ENTFERNT
+      // await _clueService.saveClues(_clues); // ENTFERNT
 
+      if (!mounted) return;
+      // Navigiere zum Detail-Bildschirm.
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ClueDetailScreen(clue: clue)),
@@ -88,20 +116,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  // NEUE FUNKTION zum Scannen für den Spieler
+  /// Öffnet den QR-Scanner und übergibt das Ergebnis an _submitCode.
   Future<void> _scanAndSubmit() async {
-    // Öffnet die Scanner-Seite
     final code = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const QrScannerScreen()),
     );
-
-    // Wenn ein Code zurückkommt, wird er direkt an die Logik übergeben
     if (code != null && code.isNotEmpty) {
       _submitCode(code);
     }
   }
 
+  // ============================================================
+  // SECTION: UI-Aufbau
+  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,8 +182,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
               const SizedBox(height: 20),
               ElevatedButton(onPressed: () => _submitCode(), child: const Text('Los!')),
-              
-              // NEUE UI-ELEMENTE für die "oder"-Option
               const SizedBox(height: 12),
               const Text('oder'),
               TextButton.icon(

@@ -1,14 +1,18 @@
+// ============================================================
+// SECTION: Imports
+// ============================================================
 import 'dart:io';
-
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-
 import '../../data/models/clue.dart';
 
+// ============================================================
+// SECTION: AdminEditorScreen Widget
+// ============================================================
 class AdminEditorScreen extends StatefulWidget {
   final String? codeToEdit;
   final Clue? existingClue;
@@ -25,7 +29,13 @@ class AdminEditorScreen extends StatefulWidget {
   State<AdminEditorScreen> createState() => _AdminEditorScreenState();
 }
 
+// ============================================================
+// SECTION: State-Klasse
+// ============================================================
 class _AdminEditorScreenState extends State<AdminEditorScreen> {
+  // ============================================================
+  // SECTION: State & Controller
+  // ============================================================
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   final _contentController = TextEditingController();
@@ -37,10 +47,19 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _answerController = TextEditingController();
   bool _isRiddle = false;
 
+  // Controller für Multiple-Choice-Optionen
+  final _option1Controller = TextEditingController();
+  final _option2Controller = TextEditingController();
+  final _option3Controller = TextEditingController();
+  final _option4Controller = TextEditingController();
+
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   final _imagePicker = ImagePicker();
 
+  // ============================================================
+  // SECTION: Lifecycle-Methoden
+  // ============================================================
   @override
   void initState() {
     super.initState();
@@ -50,11 +69,18 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _type = clue.type;
       _contentController.text = clue.content;
       _descriptionController.text = clue.description ?? '';
-      
+
       if (clue.isRiddle) {
         _isRiddle = true;
         _questionController.text = clue.question!;
         _answerController.text = clue.answer!;
+        
+        if (clue.isMultipleChoice) {
+          _option1Controller.text = clue.options![0];
+          _option2Controller.text = clue.options!.length > 1 ? clue.options![1] : '';
+          _option3Controller.text = clue.options!.length > 2 ? clue.options![2] : '';
+          _option4Controller.text = clue.options!.length > 3 ? clue.options![3] : '';
+        }
       }
     }
   }
@@ -66,12 +92,26 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _descriptionController.dispose();
     _questionController.dispose();
     _answerController.dispose();
+    _option1Controller.dispose();
+    _option2Controller.dispose();
+    _option3Controller.dispose();
+    _option4Controller.dispose();
     _audioRecorder.dispose();
     super.dispose();
   }
-  
+
+  // ============================================================
+  // SECTION: Logik
+  // ============================================================
   void _save() {
     if (_formKey.currentState!.validate()) {
+      final options = [
+        _option1Controller.text.trim(),
+        _option2Controller.text.trim(),
+        _option3Controller.text.trim(),
+        _option4Controller.text.trim(),
+      ].where((o) => o.isNotEmpty).toList();
+
       final clue = Clue(
         code: _codeController.text.trim(),
         type: _type,
@@ -81,9 +121,9 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             : _descriptionController.text.trim(),
         question: _isRiddle ? _questionController.text.trim() : null,
         answer: _isRiddle ? _answerController.text.trim() : null,
+        options: _isRiddle && options.isNotEmpty ? options : null,
       );
-      // Beim Speichern wird der alte Code entfernt, falls er sich geändert hat,
-      // und der neue Code als Schlüssel verwendet.
+
       final updatedMap = {clue.code: clue};
       widget.onSave(updatedMap);
       Navigator.pop(context);
@@ -150,12 +190,14 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     });
   }
 
-
+  // ============================================================
+  // SECTION: UI-Aufbau (build-Methode)
+  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.codeToEdit != null ? 'Bearbeiten' : 'Neuer Hinweis'),
+        title: Text(widget.codeToEdit != null ? 'Hinweis bearbeiten' : 'Neuer Hinweis'),
         actions: [
           IconButton(onPressed: _save, icon: const Icon(Icons.save)),
         ],
@@ -198,7 +240,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                   _contentController.clear();
                 });
               },
-              decoration: const InputDecoration(labelText: 'Typ'),
+              decoration: const InputDecoration(labelText: 'Typ des Hinweises/Rätsels'),
             ),
             const SizedBox(height: 16),
             if (_type == 'image') ...[
@@ -231,11 +273,11 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             TextFormField(
               controller: _contentController,
               decoration: InputDecoration(
-                labelText: _type == 'text' ? 'Textinhalt' : 'Pfad zur Datei',
+                labelText: _type == 'text' ? 'Textinhalt des Hinweises' : 'Pfad zur Datei',
               ),
               validator: (value) => value == null || value.isEmpty ? 'Inhalt erforderlich' : null,
               maxLines: _type == 'text' ? 3 : 1,
-              readOnly: _type == 'image' || _type == 'audio' || _type == 'video',
+              readOnly: _type != 'text',
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -244,7 +286,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               maxLines: 2,
             ),
             
-            const Divider(height: 40),
+            const Divider(height: 40, thickness: 1),
             CheckboxListTile(
               title: const Text('Rätsel zu diesem Hinweis hinzufügen'),
               value: _isRiddle,
@@ -269,9 +311,30 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 controller: _answerController,
                 decoration: const InputDecoration(
                   labelText: 'Korrekte Antwort',
-                  hintText: 'z.B. 3',
+                  hintText: 'z.B. 3 (Groß-/Kleinschreibung wird ignoriert)',
                 ),
                 validator: (value) => (_isRiddle && (value == null || value.isEmpty)) ? 'Antwort erforderlich' : null,
+              ),
+
+              const SizedBox(height: 24),
+              const Text('Multiple-Choice Optionen (optional)', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Fülle mindestens 2 Felder aus, um ein Multiple-Choice-Rätsel zu erstellen. Die korrekte Antwort oben muss mit einer der Optionen übereinstimmen.'),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _option1Controller,
+                decoration: const InputDecoration(labelText: 'Antwort-Option 1'),
+              ),
+              TextFormField(
+                controller: _option2Controller,
+                decoration: const InputDecoration(labelText: 'Antwort-Option 2'),
+              ),
+              TextFormField(
+                controller: _option3Controller,
+                decoration: const InputDecoration(labelText: 'Antwort-Option 3 (optional)'),
+              ),
+              TextFormField(
+                controller: _option4Controller,
+                decoration: const InputDecoration(labelText: 'Antwort-Option 4 (optional)'),
               ),
             ],
           ],
