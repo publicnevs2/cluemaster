@@ -2,9 +2,10 @@
 // SECTION: Imports
 // ============================================================
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // NEU: Import für die Datumsformatierung.
-import '../../core/services/clue_service.dart'; // NEU: Import für den Service.
-import 'admin_dashboard_screen.dart';
+import 'package:intl/intl.dart';
+import '../../core/services/clue_service.dart';
+import 'admin_hunt_list_screen.dart'; // NEU: Importiere den neuen Hunt-List-Screen.
+// import 'admin_dashboard_screen.dart'; // ALTER IMPORT: Wird nicht mehr direkt benötigt.
 
 // ============================================================
 // SECTION: AdminLoginScreen Widget
@@ -24,40 +25,30 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   // SECTION: State & Controller
   // ============================================================
   final TextEditingController _passwordController = TextEditingController();
-  final ClueService _clueService = ClueService(); // NEU: Instanz des Service erstellen.
+  final ClueService _clueService = ClueService();
   String? _errorText;
-
-  // Das feste Passwort wird entfernt, da es jetzt dynamisch geladen wird.
-  // final String _adminPassword = 'admin123'; // ENTFERNT
 
   // ============================================================
   // SECTION: Logik
   // ============================================================
-
-  /// Prüft das eingegebene Passwort gegen das gespeicherte und das Backup-Passwort.
   void _checkPassword() async {
     final enteredPassword = _passwordController.text.trim();
-
-    // 1. Lade das aktuell in der Datei gespeicherte Admin-Passwort.
     final storedPassword = await _clueService.loadAdminPassword();
 
-    // 2. Generiere das dynamische Backup-Passwort basierend auf dem heutigen Datum.
     final today = DateTime.now();
     final formattedDate = DateFormat('ddMMyyyy').format(today);
     final backupPassword = 'admin$formattedDate';
-    
-    print("DEBUG: Eingegeben: $enteredPassword, Gespeichert: $storedPassword, Backup: $backupPassword");
 
-    // 3. Prüfe, ob die Eingabe mit einem der beiden gültigen Passwörter übereinstimmt.
     if (enteredPassword == storedPassword || enteredPassword == backupPassword) {
-      // Bei Erfolg zum Dashboard navigieren.
-      // pushReplacement verhindert, dass der Nutzer zum Login-Screen zurückkehren kann.
+      // ============================================================
+      // KORREKTUR: Das Navigationsziel wurde geändert.
+      // Statt zum alten Dashboard navigieren wir jetzt zur neuen Liste der Schnitzeljagden.
+      // ============================================================
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+        MaterialPageRoute(builder: (_) => const AdminHuntListScreen()),
       );
     } else {
-      // Bei Misserfolg eine Fehlermeldung anzeigen.
       setState(() {
         _errorText = 'Falsches Passwort';
       });
@@ -83,13 +74,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             const SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              obscureText: true, // Versteckt die Passworteingabe.
+              obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Passwort eingeben',
                 errorText: _errorText,
                 border: const OutlineInputBorder(),
               ),
-              // Ermöglicht das Absenden mit der Enter-Taste auf der Tastatur.
               onSubmitted: (_) => _checkPassword(),
             ),
             const SizedBox(height: 20),

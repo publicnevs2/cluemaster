@@ -3,9 +3,9 @@
 // ============================================================
 import 'dart:convert';
 import 'dart:io';
+import 'package:clue_master/data/models/hunt.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-
 import '../../data/models/clue.dart';
 
 // ============================================================
@@ -16,105 +16,107 @@ class ClueService {
   // SECTION: Dateinamen-Konstanten
   // ============================================================
   
-  /// Dateiname für die Speicherdatei der Hinweise.
-  static const String _cluesFileName = 'codes.json';
-
-  /// NEU: Eigener Dateiname für die Admin-Einstellungen, um sie von den Spieldaten zu trennen.
+  /// NEU: Dateiname für die Speicherdatei, die alle Schnitzeljagden enthält.
+  static const String _huntsFileName = 'hunts.json';
   static const String _settingsFileName = 'admin_settings.json';
 
   // ============================================================
-  // SECTION: Methoden für Hinweise (Clues)
+  // SECTION: Methoden für Schnitzeljagden (Hunts)
   // ============================================================
 
-  /// Lädt Clues aus der Datei oder kopiert sie initial aus den Assets, falls die Datei nicht existiert.
-  Future<Map<String, Clue>> loadClues() async {
+  /// Lädt alle Schnitzeljagden aus der Datei.
+  /// Wenn die Datei nicht existiert, wird eine Beispieldatei aus den Assets kopiert.
+  Future<List<Hunt>> loadHunts() async {
     final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$_cluesFileName');
+    final file = File('${dir.path}/$_huntsFileName');
 
     try {
-      // Kopiere die Standard-Hinweise aus den Assets nur, wenn die Speicherdatei noch nicht existiert.
       if (!await file.exists()) {
-        final assetJson = await rootBundle.loadString('assets/$_cluesFileName');
+        // Lade die Vorlage aus den Assets, die eine Beispieljagd enthält.
+        final assetJson = await rootBundle.loadString('assets/$_huntsFileName');
         await file.writeAsString(assetJson);
       }
 
-      // Lese die JSON-Daten aus der Datei.
       final jsonStr = await file.readAsString();
-      final Map<String, dynamic> decoded = jsonDecode(jsonStr);
+      // Die JSON-Datei enthält eine Liste von Jagden.
+      final List<dynamic> decodedList = jsonDecode(jsonStr);
 
-      print("✅ Geladene Codes: ${decoded.keys.toList()}");
-
-      // Wandle die JSON-Daten in eine Map von Clue-Objekten um.
-      return decoded.map((key, value) => MapEntry(
-            key,
-            Clue.fromJson(key, value),
-          ));
+      // Wandle jedes Element der Liste in ein Hunt-Objekt um.
+      return decodedList.map((json) => Hunt.fromJson(json)).toList();
     } catch (e) {
-      print("❌ Fehler beim Laden der Clues: $e");
-      return {};
+      print("❌ Fehler beim Laden der Schnitzeljagden: $e");
+      return []; // Gib eine leere Liste zurück, wenn ein Fehler auftritt.
     }
   }
 
-  /// Speichert die aktuelle Map von Hinweisen in die lokale Datei.
-  Future<void> saveClues(Map<String, Clue> clues) async {
+  /// Speichert die komplette Liste aller Schnitzeljagden.
+  Future<void> saveHunts(List<Hunt> hunts) async {
     final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$_cluesFileName');
+    final file = File('${dir.path}/$_huntsFileName');
 
-    // Wandle die Map von Clue-Objekten zurück in ein JSON-Format.
-    final Map<String, dynamic> jsonMap = {
-      for (var entry in clues.entries) entry.key: entry.value.toJson()
-    };
+    // Wandle die Liste von Hunt-Objekten in ein JSON-Format um.
+    final List<Map<String, dynamic>> jsonList =
+        hunts.map((hunt) => hunt.toJson()).toList();
 
     // Schreibe die JSON-Daten in die Datei.
-    await file.writeAsString(jsonEncode(jsonMap));
-    print("💾 Clues gespeichert: ${clues.keys.toList()}");
-  }
-
-  /// Setzt die Hinweise auf die ursprüngliche Version aus den Assets zurück.
-  Future<void> resetCluesFromAssets() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$_cluesFileName');
-    final assetJson = await rootBundle.loadString('assets/$_cluesFileName');
-    await file.writeAsString(assetJson);
-    print("🔁 Clues zurückgesetzt");
+    await file.writeAsString(jsonEncode(jsonList));
+    print("💾 Alle Schnitzeljagden gespeichert.");
   }
 
   // ============================================================
-  // NEUER ABSCHNITT: Methoden für Admin-Einstellungen
+  // SECTION: Alte Methoden (werden jetzt als veraltet markiert)
   // ============================================================
+  // Diese Methoden werden wir in den nächsten Schritten entfernen oder anpassen,
+  // da die Logik jetzt über die Hunts läuft. Vorerst lassen wir sie hier,
+  // damit die App nicht sofort komplett bricht.
 
-  /// Lädt das Admin-Passwort aus der Einstellungsdatei.
-  /// Gibt 'admin123' als Standardwert zurück, falls die Datei nicht existiert.
+  @Deprecated('Nutze stattdessen loadHunts und wähle die gewünschte Jagd aus.')
+  Future<Map<String, Clue>> loadClues() async {
+    // Provisorische Implementierung: Lade die erste Jagd aus der Liste.
+    final hunts = await loadHunts();
+    if (hunts.isNotEmpty) {
+      return hunts.first.clues;
+    }
+    return {};
+  }
+
+  @Deprecated('Nutze stattdessen saveHunts.')
+  Future<void> saveClues(Map<String, Clue> clues) async {
+    // Diese Methode wird komplexer, da wir wissen müssen, zu welcher Jagd wir speichern.
+    // Vorerst speichert sie die Clues in die erste gefundene Jagd.
+    final hunts = await loadHunts();
+    if (hunts.isNotEmpty) {
+      hunts.first.clues = clues;
+      await saveHunts(hunts);
+    }
+  }
+
+  // ============================================================
+  // SECTION: Methoden für Admin-Einstellungen (unverändert)
+  // ============================================================
+  
   Future<String> loadAdminPassword() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/$_settingsFileName');
 
-      // Prüfe, ob die Einstellungsdatei existiert.
       if (await file.exists()) {
         final jsonStr = await file.readAsString();
         final Map<String, dynamic> settings = jsonDecode(jsonStr);
-        // Gib das Passwort zurück oder das Standardpasswort, falls es leer ist.
         return settings['admin_password'] ?? 'admin123';
       } else {
-        // Wenn die Datei nicht existiert, wird das Standardpasswort verwendet.
         return 'admin123';
       }
     } catch (e) {
       print("❌ Fehler beim Laden des Admin-Passworts: $e");
-      return 'admin123'; // Sicherheits-Fallback
+      return 'admin123';
     }
   }
 
-  /// Speichert ein neues Admin-Passwort in die Einstellungsdatei.
   Future<void> saveAdminPassword(String password) async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_settingsFileName');
-    
-    // Erstelle eine Map mit dem neuen Passwort.
     final settings = {'admin_password': password};
-    
-    // Wandle die Map in einen JSON-String um und speichere ihn.
     await file.writeAsString(jsonEncode(settings));
     print("🔑 Admin-Passwort aktualisiert.");
   }

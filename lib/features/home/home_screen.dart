@@ -5,6 +5,7 @@ import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
+import '../../data/models/hunt.dart'; // NEU: Import für das Hunt-Modell
 import '../clue/clue_detail_screen.dart';
 import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
@@ -14,7 +15,10 @@ import '../../main.dart';
 // SECTION: HomeScreen Widget
 // ============================================================
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  // NEU: Der HomeScreen erwartet jetzt eine 'hunt', die ihm sagt, welches Spiel gespielt wird.
+  final Hunt hunt;
+
+  const HomeScreen({super.key, required this.hunt});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -30,8 +34,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final TextEditingController _codeController = TextEditingController();
   final ClueService _clueService = ClueService();
 
-  Map<String, Clue> _clues = {};
-  Map<String, String> _normalizedMap = {};
+  // Die Hinweise kommen jetzt direkt von der übergebenen Jagd.
+  late Map<String, Clue> _clues;
+  late Map<String, String> _normalizedMap;
   String? _errorText;
 
   // ============================================================
@@ -40,7 +45,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
-    _loadClues();
+    // Die Hinweise werden direkt aus der übergebenen Jagd initialisiert.
+    _initializeClues();
   }
 
   @override
@@ -52,11 +58,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  // Diese Methode wird aufgerufen, wenn der Spieler vom Detail-Screen zurückkehrt.
-  // Sie lädt die Hinweise neu, um den "gelöst"-Status zu aktualisieren.
+  // Wenn wir zu diesem Screen zurückkehren, laden wir die Hinweise neu,
+  // um den 'solved'-Status zu aktualisieren.
   @override
   void didPopNext() {
-    _loadClues();
+    _refreshHuntData();
   }
 
   @override
@@ -69,11 +75,24 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   // ============================================================
   // SECTION: Logik
   // ============================================================
-  Future<void> _loadClues() async {
-    final loaded = await _clueService.loadClues();
+
+  /// Initialisiert die Hinweise aus der übergebenen Jagd.
+  void _initializeClues() {
     setState(() {
-      _clues = loaded;
+      _clues = widget.hunt.clues;
       _normalizedMap = {
+        for (var code in _clues.keys) code.toLowerCase(): code,
+      };
+    });
+  }
+
+  /// Lädt die Daten der aktuellen Jagd neu.
+  Future<void> _refreshHuntData() async {
+    final allHunts = await _clueService.loadHunts();
+    final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name, orElse: () => widget.hunt);
+    setState(() {
+      _clues = updatedHunt.clues;
+       _normalizedMap = {
         for (var code in _clues.keys) code.toLowerCase(): code,
       };
     });
@@ -86,25 +105,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     final norm = input.toLowerCase();
 
-    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(input)) {
-      setState(() => _errorText = 'Nur Buchstaben (A–Z) und Zahlen erlaubt');
-      return;
-    }
-
     if (_normalizedMap.containsKey(norm)) {
       final originalCode = _normalizedMap[norm]!;
       final clue = _clues[originalCode]!;
 
-      // ============================================================
-      // KORREKTUR: Die Logik, die den Hinweis als gelöst markiert,
-      // wurde hier entfernt. Das ist jetzt die alleinige Aufgabe
-      // des ClueDetailScreen, NACHDEM ein Rätsel gelöst wurde.
-      // ============================================================
-      // clue.solved = true; // ENTFERNT
-      // await _clueService.saveClues(_clues); // ENTFERNT
-
       if (!mounted) return;
-      // Navigiere zum Detail-Bildschirm.
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ClueDetailScreen(clue: clue)),
@@ -116,7 +121,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  /// Öffnet den QR-Scanner und übergibt das Ergebnis an _submitCode.
   Future<void> _scanAndSubmit() async {
     final code = await Navigator.push<String>(
       context,
@@ -134,16 +138,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ClueMaster'),
+        // Der Titel zeigt jetzt den Namen der ausgewählten Jagd an.
+        title: Text(widget.hunt.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Gefundene Hinweise',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ClueListScreen()),
-              );
+              // TODO: Auch die ClueListScreen muss die 'hunt' übergeben bekommen.
+              // Das machen wir im nächsten Schritt.
             },
           ),
           IconButton(
@@ -170,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 controller: _codeController,
                 textAlign: TextAlign.center,
                 decoration: InputDecoration(
-                  hintText: 'z. B. CODEA',
+                  hintText: 'z. B. START',
                   errorText: _errorText,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(

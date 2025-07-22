@@ -2,54 +2,35 @@
 // SECTION: Imports
 // ============================================================
 import 'package:flutter/material.dart';
-import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
+import '../../data/models/hunt.dart'; // NEU: Import für das Hunt-Modell
 import 'clue_detail_screen.dart';
 
 // ============================================================
 // SECTION: ClueListScreen Widget
 // ============================================================
 class ClueListScreen extends StatefulWidget {
-  const ClueListScreen({super.key});
+  // NEU: Der Screen erwartet jetzt die aktuelle Jagd.
+  final Hunt hunt;
+
+  const ClueListScreen({super.key, required this.hunt});
 
   @override
   State<ClueListScreen> createState() => _ClueListScreenState();
 }
 
 // ============================================================
-// SECTION: State & Controller
+// SECTION: State-Klasse
 // ============================================================
 class _ClueListScreenState extends State<ClueListScreen> {
-  final ClueService _clueService = ClueService();
-  Map<String, Clue> _clues = {};
-
-  // ============================================================
-  // SECTION: Lifecycle
-  // ============================================================
-  @override
-  void initState() {
-    super.initState();
-    _loadClues();
-  }
-
-  // ============================================================
-  // SECTION: Helper-Methoden
-  // ============================================================
-  Future<void> _loadClues() async {
-    final loaded = await _clueService.loadClues();
-    if (mounted) {
-      setState(() => _clues = loaded);
-    }
-  }
-
   // ============================================================
   // SECTION: Build-Method (UI-Aufbau)
   // ============================================================
   @override
   Widget build(BuildContext context) {
-    // Filtert die Liste, um nur die gelösten Hinweise anzuzeigen.
+    // Die Hinweise werden direkt aus der übergebenen Jagd gefiltert.
     final solvedEntries =
-        _clues.entries.where((entry) => entry.value.solved).toList()
+        widget.hunt.clues.entries.where((entry) => entry.value.solved).toList()
           ..sort((a, b) => a.key.compareTo(b.key));
 
     return Scaffold(
@@ -64,22 +45,16 @@ class _ClueListScreenState extends State<ClueListScreen> {
                 final code = solvedEntries[index].key;
                 final clue = solvedEntries[index].value;
 
-                // KORREKTUR: Die Anzeige wurde an das neue Clue-Modell angepasst.
                 return ListTile(
                   leading: Icon(
-                    // Zeigt das Icon basierend auf dem Typ des Hinweises an.
-                    clue.type == 'text'
-                        ? Icons.text_snippet
-                        : Icons.image,
+                    clue.type == 'text' ? Icons.text_snippet : Icons.image,
                     color: Colors.green,
                   ),
                   title: Text('Code: $code'),
-                  // Zeigt entweder die Frage des Rätsels oder den Hinweis-Inhalt an.
                   subtitle: Text(clue.isRiddle ? clue.question! : clue.content),
                   trailing:
                       const Icon(Icons.check_circle, color: Colors.green),
                   onTap: () {
-                    // Beim Tippen wird der Detail-Bildschirm geöffnet.
                     Navigator.push(
                       context,
                       MaterialPageRoute(

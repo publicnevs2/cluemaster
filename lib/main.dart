@@ -2,7 +2,7 @@
 // SECTION: Imports
 // ============================================================
 import 'package:flutter/material.dart';
-import 'features/home/home_screen.dart';
+import 'features/home/hunt_selection_screen.dart'; // NEU: Importiere den neuen Auswahl-Bildschirm.
 
 // ============================================================
 // SECTION: Route Observer
@@ -23,13 +23,14 @@ class ClueMasterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ClueMaster',
+      title: 'ClueMaster by Sven Kompe',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const HomeScreen(),
-      navigatorObservers: [routeObserver],  // ← hier aktivieren
+      // KORREKTUR: Der Startbildschirm der App ist jetzt der HuntSelectionScreen.
+      home: const HuntSelectionScreen(),
+      navigatorObservers: [routeObserver],
     );
   }
 }
