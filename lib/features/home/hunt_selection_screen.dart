@@ -4,7 +4,8 @@
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
-import 'home_screen.dart'; // Import für den nächsten Bildschirm
+import 'home_screen.dart';
+import '../admin/admin_login_screen.dart'; // Import für den Admin-Login
 
 // ============================================================
 // SECTION: HuntSelectionScreen Widget
@@ -59,6 +60,31 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     );
   }
 
+  /// Importiert eine neue Schnitzeljagd aus einer Datei.
+  Future<void> _importHunt() async {
+    final result = await _clueService.importHunt();
+    if (!mounted) return;
+
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Import abgebrochen.')),
+      );
+    } else if (result == "EXISTS") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fehler: Eine Jagd mit diesem Namen existiert bereits.'), backgroundColor: Colors.orange),
+      );
+    } else if (result == "ERROR") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fehler: Die Datei konnte nicht importiert werden.'), backgroundColor: Colors.red),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Die Jagd "$result" wurde erfolgreich importiert.'), backgroundColor: Colors.green),
+      );
+      _loadHunts(); // Lade die Liste neu, um die neue Jagd anzuzeigen
+    }
+  }
+
   // ============================================================
   // SECTION: UI-Aufbau
   // ============================================================
@@ -67,12 +93,32 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Schnitzeljagd auswählen'),
+        actions: [
+          // Button, um zum Admin-Login zu gelangen
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: 'Admin-Bereich',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _hunts.isEmpty
-              ? const Center(
-                  child: Text('Keine Schnitzeljagden verfügbar.'),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Keine Schnitzeljagden verfügbar. Bitte importiere eine .cluemaster Datei.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
                 )
               : ListView.builder(
                   itemCount: _hunts.length,
@@ -86,6 +132,12 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
                     );
                   },
                 ),
+      // NEU: FloatingActionButton zum Importieren für den Spieler
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _importHunt,
+        label: const Text('Jagd importieren'),
+        icon: const Icon(Icons.file_download),
+      ),
     );
   }
 }
