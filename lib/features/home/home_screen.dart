@@ -3,6 +3,8 @@
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:pinput/pinput.dart';
+import 'package:vibration/vibration.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
@@ -13,7 +15,6 @@ import '../../main.dart';
 
 class HomeScreen extends StatefulWidget {
   final Hunt hunt;
-
   const HomeScreen({super.key, required this.hunt});
 
   @override
@@ -22,13 +23,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final TextEditingController _codeController = TextEditingController();
+  final FocusNode _codeFocusNode = FocusNode();
   final ClueService _clueService = ClueService();
   final SoundService _soundService = SoundService();
 
-  // Diese Variable hält jetzt immer den aktuellsten Stand der Hinweise
   late Map<String, Clue> _currentClues;
   late Map<String, String> _normalizedMap;
-  String? _errorText;
+  bool _showError = false;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void dispose() {
     routeObserver.unsubscribe(this);
     _codeController.dispose();
+    _codeFocusNode.dispose();
     _soundService.dispose();
     super.dispose();
   }
@@ -72,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name,
         orElse: () => widget.hunt);
     setState(() {
-      // Wir aktualisieren unsere lokale State-Variable mit den frischen Daten
       _currentClues = updatedHunt.clues;
        _normalizedMap = {
         for (var code in _currentClues.keys) code.toLowerCase(): code,
@@ -80,9 +81,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  Future<void> _submitCode([String? scannedCode]) async {
+  Future<void> _submitCode([String? code]) async {
+    Vibration.vibrate(duration: 50);
     _soundService.playSound(SoundEffect.buttonClick);
-    final input = scannedCode ?? _codeController.text.trim();
+    final input = code ?? _codeController.text.trim();
     if (input.isEmpty) return;
     final norm = input.toLowerCase();
 
@@ -90,8 +92,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _soundService.playSound(SoundEffect.clueUnlocked);
       final originalCode = _normalizedMap[norm]!;
       final clue = _currentClues[originalCode]!;
-
-      // Erstelle ein frisches Hunt-Objekt für die Detailansicht
       final currentHuntState = Hunt(name: widget.hunt.name, clues: _currentClues);
 
       if (!mounted) return;
@@ -101,14 +101,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             builder: (_) => ClueDetailScreen(hunt: currentHuntState, clue: clue)),
       );
       _codeController.clear();
-      setState(() => _errorText = null);
+      setState(() => _showError = false);
     } else {
       _soundService.playSound(SoundEffect.failure);
-      setState(() => _errorText = 'Ungültiger Code');
+      Vibration.vibrate(pattern: [0, 200, 100, 200]);
+      setState(() => _showError = true);
+      _codeController.clear();
+      _codeFocusNode.requestFocus();
     }
   }
 
   Future<void> _scanAndSubmit() async {
+    Vibration.vibrate(duration: 50);
     _soundService.playSound(SoundEffect.buttonClick);
     final code = await Navigator.push<String>(
       context,
@@ -121,12 +125,32 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    final totalClues = _currentClues.length;
+    final solvedClues = _currentClues.values.where((c) => c.solved).length;
+
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 56,
+      textStyle: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600, fontFamily: 'SpecialElite'),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[800]!),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey[900],
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
+      border: Border.all(color: Colors.amber),
+    );
+    
+    final errorPinTheme = defaultPinTheme.copyDecorationWith(
+      border: Border.all(color: Colors.redAccent),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.hunt.name),
         actions: [
-          // *** HIER IST DIE KORREKTUR ***
-          // Das Menü enthält jetzt nur noch die für den Spieler relevanten Optionen.
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'list') {
@@ -165,33 +189,51 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Gib deinen Code ein:', style: TextStyle(fontSize: 20)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _codeController,
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  hintText: 'z. B. START',
-                  errorText: _errorText,
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () => _codeController.clear(),
-                  ),
-                ),
-                onSubmitted: (_) => _submitCode(),
+              Text(
+                'Station $solvedClues / $totalClues',
+                style: TextStyle(fontSize: 22, color: Colors.amber[200], letterSpacing: 1.5),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                  onPressed: () => _submitCode(), child: const Text('Los!')),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
+              const Text('Missions-Code eingeben:', style: TextStyle(fontSize: 20)),
+              const SizedBox(height: 24),
+              
+              Pinput(
+                controller: _codeController,
+                focusNode: _codeFocusNode,
+                length: 6,
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: focusedPinTheme,
+                errorPinTheme: errorPinTheme,
+                forceErrorState: _showError,
+                autofocus: true,
+                onCompleted: (pin) => _submitCode(pin),
+                onChanged: (_) {
+                  if (_showError) setState(() => _showError = false);
+                },
+                pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+              ),
+              
+              SizedBox(
+                height: 40,
+                child: _showError
+                    ? const Center(
+                        child: Text(
+                          'CODE UNGÜLTIG',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                        ),
+                      )
+                    : null,
+              ),
+                
               const Text('oder'),
+              const SizedBox(height: 8),
               TextButton.icon(
+                style: TextButton.styleFrom(foregroundColor: Colors.amber[200]),
                 onPressed: _scanAndSubmit,
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('QR-Code scannen'),

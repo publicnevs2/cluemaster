@@ -2,15 +2,15 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:clue_master/core/services/sound_service.dart';
-import 'package:clue_master/data/models/hunt.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
-import '../../data/models/clue.dart';
-import '../../core/services/clue_service.dart';
+import 'package:vibration/vibration.dart';
 
-// HINWEIS: Es gibt hier KEINEN Import für 'main.dart', um Konflikte zu vermeiden.
+import '../../core/services/clue_service.dart';
+import '../../core/services/sound_service.dart';
+import '../../data/models/clue.dart';
+import '../../data/models/hunt.dart';
 
 class ClueDetailScreen extends StatefulWidget {
   final Hunt hunt;
@@ -31,6 +31,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   bool _isSolved = false;
   int _wrongAttempts = 0;
   String? _errorMessage;
+  bool _contentVisible = false;
 
   @override
   void initState() {
@@ -38,6 +39,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     if (widget.clue.solved) {
       _isSolved = true;
     }
+    // Startet die Einblend-Animation
+    Timer(const Duration(milliseconds: 100), () {
+      if (mounted) setState(() => _contentVisible = true);
+    });
   }
 
   @override
@@ -54,6 +59,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
+      Vibration.vibrate(duration: 100);
       _soundService.playSound(SoundEffect.success);
       setState(() {
         _isSolved = true;
@@ -75,6 +81,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
             backgroundColor: Colors.green),
       );
     } else {
+      Vibration.vibrate(pattern: [0, 200, 100, 200]);
       _soundService.playSound(SoundEffect.failure);
       setState(() {
         _wrongAttempts++;
@@ -84,6 +91,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       Timer(const Duration(seconds: 3), () {
         if (mounted) {
           _answerController.clear();
+          setState(() {
+            _errorMessage = null;
+          });
         }
       });
 
@@ -102,7 +112,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Station')),
+      appBar: AppBar(title: const Text('Eingehende Nachricht')),
       body: SafeArea(
         child: Column(
           children: [
@@ -110,22 +120,26 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
               child: SingleChildScrollView(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    _buildMediaWidget(
-                      type: widget.clue.type,
-                      content: widget.clue.content,
-                      description: widget.clue.description,
-                    ),
-                    const SizedBox(height: 16),
-                    if (widget.clue.isRiddle) ...[
-                      const Divider(height: 24, thickness: 1),
-                      if (_isSolved)
-                        _buildRewardWidget()
-                      else
-                        _buildRiddleWidget(),
-                    ]
-                  ],
+                child: AnimatedOpacity(
+                  opacity: _contentVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 500),
+                  child: Column(
+                    children: [
+                      _buildMediaWidget(
+                        type: widget.clue.type,
+                        content: widget.clue.content,
+                        description: widget.clue.description,
+                      ),
+                      const SizedBox(height: 16),
+                      if (widget.clue.isRiddle) ...[
+                        const Divider(height: 24, thickness: 1, color: Colors.white24),
+                        if (_isSolved)
+                          _buildRewardWidget()
+                        else
+                          _buildRiddleWidget(),
+                      ]
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -137,18 +151,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     minimumSize: const Size(double.infinity, 50),
                   ),
                   onPressed: () {
-                    _soundService
-                        .playSound(SoundEffect.buttonClick);
+                    Vibration.vibrate(duration: 50);
+                    _soundService.playSound(SoundEffect.buttonClick);
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Nächsten Code eingeben'),
+                  child: const Text('Zurück zur Code-Eingabe'),
                 ),
               ),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: Text('(C) Sven Kompe 2025',
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ),
           ],
         ),
       ),
@@ -160,7 +169,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       children: [
         Text(
           widget.clue.question!,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
@@ -171,11 +180,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
             child: Text(_errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 16)),
+                style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
           ),
-        if (_wrongAttempts >= 3 && widget.clue.hint1 != null)
+        if (_wrongAttempts >= 2 && widget.clue.hint1 != null)
           _buildHintCard(1, widget.clue.hint1!),
-        if (_wrongAttempts >= 6 && widget.clue.hint2 != null)
+        if (_wrongAttempts >= 4 && widget.clue.hint2 != null)
           _buildHintCard(2, widget.clue.hint2!),
       ],
     );
@@ -183,20 +192,20 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
   Widget _buildRewardWidget() {
     return Card(
-      color: Colors.green.shade100,
+      color: Colors.green.withOpacity(0.2),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text("Rätsel gelöst!",
+            const Text("RÄTSEL GELÖST!",
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green)),
+                    color: Colors.greenAccent)),
             const SizedBox(height: 16),
             Text(
               widget.clue.rewardText ?? 'Sehr gut gemacht!',
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 18, color: Colors.white),
               textAlign: TextAlign.center,
             ),
           ],
@@ -227,13 +236,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           child: TextField(
             controller: _answerController,
             decoration: const InputDecoration(
-                hintText: 'Deine Antwort...', border: OutlineInputBorder()),
+                hintText: 'Antwort...',),
             onSubmitted: (_) => _checkAnswer(),
           ),
         ),
         const SizedBox(width: 8),
         IconButton.filled(
-          icon: const Icon(Icons.send),
+          style: IconButton.styleFrom(backgroundColor: Colors.amber),
+          icon: const Icon(Icons.send, color: Colors.black),
           onPressed: () => _checkAnswer(),
         ),
       ],
@@ -243,7 +253,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   Widget _buildHintCard(int level, String hintText) {
     return Card(
       margin: const EdgeInsets.only(top: 24),
-      color: Colors.amber.shade100,
+      color: Colors.amber.withOpacity(0.2),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -293,7 +303,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 }
 
-// Die Audio- und Video-Player Widgets bleiben unverändert...
 class AudioPlayerWidget extends StatefulWidget {
   final String path;
   final String? description;
@@ -337,7 +346,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.audiotrack, size: 120, color: Colors.blueAccent),
+        const Icon(Icons.audiotrack, size: 120, color: Colors.amber),
         const SizedBox(height: 24),
         StreamBuilder<PlayerState>(
           stream: _player.playerStateStream,
@@ -352,26 +361,26 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             } else if (playing != true) {
               return IconButton(
                 icon: const Icon(Icons.play_circle_fill, size: 80),
-                color: Colors.blue,
+                color: Colors.amber,
                 onPressed: _player.play,
               );
             } else if (processingState != ProcessingState.completed) {
               return IconButton(
                 icon: const Icon(Icons.pause_circle_filled, size: 80),
-                color: Colors.blue,
+                color: Colors.amber,
                 onPressed: _player.pause,
               );
             } else {
               return IconButton(
                 icon: const Icon(Icons.replay_circle_filled, size: 80),
-                color: Colors.blue,
+                color: Colors.amber,
                 onPressed: () => _player.seek(Duration.zero),
               );
             }
           },
         ),
         const SizedBox(height: 8),
-        const Text("Audio-Hinweis abspielen", style: TextStyle(fontSize: 16)),
+        const Text("Audio-Hinweis abspielen"),
       ],
     );
   }
@@ -435,6 +444,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         ),
         const SizedBox(height: 24),
         FloatingActionButton(
+          backgroundColor: Colors.amber,
+          foregroundColor: Colors.black,
           onPressed: () {
             setState(() {
               if (_controller.value.position >= _controller.value.duration) {
