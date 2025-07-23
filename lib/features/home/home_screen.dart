@@ -136,6 +136,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  // *** KORREKTUR: REFRESH NACH ADMIN-MODUS ***
+  void _navigateToAdmin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+    ).then((_) {
+      // Diese Zeile wird ausgeführt, wenn man vom Admin-Bereich zurückkehrt.
+      _refreshHuntData();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final totalClues = _currentClues.isNotEmpty ? _currentClues.length : 1;
@@ -175,10 +186,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       builder: (_) => ClueListScreen(hunt: currentHuntState)),
                 );
               } else if (value == 'admin') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-                );
+                _navigateToAdmin(); // Korrigierter Aufruf
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -219,8 +227,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 controller: _codeController,
                 focusNode: _codeFocusNode,
                 length: 6,
+                // *** KORREKTUR: ALPHANUMERISCHE EINGABE ***
+                keyboardType: TextInputType.text, // Erlaubt die volle Tastatur
                 inputFormatters: [
-                  UpperCaseTextFormatter(),
+                  UpperCaseTextFormatter(), // Wandelt alles in Großbuchstaben um
                 ],
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: focusedPinTheme,
