@@ -1,15 +1,11 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
+// lib/features/admin/admin_hunt_list_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_change_password_screen.dart';
 
-// ============================================================
-// SECTION: AdminHuntListScreen Widget
-// ============================================================
 class AdminHuntListScreen extends StatefulWidget {
   const AdminHuntListScreen({super.key});
 
@@ -17,28 +13,15 @@ class AdminHuntListScreen extends StatefulWidget {
   State<AdminHuntListScreen> createState() => _AdminHuntListScreenState();
 }
 
-// ============================================================
-// SECTION: State-Klasse
-// ============================================================
 class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
-  // ============================================================
-  // SECTION: State & Controller
-  // ============================================================
   final ClueService _clueService = ClueService();
   List<Hunt> _hunts = [];
 
-  // ============================================================
-  // SECTION: Lifecycle
-  // ============================================================
   @override
   void initState() {
     super.initState();
     _loadHunts();
   }
-
-  // ============================================================
-  // SECTION: Logik
-  // ============================================================
 
   Future<void> _loadHunts() async {
     final loadedHunts = await _clueService.loadHunts();
@@ -59,7 +42,9 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Abbrechen')),
           TextButton(
             onPressed: () {
               if (huntNameController.text.trim().isNotEmpty) {
@@ -73,10 +58,13 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
     );
 
     if (newHuntName != null) {
-      if (_hunts.any((hunt) => hunt.name.toLowerCase() == newHuntName.toLowerCase())) {
+      if (_hunts
+          .any((hunt) => hunt.name.toLowerCase() == newHuntName.toLowerCase())) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Eine Jagd mit diesem Namen existiert bereits.'), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text('Eine Jagd mit diesem Namen existiert bereits.'),
+              backgroundColor: Colors.red),
         );
         return;
       }
@@ -102,10 +90,15 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
         context: context,
         builder: (context) => AlertDialog(
               title: const Text('Jagd löschen?'),
-              content: Text('Möchtest du die Schnitzeljagd "${huntToDelete.name}" wirklich endgültig löschen?'),
+              content: Text(
+                  'Möchtest du die Schnitzeljagd "${huntToDelete.name}" wirklich endgültig löschen?'),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-                TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Abbrechen')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Löschen')),
               ],
             ));
 
@@ -116,62 +109,77 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
     }
   }
 
-  // ============================================================
-  // NEUE METHODE: Importieren einer Schnitzeljagd
-  // ============================================================
   Future<void> _importHunt() async {
     final result = await _clueService.importHunt();
     if (!mounted) return;
 
     if (result == null) {
-      // Benutzer hat den Import abgebrochen
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Import abgebrochen.')),
       );
     } else if (result == "EXISTS") {
-      // Eine Jagd mit diesem Namen existiert bereits
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fehler: Eine Jagd mit diesem Namen existiert bereits.'), backgroundColor: Colors.orange),
+        const SnackBar(
+            content: Text('Fehler: Eine Jagd mit diesem Namen existiert bereits.'),
+            backgroundColor: Colors.orange),
       );
     } else if (result == "ERROR") {
-      // Ein genereller Fehler ist aufgetreten
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fehler: Die Datei konnte nicht importiert werden.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Fehler: Die Datei konnte nicht importiert werden. Bitte stelle sicher, dass es eine gültige .cluemaster-Datei ist.'),
+            backgroundColor: Colors.red),
       );
     } else {
-      // Erfolgreicher Import
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Die Jagd "$result" wurde erfolgreich importiert.'), backgroundColor: Colors.green),
+        SnackBar(
+            content: Text('Die Jagd "$result" wurde erfolgreich importiert.'),
+            backgroundColor: Colors.green),
       );
-      _loadHunts(); // Lade die Liste neu, um die neue Jagd anzuzeigen
+      _loadHunts();
     }
   }
 
-  // ============================================================
-  // SECTION: UI-Aufbau
-  // ============================================================
+  Future<void> _exportHuntWithFeedback(Hunt hunt) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('"${hunt.name}" wird zum Teilen vorbereitet...'),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+
+    try {
+      await _clueService.exportHunt(hunt, context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler beim Exportieren: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Meine Schnitzeljagden'),
         actions: [
-          // ============================================================
-          // NEUER BUTTON: Importieren
-          // ============================================================
           IconButton(
             icon: const Icon(Icons.file_download),
             tooltip: 'Jagd importieren',
             onPressed: _importHunt,
           ),
-          // ============================================================
           IconButton(
             icon: const Icon(Icons.lock_outline),
             tooltip: 'Passwort ändern',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AdminChangePasswordScreen()),
+                MaterialPageRoute(
+                    builder: (_) => const AdminChangePasswordScreen()),
               );
             },
           ),
@@ -179,7 +187,8 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
       ),
       body: _hunts.isEmpty
           ? const Center(
-              child: Text('Keine Schnitzeljagden gefunden. Erstelle oder importiere eine neue!'),
+              child: Text(
+                  'Keine Schnitzeljagden gefunden. Erstelle oder importiere eine neue!'),
             )
           : ListView.builder(
               itemCount: _hunts.length,
@@ -194,9 +203,7 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
                       IconButton(
                         icon: const Icon(Icons.share, color: Colors.blue),
                         tooltip: 'Jagd teilen/exportieren',
-                        onPressed: () async {
-                          await _clueService.exportHunt(hunt);
-                        },
+                        onPressed: () => _exportHuntWithFeedback(hunt),
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit),

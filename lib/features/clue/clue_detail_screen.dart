@@ -141,7 +141,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                         .playSound(SoundEffect.buttonClick);
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Nächsten Hinweis eingeben'),
+                  child: const Text('Nächsten Code eingeben'),
                 ),
               ),
             const Padding(
