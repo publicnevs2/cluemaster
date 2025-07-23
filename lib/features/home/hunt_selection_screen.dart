@@ -1,15 +1,12 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
+// lib/features/home/hunt_selection_screen.dart
+
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'home_screen.dart';
-import '../admin/admin_login_screen.dart'; // Import für den Admin-Login
+import '../admin/admin_login_screen.dart';
 
-// ============================================================
-// SECTION: HuntSelectionScreen Widget
-// ============================================================
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
 
@@ -17,30 +14,20 @@ class HuntSelectionScreen extends StatefulWidget {
   State<HuntSelectionScreen> createState() => _HuntSelectionScreenState();
 }
 
-// ============================================================
-// SECTION: State-Klasse
-// ============================================================
 class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
-  // ============================================================
-  // SECTION: State & Controller
-  // ============================================================
   final ClueService _clueService = ClueService();
   List<Hunt> _hunts = [];
   bool _isLoading = true;
 
-  // ============================================================
-  // SECTION: Lifecycle
-  // ============================================================
   @override
   void initState() {
     super.initState();
     _loadHunts();
   }
 
-  // ============================================================
-  // SECTION: Logik
-  // ============================================================
   Future<void> _loadHunts() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
     final loadedHunts = await _clueService.loadHunts();
     if (mounted) {
       setState(() {
@@ -50,17 +37,18 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
-  /// Navigiert zum HomeScreen für die ausgewählte Jagd.
   void _selectHunt(Hunt hunt) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => HomeScreen(hunt: hunt),
       ),
-    );
+    ).then((_) {
+      // Lädt die Daten neu, wenn man von einem Spiel zurückkehrt
+      _loadHunts();
+    });
   }
 
-  /// Importiert eine neue Schnitzeljagd aus einer Datei.
   Future<void> _importHunt() async {
     final result = await _clueService.importHunt();
     if (!mounted) return;
@@ -81,29 +69,33 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Die Jagd "$result" wurde erfolgreich importiert.'), backgroundColor: Colors.green),
       );
-      _loadHunts(); // Lade die Liste neu, um die neue Jagd anzuzeigen
+      _loadHunts();
     }
   }
 
-  // ============================================================
-  // SECTION: UI-Aufbau
-  // ============================================================
+  void _navigateToAdmin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+    ).then((_) {
+      // Lädt die Daten neu, wenn man vom Admin-Bereich zurückkehrt
+      _loadHunts();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Schnitzeljagd auswählen'),
+        title: const AutoSizeText(
+          'Schnitzeljagd auswählen',
+          maxLines: 1,
+        ),
         actions: [
-          // Button, um zum Admin-Login zu gelangen
           IconButton(
             icon: const Icon(Icons.admin_panel_settings),
             tooltip: 'Admin-Bereich',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-              );
-            },
+            onPressed: _navigateToAdmin,
           ),
         ],
       ),
@@ -132,7 +124,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
                     );
                   },
                 ),
-      // NEU: FloatingActionButton zum Importieren für den Spieler
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _importHunt,
         label: const Text('Jagd importieren'),

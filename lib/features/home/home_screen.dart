@@ -1,8 +1,10 @@
 // lib/features/home/home_screen.dart
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
 import '../../core/services/clue_service.dart';
@@ -12,6 +14,17 @@ import '../clue/clue_detail_screen.dart';
 import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
 import '../../main.dart';
+
+// Dieser Formatter wandelt jede Eingabe automatisch in Großbuchstaben um.
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   final Hunt hunt;
@@ -125,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final totalClues = _currentClues.length;
+    final totalClues = _currentClues.isNotEmpty ? _currentClues.length : 1;
     final solvedClues = _currentClues.values.where((c) => c.solved).length;
 
     final defaultPinTheme = PinTheme(
@@ -149,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.hunt.name),
+        title: AutoSizeText(widget.hunt.name, maxLines: 1),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -206,6 +219,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 controller: _codeController,
                 focusNode: _codeFocusNode,
                 length: 6,
+                inputFormatters: [
+                  UpperCaseTextFormatter(),
+                ],
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: focusedPinTheme,
                 errorPinTheme: errorPinTheme,

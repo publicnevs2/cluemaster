@@ -1,8 +1,6 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
+// lib/features/admin/admin_editor_screen.dart
+
 import 'dart:io';
-import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,14 +8,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import '../../data/models/clue.dart';
 
-// ============================================================
-// SECTION: AdminEditorScreen Widget
-// ============================================================
 class AdminEditorScreen extends StatefulWidget {
   final String? codeToEdit;
   final Clue? existingClue;
   final Function(Map<String, Clue>) onSave;
-  // NEU: Nimmt die Liste der existierenden Codes entgegen.
   final List<String> existingCodes;
 
   const AdminEditorScreen({
@@ -25,18 +19,14 @@ class AdminEditorScreen extends StatefulWidget {
     this.codeToEdit,
     this.existingClue,
     required this.onSave,
-    this.existingCodes = const [], // Standardwert ist eine leere Liste.
+    this.existingCodes = const [],
   });
 
   @override
   State<AdminEditorScreen> createState() => _AdminEditorScreenState();
 }
 
-// ============================================================
-// SECTION: State-Klasse
-// ============================================================
 class _AdminEditorScreenState extends State<AdminEditorScreen> {
-  // ... (alle Controller und initState/dispose bleiben unverändert)
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
   final _audioRecorder = AudioRecorder();
@@ -100,9 +90,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     super.dispose();
   }
 
-  // ============================================================
-  // SECTION: Logik
-  // ============================================================
   void _save() {
     if (_formKey.currentState!.validate()) {
       final options = [
@@ -170,9 +157,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     });
   }
   
-  // ============================================================
-  // SECTION: UI-Aufbau (build-Methode)
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,25 +169,20 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // --- HINWEIS-SEKTION ---
             _buildSectionHeader('Hinweis (wird immer angezeigt)'),
             TextFormField(
               controller: _codeController,
-              decoration: const InputDecoration(labelText: 'Code der Station'),
-              // KORREKTUR: Validierung für Pflichtfeld und Duplikate
+              decoration: const InputDecoration(labelText: 'Code der Station', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
               validator: (value) {
                 final code = value?.trim() ?? '';
                 if (code.isEmpty) {
                   return 'Der Code ist ein Pflichtfeld.';
                 }
-                // Prüfe auf Duplikate, aber nur, wenn es ein neuer Code ist.
-                // Wenn wir einen Code bearbeiten, darf er sich selbst natürlich finden.
                 if (widget.codeToEdit == null && widget.existingCodes.contains(code)) {
-                  return 'Dieser Code existiert bereits in dieser Jagd.';
+                  return 'Dieser Code existiert bereits.';
                 }
-                // Wenn wir einen Code umbenennen, prüfen wir, ob der neue Name schon existiert.
                 if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) {
-                  return 'Dieser Code existiert bereits in dieser Jagd.';
+                  return 'Dieser Code existiert bereits.';
                 }
                 return null;
               },
@@ -221,42 +200,44 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 _type = value!;
                 _contentController.clear();
               }),
-              decoration: const InputDecoration(labelText: 'Typ des Hinweises'),
+              decoration: const InputDecoration(labelText: 'Typ des Hinweises', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
             ),
             const SizedBox(height: 8),
             _buildMediaContentField(),
             
-            // --- RÄTSEL-SEKTION ---
             const Divider(height: 40, thickness: 1),
             CheckboxListTile(
               title: const Text('Optionales Rätsel hinzufügen'),
               subtitle: const Text('Wenn aktiviert, muss der Spieler erst eine Frage beantworten.'),
               value: _isRiddle,
               onChanged: (value) => setState(() => _isRiddle = value ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
             ),
             if (_isRiddle) ...[
               _buildSectionHeader('Rätsel-Details'),
               TextFormField(
                 controller: _questionController,
-                decoration: const InputDecoration(labelText: 'Frage zum Hinweis'),
+                decoration: const InputDecoration(labelText: 'Frage zum Hinweis', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
                 validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Frage erforderlich' : null,
               ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _answerController,
-                decoration: const InputDecoration(labelText: 'Korrekte Antwort'),
+                decoration: const InputDecoration(labelText: 'Korrekte Antwort', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
                 validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
               ),
               const SizedBox(height: 16),
               _buildMultipleChoiceFields(),
               const SizedBox(height: 16),
               _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
-              TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 3 Fehlversuchen')),
-              TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 6 Fehlversuchen')),
+              TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+              const SizedBox(height: 8),
+              TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
               const SizedBox(height: 16),
               _buildSectionHeader('Belohnung nach gelöstem Rätsel'),
               TextFormField(
                 controller: _rewardTextController,
-                decoration: const InputDecoration(labelText: 'Belohnungs-Text', hintText: 'z.B. Gut gemacht! Der nächste Code ist...'),
+                decoration: const InputDecoration(labelText: 'Belohnungs-Text', hintText: 'z.B. Gut gemacht! Der nächste Code ist...', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
                 maxLines: 3,
                 validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Belohnungstext erforderlich' : null,
               ),
@@ -267,11 +248,10 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     );
   }
 
-  // ... (Restliche UI-Hilfsmethoden bleiben unverändert)
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+      child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)),
     );
   }
 
@@ -280,18 +260,19 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       return Column(children: [
         TextFormField(
           controller: _contentController,
-          decoration: const InputDecoration(labelText: 'Hinweis-Text'),
+          decoration: const InputDecoration(labelText: 'Hinweis-Text', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
           maxLines: 3,
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
         ),
-        TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
+        const SizedBox(height: 8),
+        TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
       ]);
     } else {
       return Column(children: [
         TextFormField(
           controller: _contentController,
           readOnly: true,
-          decoration: InputDecoration(labelText: 'Dateipfad (${_type.capitalize()})'),
+          decoration: InputDecoration(labelText: 'Dateipfad (${_type})', contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
         ),
         const SizedBox(height: 8),
@@ -308,7 +289,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: _isRecording ? Colors.red : null),
             ),
         ]),
-        TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
+        const SizedBox(height: 8),
+        TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
       ]);
     }
   }
@@ -317,21 +299,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 8),
       const Text('Multiple-Choice Optionen (optional)', style: TextStyle(fontWeight: FontWeight.bold)),
-      TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1')),
-      TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2')),
-      TextFormField(controller: _option3Controller, decoration: const InputDecoration(labelText: 'Option 3')),
-      TextFormField(controller: _option4Controller, decoration: const InputDecoration(labelText: 'Option 4')),
+      TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      const SizedBox(height: 8),
+      TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      const SizedBox(height: 8),
+      TextFormField(controller: _option3Controller, decoration: const InputDecoration(labelText: 'Option 3', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      const SizedBox(height: 8),
+      TextFormField(controller: _option4Controller, decoration: const InputDecoration(labelText: 'Option 4', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
     ]);
-  }
-}
-
-extension StringExtension on String {
-  String capitalize() => "${this[0].toUpperCase()}${this.substring(1)}";
-}
-
-class UpperCaseTextFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    return newValue.copyWith(text: newValue.text.toUpperCase());
   }
 }

@@ -1,5 +1,6 @@
 // lib/features/admin/admin_hunt_list_screen.dart
 
+import 'package:auto_size_text/auto_size_text.dart'; // <-- NEUER IMPORT
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
@@ -165,7 +166,11 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meine Schnitzeljagden'),
+        // *** HIER IST DIE ÄNDERUNG ***
+        title: const AutoSizeText(
+          'Meine Schnitzeljagden',
+          maxLines: 1,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download),

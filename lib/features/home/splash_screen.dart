@@ -34,9 +34,8 @@ class _SplashScreenState extends State<SplashScreen> {
           image: DecorationImage(
             image: const AssetImage('assets/images/20211205_FamilienfotomitdemBärtigen.jpg'),
             fit: BoxFit.cover,
-            // Korrigierte Version für den Filter
             colorFilter: ColorFilter.mode(
-              Colors.black.withAlpha(102), // (0-255, 102 ist ca. 40%)
+              Colors.black.withAlpha(102), // ca. 40% Abdunkelung
               BlendMode.darken,
             ),
           ),
@@ -45,12 +44,12 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Spacer(flex: 2),
+              const Spacer(flex: 4), // Mehr Platz oben, um alles nach unten zu schieben
               const Text(
                 'Papa Svens\nMissionControl',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 48,
+                  fontSize: 42, // Schriftgröße reduziert
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   shadows: [
@@ -62,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ],
                 ),
               ),
-              const Spacer(flex: 3),
+              const Spacer(flex: 5), // Mehr Platz zum Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
