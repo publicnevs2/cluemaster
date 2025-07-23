@@ -1,7 +1,8 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
+// lib/features/clue/clue_detail_screen.dart
+
+import 'dart:async';
 import 'dart:io';
+import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/data/models/hunt.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
@@ -9,11 +10,9 @@ import 'package:video_player/video_player.dart';
 import '../../data/models/clue.dart';
 import '../../core/services/clue_service.dart';
 
-// ============================================================
-// SECTION: ClueDetailScreen Widget
-// ============================================================
+// HINWEIS: Es gibt hier KEINEN Import für 'main.dart', um Konflikte zu vermeiden.
+
 class ClueDetailScreen extends StatefulWidget {
-  // NEU: Der Screen benötigt jetzt die Information über die gesamte Jagd.
   final Hunt hunt;
   final Clue clue;
 
@@ -23,24 +22,16 @@ class ClueDetailScreen extends StatefulWidget {
   State<ClueDetailScreen> createState() => _ClueDetailScreenState();
 }
 
-// ============================================================
-// SECTION: State-Klasse
-// ============================================================
 class _ClueDetailScreenState extends State<ClueDetailScreen> {
-  // ============================================================
-  // SECTION: State & Controller
-  // ============================================================
   final _answerController = TextEditingController();
   final _clueService = ClueService();
   final _scrollController = ScrollController();
+  final _soundService = SoundService();
 
   bool _isSolved = false;
   int _wrongAttempts = 0;
   String? _errorMessage;
 
-  // ============================================================
-  // SECTION: Lifecycle
-  // ============================================================
   @override
   void initState() {
     super.initState();
@@ -53,50 +44,47 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   void dispose() {
     _answerController.dispose();
     _scrollController.dispose();
+    _soundService.dispose();
     super.dispose();
   }
 
-  // ============================================================
-  // SECTION: Logik
-  // ============================================================
-
-  /// Prüft die Antwort und speichert den Fortschritt korrekt.
   void _checkAnswer({String? userAnswer}) async {
     final correctAnswer = widget.clue.answer?.trim().toLowerCase();
-    final providedAnswer = (userAnswer ?? _answerController.text).trim().toLowerCase();
+    final providedAnswer =
+        (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
-      // ANTWORT RICHTIG
+      _soundService.playSound(SoundEffect.success);
       setState(() {
         _isSolved = true;
         widget.clue.solved = true;
       });
 
-      // ============================================================
-      // KORREKTUR: Die Speicherlogik wurde repariert.
-      // ============================================================
-      // 1. Lade die aktuelle Liste aller Jagden.
       final allHunts = await _clueService.loadHunts();
-      // 2. Finde den Index der Jagd, die wir gerade spielen.
       final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
 
       if (huntIndex != -1) {
-        // 3. Aktualisiere den spezifischen Hinweis in der korrekten Jagd.
         allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
-        // 4. Speichere die gesamte aktualisierte Liste aller Jagden.
         await _clueService.saveHunts(allHunts);
       }
-      // ============================================================
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Richtig! Belohnung freigeschaltet!'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('Richtig! Belohnung freigeschaltet!'),
+            backgroundColor: Colors.green),
       );
     } else {
-      // ANTWORT FALSCH
+      _soundService.playSound(SoundEffect.failure);
       setState(() {
         _wrongAttempts++;
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
+      });
+
+      Timer(const Duration(seconds: 3), () {
+        if (mounted) {
+          _answerController.clear();
+        }
       });
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -111,9 +99,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
-  // ============================================================
-  // SECTION: UI-Aufbau (build-Methode)
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,9 +129,25 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                 ),
               ),
             ),
+            if (!widget.clue.isRiddle || _isSolved)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  onPressed: () {
+                    _soundService
+                        .playSound(SoundEffect.buttonClick);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Nächsten Hinweis eingeben'),
+                ),
+              ),
             const Padding(
               padding: EdgeInsets.only(bottom: 8.0),
-              child: Text('(C) Sven Kompe 2025', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              child: Text('(C) Sven Kompe 2025',
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
             ),
           ],
         ),
@@ -154,7 +155,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  // ... (Der Rest der Datei, alle _build... Methoden und die Player-Widgets, bleiben unverändert)
   Widget _buildRiddleWidget() {
     return Column(
       children: [
@@ -170,7 +170,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
-            child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 16)),
+            child: Text(_errorMessage!,
+                style: const TextStyle(color: Colors.red, fontSize: 16)),
           ),
         if (_wrongAttempts >= 3 && widget.clue.hint1 != null)
           _buildHintCard(1, widget.clue.hint1!),
@@ -187,7 +188,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text("Rätsel gelöst!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+            const Text("Rätsel gelöst!",
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green)),
             const SizedBox(height: 16),
             Text(
               widget.clue.rewardText ?? 'Sehr gut gemacht!',
@@ -221,7 +226,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         Expanded(
           child: TextField(
             controller: _answerController,
-            decoration: const InputDecoration(hintText: 'Deine Antwort...', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+                hintText: 'Deine Antwort...', border: OutlineInputBorder()),
             onSubmitted: (_) => _checkAnswer(),
           ),
         ),
@@ -233,7 +239,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       ],
     );
   }
-  
+
   Widget _buildHintCard(int level, String hintText) {
     return Card(
       margin: const EdgeInsets.only(top: 24),
@@ -251,11 +257,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  Widget _buildMediaWidget({required String type, required String content, String? description}) {
+  Widget _buildMediaWidget(
+      {required String type, required String content, String? description}) {
     Widget mediaWidget;
     switch (type) {
       case 'text':
-        mediaWidget = Text(content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+        mediaWidget = Text(content,
+            style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
         break;
       case 'image':
         mediaWidget = content.startsWith('file://')
@@ -269,19 +277,23 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       default:
         mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
     }
-    
+
     return Column(
       children: [
         mediaWidget,
         if (description != null && description.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text(description, style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+          Text(description,
+              style:
+                  const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center),
         ],
       ],
     );
   }
 }
 
+// Die Audio- und Video-Player Widgets bleiben unverändert...
 class AudioPlayerWidget extends StatefulWidget {
   final String path;
   final String? description;
@@ -309,6 +321,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         await _player.setAsset(widget.path);
       }
     } catch (e) {
+      // ignore: avoid_print
       print("Fehler beim Laden der Audio-Datei: $e");
     }
   }
@@ -333,7 +346,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             final processingState = playerState?.processingState;
             final playing = playerState?.playing;
 
-            if (processingState == ProcessingState.loading || processingState == ProcessingState.buffering) {
+            if (processingState == ProcessingState.loading ||
+                processingState == ProcessingState.buffering) {
               return const CircularProgressIndicator();
             } else if (playing != true) {
               return IconButton(

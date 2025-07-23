@@ -1,6 +1,6 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
+// lib/features/home/home_screen.dart
+
+import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
@@ -11,9 +11,6 @@ import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
 import '../../main.dart';
 
-// ============================================================
-// SECTION: HomeScreen Widget
-// ============================================================
 class HomeScreen extends StatefulWidget {
   final Hunt hunt;
 
@@ -23,23 +20,16 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// ============================================================
-// SECTION: State-Klasse
-// ============================================================
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
-  // ============================================================
-  // SECTION: State & Controller
-  // ============================================================
   final TextEditingController _codeController = TextEditingController();
   final ClueService _clueService = ClueService();
+  final SoundService _soundService = SoundService();
 
-  late Map<String, Clue> _clues;
+  // Diese Variable hält jetzt immer den aktuellsten Stand der Hinweise
+  late Map<String, Clue> _currentClues;
   late Map<String, String> _normalizedMap;
   String? _errorText;
 
-  // ============================================================
-  // SECTION: Lifecycle
-  // ============================================================
   @override
   void initState() {
     super.initState();
@@ -64,56 +54,62 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void dispose() {
     routeObserver.unsubscribe(this);
     _codeController.dispose();
+    _soundService.dispose();
     super.dispose();
   }
 
-  // ============================================================
-  // SECTION: Logik
-  // ============================================================
-
   void _initializeClues() {
     setState(() {
-      _clues = widget.hunt.clues;
+      _currentClues = widget.hunt.clues;
       _normalizedMap = {
-        for (var code in _clues.keys) code.toLowerCase(): code,
+        for (var code in _currentClues.keys) code.toLowerCase(): code,
       };
     });
   }
 
   Future<void> _refreshHuntData() async {
     final allHunts = await _clueService.loadHunts();
-    final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name, orElse: () => widget.hunt);
+    final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name,
+        orElse: () => widget.hunt);
     setState(() {
-      _clues = updatedHunt.clues;
+      // Wir aktualisieren unsere lokale State-Variable mit den frischen Daten
+      _currentClues = updatedHunt.clues;
        _normalizedMap = {
-        for (var code in _clues.keys) code.toLowerCase(): code,
+        for (var code in _currentClues.keys) code.toLowerCase(): code,
       };
     });
   }
 
   Future<void> _submitCode([String? scannedCode]) async {
+    _soundService.playSound(SoundEffect.buttonClick);
     final input = scannedCode ?? _codeController.text.trim();
     if (input.isEmpty) return;
-
     final norm = input.toLowerCase();
 
     if (_normalizedMap.containsKey(norm)) {
+      _soundService.playSound(SoundEffect.clueUnlocked);
       final originalCode = _normalizedMap[norm]!;
-      final clue = _clues[originalCode]!;
+      final clue = _currentClues[originalCode]!;
+
+      // Erstelle ein frisches Hunt-Objekt für die Detailansicht
+      final currentHuntState = Hunt(name: widget.hunt.name, clues: _currentClues);
 
       if (!mounted) return;
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ClueDetailScreen(hunt: widget.hunt, clue: clue)),
+        MaterialPageRoute(
+            builder: (_) => ClueDetailScreen(hunt: currentHuntState, clue: clue)),
       );
       _codeController.clear();
       setState(() => _errorText = null);
     } else {
+      _soundService.playSound(SoundEffect.failure);
       setState(() => _errorText = 'Ungültiger Code');
     }
   }
 
   Future<void> _scanAndSubmit() async {
+    _soundService.playSound(SoundEffect.buttonClick);
     final code = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const QrScannerScreen()),
@@ -123,35 +119,48 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  // ============================================================
-  // SECTION: UI-Aufbau
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.hunt.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.list),
-            tooltip: 'Gefundene Hinweise',
-            onPressed: () {
-              // KORREKTUR: Wir übergeben die aktuelle Jagd an den ClueListScreen.
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ClueListScreen(hunt: widget.hunt)),
-              );
+          // *** HIER IST DIE KORREKTUR ***
+          // Das Menü enthält jetzt nur noch die für den Spieler relevanten Optionen.
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'list') {
+                _soundService.playSound(SoundEffect.buttonClick);
+                final currentHuntState = Hunt(name: widget.hunt.name, clues: _currentClues);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => ClueListScreen(hunt: currentHuntState)),
+                );
+              } else if (value == 'admin') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                );
+              }
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings),
-            tooltip: 'Admin',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-              );
-            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'list',
+                child: ListTile(
+                  leading: Icon(Icons.list),
+                  title: Text('Gefundene Hinweise'),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'admin',
+                child: ListTile(
+                  leading: Icon(Icons.admin_panel_settings),
+                  title: Text('Admin-Bereich'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -178,7 +187,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 onSubmitted: (_) => _submitCode(),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: () => _submitCode(), child: const Text('Los!')),
+              ElevatedButton(
+                  onPressed: () => _submitCode(), child: const Text('Los!')),
               const SizedBox(height: 12),
               const Text('oder'),
               TextButton.icon(

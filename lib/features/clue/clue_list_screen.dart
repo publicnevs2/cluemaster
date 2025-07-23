@@ -1,30 +1,18 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
-import 'package:flutter/material.dart';
-import '../../data/models/clue.dart';
-import '../../data/models/hunt.dart';
-import 'clue_detail_screen.dart';
+// lib/features/clue/clue_list_screen.dart
 
-// ============================================================
-// SECTION: ClueListScreen Widget
-// ============================================================
+import 'package:flutter/material.dart';
+import '../../data/models/hunt.dart';
+import 'clue_detail_screen.dart'; 
+
 class ClueListScreen extends StatefulWidget {
   final Hunt hunt;
-
   const ClueListScreen({super.key, required this.hunt});
 
   @override
   State<ClueListScreen> createState() => _ClueListScreenState();
 }
 
-// ============================================================
-// SECTION: State-Klasse
-// ============================================================
 class _ClueListScreenState extends State<ClueListScreen> {
-  // ============================================================
-  // SECTION: Build-Method (UI-Aufbau)
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     final solvedEntries =
@@ -45,7 +33,7 @@ class _ClueListScreenState extends State<ClueListScreen> {
 
                 return ListTile(
                   leading: Icon(
-                    clue.type == 'text' ? Icons.text_snippet : Icons.image,
+                    clue.type == 'text' ? Icons.text_fields : Icons.image,
                     color: Colors.green,
                   ),
                   title: Text('Code: $code'),
@@ -53,8 +41,6 @@ class _ClueListScreenState extends State<ClueListScreen> {
                   trailing:
                       const Icon(Icons.check_circle, color: Colors.green),
                   onTap: () {
-                    // KORREKTUR: Wir übergeben jetzt die aktuelle Jagd (hunt)
-                    // zusammen mit dem Hinweis (clue) an den Detail-Bildschirm.
                     Navigator.push(
                       context,
                       MaterialPageRoute(

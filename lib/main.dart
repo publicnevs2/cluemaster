@@ -1,18 +1,11 @@
-// ============================================================
-// SECTION: Imports
-// ============================================================
-import 'package:flutter/material.dart';
-import 'features/home/hunt_selection_screen.dart'; // Importiert den neuen Auswahl-Bildschirm.
+// lib/main.dart
 
-// ============================================================
-// SECTION: Route Observer
-// ============================================================
-/// Beobachtet, wenn man zwischen Screens navigiert
+import 'package:clue_master/features/home/splash_screen.dart';
+import 'package:flutter/material.dart';
+
+// Diese Variable MUSS hier global bleiben, damit alle Screens darauf zugreifen können.
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
-// ============================================================
-// SECTION: App-Einstieg
-// ============================================================
 void main() {
   runApp(const ClueMasterApp());
 }
@@ -28,8 +21,8 @@ class ClueMasterApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      // Der Startbildschirm der App ist jetzt der HuntSelectionScreen.
-      home: const HuntSelectionScreen(),
+      // Hier wird der neue SplashScreen als Startpunkt der App festgelegt
+      home: const SplashScreen(),
       navigatorObservers: [routeObserver],
     );
   }

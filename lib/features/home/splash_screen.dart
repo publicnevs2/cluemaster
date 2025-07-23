@@ -2,21 +2,41 @@
 
 import 'package:flutter/material.dart';
 import 'hunt_selection_screen.dart';
+import '../../core/services/sound_service.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  final SoundService _soundService = SoundService();
+
+  @override
+  void initState() {
+    super.initState();
+    _soundService.playSound(SoundEffect.appStart);
+  }
+
+  @override
+  void dispose() {
+    _soundService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // Hintergrundbild mit leichter Abdunkelung für bessere Lesbarkeit
         decoration: BoxDecoration(
           image: DecorationImage(
             image: const AssetImage('assets/images/20211205_FamilienfotomitdemBärtigen.jpg'),
             fit: BoxFit.cover,
+            // Korrigierte Version für den Filter
             colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.4),
+              Colors.black.withAlpha(102), // (0-255, 102 ist ca. 40%)
               BlendMode.darken,
             ),
           ),
@@ -26,7 +46,6 @@ class SplashScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const Spacer(flex: 2),
-              // Der neue App-Titel
               const Text(
                 'Papa Svens\nMissionControl',
                 textAlign: TextAlign.center,
@@ -44,7 +63,6 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(flex: 3),
-              // Der Start-Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -52,7 +70,7 @@ class SplashScreen extends StatelessWidget {
                 ),
                 child: const Text('Mission starten!'),
                 onPressed: () {
-                  // Navigation zur Schnitzeljagd-Auswahl
+                  _soundService.playSound(SoundEffect.buttonClick);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const HuntSelectionScreen()),
@@ -60,7 +78,6 @@ class SplashScreen extends StatelessWidget {
                 },
               ),
               const Spacer(flex: 1),
-              // Dein Copyright
               const Text(
                 '(C) Sven Kompe, 2025',
                 style: TextStyle(
@@ -68,7 +85,7 @@ class SplashScreen extends StatelessWidget {
                   color: Colors.white70,
                 ),
               ),
-              const SizedBox(height: 20), // Etwas Abstand zum unteren Rand
+              const SizedBox(height: 20),
             ],
           ),
         ),

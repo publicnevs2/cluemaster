@@ -45,3 +45,4 @@ flutter:
     - assets/hunts.json
     - assets/codes.json
     - assets/images/
+    - assets/audio/   
