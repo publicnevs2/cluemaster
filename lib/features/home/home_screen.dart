@@ -1,5 +1,3 @@
-// lib/features/home/home_screen.dart
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
@@ -219,8 +217,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 controller: _codeController,
                 focusNode: _codeFocusNode,
                 length: 6,
+                keyboardType: TextInputType.text, // <-- HIER IST DEINE KORREKTUR!
                 inputFormatters: [
                   UpperCaseTextFormatter(),
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 ],
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: focusedPinTheme,
@@ -245,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       )
                     : null,
               ),
-                
+              
               const Text('oder'),
               const SizedBox(height: 8),
               TextButton.icon(

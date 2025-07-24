@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Spacer(flex: 4), // Mehr Platz oben, um alles nach unten zu schieben
+              const Spacer(flex: 5), // Mehr Platz oben, um alles nach unten zu schieben
               const Text(
                 'Papa Svens\nMissionControl',
                 textAlign: TextAlign.center,

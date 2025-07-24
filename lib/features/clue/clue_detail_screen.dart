@@ -1,8 +1,7 @@
-// lib/features/clue/clue_detail_screen.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import für InputFormatter hinzugefügt
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import 'package:vibration/vibration.dart';
@@ -235,9 +234,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         Expanded(
           child: TextField(
             controller: _answerController,
+            keyboardType: TextInputType.text, // Sorgt für die normale Text-Tastatur
+            textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(
-                hintText: 'Antwort...',),
+                hintText: 'Antwort...'),
             onSubmitted: (_) => _checkAnswer(),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+            ],
           ),
         ),
         const SizedBox(width: 8),
