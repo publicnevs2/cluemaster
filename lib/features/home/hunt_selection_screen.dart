@@ -8,10 +8,6 @@ import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
 import 'briefing_screen.dart';
 
-// FEATURE: Missions-Briefing (v1.41)
-// Dieser Screen zeigt alle verfügbaren Schnitzeljagden an und leitet den Spieler
-// entweder zu einem optionalen Briefing oder direkt zum Spielstart.
-
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
 
@@ -42,12 +38,10 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
-  /// Leitet die Navigation für eine ausgewählte Jagd ein.
-  /// Prüft, ob ein Briefing vorhanden ist und zeigt dieses ggf. an.
-  void _selectHunt(Hunt hunt) {
+  /// Startet die Navigation zu einer Jagd, entweder zum Briefing oder direkt zum Spiel.
+  void _navigateToGame(Hunt hunt) {
     // Prüft, ob ein Briefing-Text vorhanden und nicht leer ist.
     if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
-      // Wenn ja, navigiere zum neuen Briefing-Bildschirm.
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -57,7 +51,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
         _loadHunts();
       });
     } else {
-      // Wenn nicht, navigiere direkt zum Code-Eingabe-Bildschirm (wie bisher).
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -66,6 +59,45 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       ).then((_) {
         _loadHunts();
       });
+    }
+  }
+
+  /// Prüft den Fortschritt einer Jagd und fragt den Spieler ggf., ob er fortsetzen oder neu starten möchte.
+  void _selectHunt(Hunt hunt) async {
+    final hasProgress = hunt.clues.values.any((clue) => clue.hasBeenViewed);
+
+    if (hasProgress) {
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Mission fortsetzen?'),
+          content: const Text('Du hast bei dieser Jagd bereits Fortschritt erzielt. Möchtest du weiterspielen oder von vorne beginnen?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'continue'),
+              child: const Text('Fortsetzen'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'reset'),
+              child: const Text('Neu starten'),
+            ),
+          ],
+        ),
+      );
+
+      if (choice == 'reset') {
+        // HINWEIS: Du musst die Methode 'resetHuntProgress' noch zu deinem ClueService hinzufügen!
+        await _clueService.resetHuntProgress(hunt);
+        // Lade die Jagd neu, um den zurückgesetzten Zustand zu erhalten
+        final allHunts = await _clueService.loadHunts();
+        final freshHunt = allHunts.firstWhere((h) => h.name == hunt.name);
+        _navigateToGame(freshHunt);
+      } else if (choice == 'continue') {
+        _navigateToGame(hunt);
+      }
+    } else {
+      // Kein Fortschritt, direkt zur Jagd navigieren
+      _navigateToGame(hunt);
     }
   }
 

@@ -1,5 +1,3 @@
-// lib/core/services/clue_service.dart
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -9,7 +7,7 @@ import 'package:archive/archive_io.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../data/models/hunt.dart'; // KORRIGIERTER IMPORT
+import '../../data/models/hunt.dart';
 import '../../data/models/clue.dart';
 
 class ClueService {
@@ -44,6 +42,25 @@ class ClueService {
     print("💾 Alle Schnitzeljagden gespeichert.");
   }
 
+  // NEUE METHODE (v1.43): Setzt den Fortschritt für eine Jagd zurück.
+  /// Setzt den Fortschritt für eine bestimmte Jagd zurück, indem 'solved' und 'hasBeenViewed'
+  /// bei allen Hinweisen auf false gesetzt werden.
+  Future<void> resetHuntProgress(Hunt hunt) async {
+    final allHunts = await loadHunts();
+    final huntIndex = allHunts.indexWhere((h) => h.name == hunt.name);
+
+    if (huntIndex != -1) {
+      // Setze bei jedem Hinweis 'solved' und 'hasBeenViewed' zurück.
+      allHunts[huntIndex].clues.forEach((code, clue) {
+        clue.solved = false;
+        clue.hasBeenViewed = false;
+      });
+      await saveHunts(allHunts);
+      // ignore: avoid_print
+      print("🔄 Fortschritt für '${hunt.name}' zurückgesetzt.");
+    }
+  }
+
   Future<void> exportHunt(Hunt hunt, BuildContext context) async {
     try {
       final tempDir = await getTemporaryDirectory();
@@ -67,12 +84,14 @@ class ClueService {
             print("⚠️ Datei nicht gefunden, wird ignoriert: ${file.path}");
           }
         }
-
+        
+        // Erstelle eine neue Clue-Instanz mit zurückgesetztem Fortschritt
         updatedClues[entry.key] = Clue(
           code: clue.code,
-          solved: false,
+          solved: false, // Fortschritt zurücksetzen
+          hasBeenViewed: false, // Fortschritt zurücksetzen
           type: clue.type,
-          content: newContent,
+          content: newContent, // Aktualisierter Medienpfad
           description: clue.description,
           question: clue.question,
           answer: clue.answer,
@@ -80,6 +99,7 @@ class ClueService {
           hint1: clue.hint1,
           hint2: clue.hint2,
           rewardText: clue.rewardText,
+          isFinalClue: clue.isFinalClue,
         );
       }
       exportHunt.clues = updatedClues;
@@ -130,7 +150,7 @@ class ClueService {
       final importFile = File(result.files.single.path!);
       
       if (!importFile.path.toLowerCase().endsWith('.cluemaster')) {
-         throw Exception("Die ausgewählte Datei ist keine .cluemaster-Datei.");
+          throw Exception("Die ausgewählte Datei ist keine .cluemaster-Datei.");
       }
 
       final bytes = await importFile.readAsBytes();
@@ -193,7 +213,7 @@ class ClueService {
     } catch (e) {
       // ignore: avoid_print
       print("❌ Fehler beim Laden des Admin-Passworts: $e");
-      return 'admin12p3';
+      return 'admin123'; // Sicherer Standardwert
     }
   }
 

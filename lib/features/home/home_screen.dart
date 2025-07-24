@@ -38,13 +38,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final ClueService _clueService = ClueService();
   final SoundService _soundService = SoundService();
 
-  late Map<String, Clue> _currentClues;
+  late Hunt _currentHunt;
   late Map<String, String> _normalizedMap;
   bool _showError = false;
 
   @override
   void initState() {
     super.initState();
+    _currentHunt = widget.hunt;
     _initializeClues();
   }
 
@@ -73,9 +74,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   void _initializeClues() {
     setState(() {
-      _currentClues = widget.hunt.clues;
       _normalizedMap = {
-        for (var code in _currentClues.keys) code.toLowerCase(): code,
+        for (var code in _currentHunt.clues.keys) code.toLowerCase(): code,
       };
     });
   }
@@ -83,12 +83,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Future<void> _refreshHuntData() async {
     final allHunts = await _clueService.loadHunts();
     final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name,
-        orElse: () => widget.hunt);
+        orElse: () => _currentHunt);
     setState(() {
-      _currentClues = updatedHunt.clues;
-       _normalizedMap = {
-        for (var code in _currentClues.keys) code.toLowerCase(): code,
-      };
+      _currentHunt = updatedHunt;
+      _initializeClues();
     });
   }
 
@@ -102,14 +100,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (_normalizedMap.containsKey(norm)) {
       _soundService.playSound(SoundEffect.clueUnlocked);
       final originalCode = _normalizedMap[norm]!;
-      final clue = _currentClues[originalCode]!;
-      final currentHuntState = Hunt(name: widget.hunt.name, clues: _currentClues);
+      final clue = _currentHunt.clues[originalCode]!;
 
       if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (_) => ClueDetailScreen(hunt: currentHuntState, clue: clue)),
+            builder: (_) => ClueDetailScreen(hunt: _currentHunt, clue: clue)),
       );
       _codeController.clear();
       setState(() => _showError = false);
@@ -136,8 +133,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final totalClues = _currentClues.isNotEmpty ? _currentClues.length : 1;
-    final solvedClues = _currentClues.values.where((c) => c.solved).length;
+    // NEUE FORTSCHRITTSBERECHNUNG (v1.43)
+    final totalClues = _currentHunt.clues.length;
+    final viewedClues = _currentHunt.clues.values.where((c) => c.hasBeenViewed).length;
+    final double progress = totalClues > 0 ? viewedClues / totalClues : 0.0;
 
     final defaultPinTheme = PinTheme(
       width: 56,
@@ -160,17 +159,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     return Scaffold(
       appBar: AppBar(
-        title: AutoSizeText(widget.hunt.name, maxLines: 1),
+        title: AutoSizeText(_currentHunt.name, maxLines: 1),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'list') {
                 _soundService.playSound(SoundEffect.buttonClick);
-                final currentHuntState = Hunt(name: widget.hunt.name, clues: _currentClues);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => ClueListScreen(hunt: currentHuntState)),
+                      builder: (_) => ClueListScreen(hunt: _currentHunt)),
                 );
               } else if (value == 'admin') {
                 Navigator.push(
@@ -205,10 +203,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // --- NEUE FORTSCHRITTSANZEIGE (v1.43) ---
               Text(
-                'Station $solvedClues / $totalClues',
+                'Fortschritt: ${(progress * 100).toStringAsFixed(0)}%',
                 style: TextStyle(fontSize: 22, color: Colors.amber[200], letterSpacing: 1.5),
               ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey[800],
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                  minHeight: 6,
+                ),
+              ),
+              // --- ENDE NEUE ANZEIGE ---
               const SizedBox(height: 24),
               const Text('Missions-Code eingeben:', style: TextStyle(fontSize: 20)),
               const SizedBox(height: 24),
@@ -217,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 controller: _codeController,
                 focusNode: _codeFocusNode,
                 length: 6,
-                keyboardType: TextInputType.text, // <-- HIER IST DEINE KORREKTUR!
+                keyboardType: TextInputType.text,
                 inputFormatters: [
                   UpperCaseTextFormatter(),
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),

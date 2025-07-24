@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -10,7 +11,6 @@ import '../../core/services/clue_service.dart';
 import '../../core/services/sound_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
-import 'mission_success_screen.dart'; // <-- NEUER IMPORT
 
 class ClueDetailScreen extends StatefulWidget {
   final Hunt hunt;
@@ -39,6 +39,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     if (widget.clue.solved) {
       _isSolved = true;
     }
+    
+    // NEUE LOGIK (v1.43): Markiert den Hinweis beim ersten Öffnen als "gesehen".
+    if (!widget.clue.hasBeenViewed) {
+      widget.clue.hasBeenViewed = true;
+      _saveHuntProgress(); // Speichert diese Änderung sofort.
+    }
+
     // Startet die Einblend-Animation
     Timer(const Duration(milliseconds: 100), () {
       if (mounted) setState(() => _contentVisible = true);
@@ -53,6 +60,16 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     super.dispose();
   }
 
+  /// Speichert den aktuellen Zustand der Jagd.
+  Future<void> _saveHuntProgress() async {
+    final allHunts = await _clueService.loadHunts();
+    final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
+    if (huntIndex != -1) {
+      allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
+      await _clueService.saveHunts(allHunts);
+    }
+  }
+
   void _checkAnswer({String? userAnswer}) async {
     final correctAnswer = widget.clue.answer?.trim().toLowerCase();
     final providedAnswer =
@@ -61,26 +78,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     if (correctAnswer == providedAnswer) {
       Vibration.vibrate(duration: 100);
       widget.clue.solved = true;
-
-      // Speichere den Fortschritt
-      final allHunts = await _clueService.loadHunts();
-      final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
-      if (huntIndex != -1) {
-        allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
-        await _clueService.saveHunts(allHunts);
-      }
+      
+      await _saveHuntProgress(); // Speichert den "solved"-Status.
       if (!mounted) return;
 
-      // --- HIER IST DIE NEUE LOGIK ---
       if (widget.clue.isFinalClue) {
-        // Wenn es der finale Hinweis ist, navigiere zum Erfolgs-Bildschirm.
-        // Navigator.pushReplacement sorgt dafür, dass der Spieler nicht zurück kann.
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
       } else {
-        // Ansonsten zeige die normale Belohnung an.
         _soundService.playSound(SoundEffect.success);
         setState(() => _isSolved = true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -210,6 +214,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.greenAccent)),
             const SizedBox(height: 16),
+            // DEINE LOGIK: Zeigt den ursprünglichen Hinweis-Inhalt als Belohnung an.
             _buildMediaWidget(
               type: widget.clue.type,
               content: widget.clue.content,

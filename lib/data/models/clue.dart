@@ -7,6 +7,9 @@ class Clue {
   // ============================================================
   final String code;
   bool solved;
+  
+  // NEUES FELD (v1.43): Speichert, ob der Hinweis schon einmal angesehen wurde.
+  bool hasBeenViewed;
 
   // ============================================================
   // SECTION: HINWEIS (Was der Spieler immer sieht)
@@ -41,6 +44,7 @@ class Clue {
   Clue({
     required this.code,
     this.solved = false,
+    this.hasBeenViewed = false, // NEU: Standardwert ist false
     required this.type,
     required this.content,
     this.description,
@@ -72,6 +76,7 @@ class Clue {
     return Clue(
       code: code,
       solved: json['solved'] ?? false,
+      hasBeenViewed: json['hasBeenViewed'] ?? false, // NEU: Aus JSON lesen
       type: json['type'],
       content: json['content'],
       description: json['description'],
@@ -89,6 +94,7 @@ class Clue {
   Map<String, dynamic> toJson() {
     return {
       'solved': solved,
+      'hasBeenViewed': hasBeenViewed, // NEU: In JSON schreiben
       'type': type,
       'content': content,
       if (description != null) 'description': description,
