@@ -1,8 +1,5 @@
-// lib/features/admin/admin_editor_screen.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -46,6 +43,9 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _hint2Controller = TextEditingController();
   final _rewardTextController = TextEditingController();
 
+  // VEREINFACHT: Nur noch die Checkbox für das Finale
+  bool _isFinalClue = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,8 +55,10 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _type = clue.type;
       _contentController.text = clue.content;
       _descriptionController.text = clue.description ?? '';
+      _isRiddle = clue.isRiddle;
+      _isFinalClue = clue.isFinalClue; // Feld initialisieren
+
       if (clue.isRiddle) {
-        _isRiddle = true;
         _questionController.text = clue.question!;
         _answerController.text = clue.answer!;
         _hint1Controller.text = clue.hint1 ?? '';
@@ -74,6 +76,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
 
   @override
   void dispose() {
+    // Alle Controller entsorgen
     _codeController.dispose();
     _contentController.dispose();
     _descriptionController.dispose();
@@ -110,6 +113,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         hint1: _isRiddle && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
         hint2: _isRiddle && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
+        // VEREINFACHT: Nur noch das Flag speichern
+        isFinalClue: _isFinalClue,
       );
 
       final updatedMap = {clue.code: clue};
@@ -234,12 +239,35 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               const SizedBox(height: 8),
               TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
               const SizedBox(height: 16),
-              _buildSectionHeader('Belohnung nach gelöstem Rätsel'),
+              
+              const Divider(height: 40, thickness: 1),
+              _buildSectionHeader('Belohnung / Finale'),
+              CheckboxListTile(
+                title: const Text('Dies ist der finale Hinweis der Mission'),
+                subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
+                value: _isFinalClue,
+                onChanged: (value) {
+                  setState(() => _isFinalClue = value ?? false);
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _isFinalClue 
+                  ? 'Die finale Botschaft wird durch den "Hinweis" oben (Text, Bild, Audio, Video) und den "Finalen Erfolgs-Text" unten definiert.'
+                  : 'Die Belohnung wird durch den "Hinweis" oben und den "Belohnungs-Text" unten definiert.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _rewardTextController,
-                decoration: const InputDecoration(labelText: 'Belohnungs-Text', hintText: 'z.B. Gut gemacht! Der nächste Code ist...', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+                decoration: InputDecoration(
+                  labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text', 
+                  hintText: 'z.B. Schatz gefunden! Der Code für die Truhe ist 1234', 
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
+                ),
                 maxLines: 3,
-                validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Belohnungstext erforderlich' : null,
+                validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Text erforderlich' : null,
               ),
             ],
           ],

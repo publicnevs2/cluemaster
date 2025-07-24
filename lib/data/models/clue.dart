@@ -21,16 +21,19 @@ class Clue {
   final String? question; // Die Frage. Wenn dieses Feld leer ist, ist es kein Rätsel.
   final String? answer;   // Die korrekte Antwort.
   final List<String>? options; // Antwortmöglichkeiten für Multiple-Choice.
-
-  // NEU: Felder für die gestaffelte Hilfe
-  final String? hint1; // Hilfe nach 3 falschen Versuchen.
-  final String? hint2; // Hilfe nach 6 falschen Versuchen.
+  final String? hint1; // Hilfe nach 2 falschen Versuchen.
+  final String? hint2; // Hilfe nach 4 falschen Versuchen.
 
   // ============================================================
   // SECTION: BELOHNUNG (Was nach dem Lösen eines Rätsels angezeigt wird)
   // ============================================================
-  // NEU: Ein einfacher Text, der als Belohnung dient.
   final String? rewardText;
+
+  // ============================================================
+  // SECTION: FINALE (v1.42)
+  // ============================================================
+  /// Markiert diesen Hinweis als den letzten der Mission.
+  final bool isFinalClue;
 
   // ============================================================
   // SECTION: Konstruktor
@@ -47,6 +50,7 @@ class Clue {
     this.hint1,
     this.hint2,
     this.rewardText,
+    this.isFinalClue = false,
   });
 
   // ============================================================
@@ -77,6 +81,7 @@ class Clue {
       hint1: json['hint1'],
       hint2: json['hint2'],
       rewardText: json['rewardText'],
+      isFinalClue: json['isFinalClue'] ?? false,
     );
   }
 
@@ -93,6 +98,7 @@ class Clue {
       if (hint1 != null) 'hint1': hint1,
       if (hint2 != null) 'hint2': hint2,
       if (rewardText != null) 'rewardText': rewardText,
+      'isFinalClue': isFinalClue,
     };
   }
 }

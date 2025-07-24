@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import für InputFormatter hinzugefügt
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import 'package:vibration/vibration.dart';
@@ -10,6 +10,7 @@ import '../../core/services/clue_service.dart';
 import '../../core/services/sound_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
+import 'mission_success_screen.dart'; // <-- NEUER IMPORT
 
 class ClueDetailScreen extends StatefulWidget {
   final Hunt hunt;
@@ -59,26 +60,35 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
     if (correctAnswer == providedAnswer) {
       Vibration.vibrate(duration: 100);
-      _soundService.playSound(SoundEffect.success);
-      setState(() {
-        _isSolved = true;
-        widget.clue.solved = true;
-      });
+      widget.clue.solved = true;
 
+      // Speichere den Fortschritt
       final allHunts = await _clueService.loadHunts();
       final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
-
       if (huntIndex != -1) {
         allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
         await _clueService.saveHunts(allHunts);
       }
-
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Richtig! Belohnung freigeschaltet!'),
-            backgroundColor: Colors.green),
-      );
+
+      // --- HIER IST DIE NEUE LOGIK ---
+      if (widget.clue.isFinalClue) {
+        // Wenn es der finale Hinweis ist, navigiere zum Erfolgs-Bildschirm.
+        // Navigator.pushReplacement sorgt dafür, dass der Spieler nicht zurück kann.
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)),
+        );
+      } else {
+        // Ansonsten zeige die normale Belohnung an.
+        _soundService.playSound(SoundEffect.success);
+        setState(() => _isSolved = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Richtig! Belohnung freigeschaltet!'),
+              backgroundColor: Colors.green),
+        );
+      }
     } else {
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       _soundService.playSound(SoundEffect.failure);
@@ -90,9 +100,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       Timer(const Duration(seconds: 3), () {
         if (mounted) {
           _answerController.clear();
-          setState(() {
-            _errorMessage = null;
-          });
+          setState(() => _errorMessage = null);
         }
       });
 
@@ -202,10 +210,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.greenAccent)),
             const SizedBox(height: 16),
-            Text(
-              widget.clue.rewardText ?? 'Sehr gut gemacht!',
-              style: const TextStyle(fontSize: 18, color: Colors.white),
-              textAlign: TextAlign.center,
+            _buildMediaWidget(
+              type: widget.clue.type,
+              content: widget.clue.content,
+              description: widget.clue.rewardText,
             ),
           ],
         ),
@@ -234,7 +242,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         Expanded(
           child: TextField(
             controller: _answerController,
-            keyboardType: TextInputType.text, // Sorgt für die normale Text-Tastatur
+            keyboardType: TextInputType.text,
             textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(
                 hintText: 'Antwort...'),
@@ -270,41 +278,41 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       ),
     );
   }
+}
 
-  Widget _buildMediaWidget(
-      {required String type, required String content, String? description}) {
-    Widget mediaWidget;
-    switch (type) {
-      case 'text':
-        mediaWidget = Text(content,
-            style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-        break;
-      case 'image':
-        mediaWidget = content.startsWith('file://')
-            ? Image.file(File(content.replaceFirst('file://', '')))
-            : Image.asset(content);
-        break;
-      case 'audio':
-        return AudioPlayerWidget(path: content, description: description);
-      case 'video':
-        return VideoPlayerWidget(path: content, description: description);
-      default:
-        mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
-    }
-
-    return Column(
-      children: [
-        mediaWidget,
-        if (description != null && description.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(description,
-              style:
-                  const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-              textAlign: TextAlign.center),
-        ],
-      ],
-    );
+Widget _buildMediaWidget(
+    {required String type, required String content, String? description}) {
+  Widget mediaWidget;
+  switch (type) {
+    case 'text':
+      mediaWidget = Text(content,
+          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+      break;
+    case 'image':
+      mediaWidget = content.startsWith('file://')
+          ? Image.file(File(content.replaceFirst('file://', '')))
+          : Image.asset(content);
+      break;
+    case 'audio':
+      return AudioPlayerWidget(path: content, description: description);
+    case 'video':
+      return VideoPlayerWidget(path: content, description: description);
+    default:
+      mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
   }
+
+  return Column(
+    children: [
+      mediaWidget,
+      if (description != null && description.isNotEmpty) ...[
+        const SizedBox(height: 12),
+        Text(description,
+            style:
+                const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            textAlign: TextAlign.center),
+      ],
+    ],
+  );
 }
 
 class AudioPlayerWidget extends StatefulWidget {

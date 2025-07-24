@@ -32,7 +32,8 @@
     
       # Paket für den Import
       file_picker: ^10.2.0
-    
+      
+      confetti: ^0.7.0 # <-- FÜGE DIESE ZEILE HINZU
     
     dev_dependencies:
       flutter_test:
