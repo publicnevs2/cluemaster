@@ -12,7 +12,7 @@ class Hunt {
   // ============================================================
   // SECTION: Eigenschaften
   // ============================================================
-  
+
   /// Der Name der Schnitzeljagd, z.B. "Kindergeburtstag Maja".
   /// Dient als einzigartiger Identifikator.
   final String name;
@@ -21,12 +21,21 @@ class Hunt {
   /// Der Key ist der Code des Hinweises (z.B. "START"), der Value das Clue-Objekt.
   Map<String, Clue> clues;
 
+  // NEUE FELDER FÜR DAS BRIEFING
+  /// Optionaler Einleitungstext für die Mission.
+  final String? briefingText;
+
+  /// Optionaler Pfad zu einem Bild für das Missions-Briefing.
+  final String? briefingImageUrl;
+
   // ============================================================
   // SECTION: Konstruktor
   // ============================================================
   Hunt({
     required this.name,
     this.clues = const {}, // Standardmäßig eine leere Map
+    this.briefingText,
+    this.briefingImageUrl,
   });
 
   // ============================================================
@@ -44,6 +53,9 @@ class Hunt {
     return Hunt(
       name: json['name'],
       clues: cluesMap,
+      // NEUE FELDER AUS JSON LESEN
+      briefingText: json['briefingText'] as String?,
+      briefingImageUrl: json['briefingImageUrl'] as String?,
     );
   }
 
@@ -57,6 +69,9 @@ class Hunt {
     return {
       'name': name,
       'clues': cluesJson,
+      // NEUE FELDER IN JSON SCHREIBEN
+      'briefingText': briefingText,
+      'briefingImageUrl': briefingImageUrl,
     };
   }
 }

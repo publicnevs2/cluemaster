@@ -1,11 +1,10 @@
-// lib/features/admin/admin_hunt_list_screen.dart
-
-import 'package:auto_size_text/auto_size_text.dart'; // <-- NEUER IMPORT
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_change_password_screen.dart';
+import 'admin_hunt_settings_screen.dart'; // <-- NEUER IMPORT
 
 class AdminHuntListScreen extends StatefulWidget {
   const AdminHuntListScreen({super.key});
@@ -31,53 +30,30 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
     }
   }
 
-  Future<void> _createNewHunt() async {
-    final huntNameController = TextEditingController();
-    final newHuntName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Neue Schnitzeljagd erstellen'),
-        content: TextField(
-          controller: huntNameController,
-          decoration: const InputDecoration(hintText: "Name der Jagd"),
-          autofocus: true,
+  // --- GEÄNDERT: Navigiert zum neuen Einstellungs-Bildschirm ---
+  Future<void> _navigateToHuntSettings(Hunt? hunt) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminHuntSettingsScreen(
+          hunt: hunt,
+          // Wir übergeben die Liste der existierenden Namen, um Duplikate zu vermeiden
+          existingHuntNames: _hunts
+              .where((h) => h.name != hunt?.name)
+              .map((h) => h.name)
+              .toList(),
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Abbrechen')),
-          TextButton(
-            onPressed: () {
-              if (huntNameController.text.trim().isNotEmpty) {
-                Navigator.pop(context, huntNameController.text.trim());
-              }
-            },
-            child: const Text('Erstellen'),
-          ),
-        ],
       ),
     );
 
-    if (newHuntName != null) {
-      if (_hunts
-          .any((hunt) => hunt.name.toLowerCase() == newHuntName.toLowerCase())) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Eine Jagd mit diesem Namen existiert bereits.'),
-              backgroundColor: Colors.red),
-        );
-        return;
-      }
-
-      final newHunt = Hunt(name: newHuntName, clues: {});
-      _hunts.add(newHunt);
-      await _clueService.saveHunts(_hunts);
+    // Wenn der Einstellungs-Bildschirm mit "true" zurückkehrt, laden wir die Liste neu.
+    if (result == true) {
       _loadHunts();
     }
   }
 
-  void _editHunt(Hunt hunt) {
+  // Navigiert zum Dashboard, um die Stationen (Clues) zu bearbeiten
+  void _navigateToDashboard(Hunt hunt) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -166,7 +142,6 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // *** HIER IST DIE ÄNDERUNG ***
         title: const AutoSizeText(
           'Meine Schnitzeljagden',
           maxLines: 1,
@@ -210,10 +185,16 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
                         tooltip: 'Jagd teilen/exportieren',
                         onPressed: () => _exportHuntWithFeedback(hunt),
                       ),
+                      // --- NEUER BUTTON für die Jagd-Einstellungen ---
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        tooltip: 'Jagd-Einstellungen (Name, Briefing)',
+                        onPressed: () => _navigateToHuntSettings(hunt),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.edit),
                         tooltip: 'Stationen bearbeiten',
-                        onPressed: () => _editHunt(hunt),
+                        onPressed: () => _navigateToDashboard(hunt),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
@@ -222,12 +203,13 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
                       ),
                     ],
                   ),
-                  onTap: () => _editHunt(hunt),
+                  onTap: () => _navigateToDashboard(hunt),
                 );
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _createNewHunt,
+        // --- GEÄNDERT: Ruft die neue Navigationsfunktion auf ---
+        onPressed: () => _navigateToHuntSettings(null),
         label: const Text('Neue Jagd'),
         icon: const Icon(Icons.add),
       ),

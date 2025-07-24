@@ -1,4 +1,4 @@
-// lib/features/home/hunt_selection_screen.dart
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +6,11 @@ import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
+import 'briefing_screen.dart';
+
+// FEATURE: Missions-Briefing (v1.41)
+// Dieser Screen zeigt alle verfügbaren Schnitzeljagden an und leitet den Spieler
+// entweder zu einem optionalen Briefing oder direkt zum Spielstart.
 
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
@@ -37,16 +42,31 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
+  /// Leitet die Navigation für eine ausgewählte Jagd ein.
+  /// Prüft, ob ein Briefing vorhanden ist und zeigt dieses ggf. an.
   void _selectHunt(Hunt hunt) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HomeScreen(hunt: hunt),
-      ),
-    ).then((_) {
-      // Lädt die Daten neu, wenn man von einem Spiel zurückkehrt
-      _loadHunts();
-    });
+    // Prüft, ob ein Briefing-Text vorhanden und nicht leer ist.
+    if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
+      // Wenn ja, navigiere zum neuen Briefing-Bildschirm.
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BriefingScreen(hunt: hunt),
+        ),
+      ).then((_) {
+        _loadHunts();
+      });
+    } else {
+      // Wenn nicht, navigiere direkt zum Code-Eingabe-Bildschirm (wie bisher).
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(hunt: hunt),
+        ),
+      ).then((_) {
+        _loadHunts();
+      });
+    }
   }
 
   Future<void> _importHunt() async {
@@ -78,7 +98,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       context,
       MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
     ).then((_) {
-      // Lädt die Daten neu, wenn man vom Admin-Bereich zurückkehrt
       _loadHunts();
     });
   }
