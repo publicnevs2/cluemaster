@@ -39,27 +39,23 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
   }
 
   /// Startet die Navigation zu einer Jagd, entweder zum Briefing oder direkt zum Spiel.
-  void _navigateToGame(Hunt hunt) {
-    // Prüft, ob ein Briefing-Text vorhanden und nicht leer ist.
-    if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BriefingScreen(hunt: hunt),
-        ),
-      ).then((_) {
-        _loadHunts();
-      });
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(hunt: hunt),
-        ),
-      ).then((_) {
-        _loadHunts();
-      });
-    }
+  void _navigateToGame(Hunt hunt) async {
+    // Navigiere zum Spiel (Briefing oder Home)
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) {
+          if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
+            return BriefingScreen(hunt: hunt);
+          } else {
+            return HomeScreen(hunt: hunt);
+          }
+        },
+      ),
+    );
+    
+    // Nach der Rückkehr vom Spiel, lade die Jagden neu, um den Fortschritt zu aktualisieren.
+    _loadHunts();
   }
 
   /// Prüft den Fortschritt einer Jagd und fragt den Spieler ggf., ob er fortsetzen oder neu starten möchte.
@@ -86,9 +82,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       );
 
       if (choice == 'reset') {
-        // HINWEIS: Du musst die Methode 'resetHuntProgress' noch zu deinem ClueService hinzufügen!
         await _clueService.resetHuntProgress(hunt);
-        // Lade die Jagd neu, um den zurückgesetzten Zustand zu erhalten
         final allHunts = await _clueService.loadHunts();
         final freshHunt = allHunts.firstWhere((h) => h.name == hunt.name);
         _navigateToGame(freshHunt);
@@ -96,7 +90,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
         _navigateToGame(hunt);
       }
     } else {
-      // Kein Fortschritt, direkt zur Jagd navigieren
       _navigateToGame(hunt);
     }
   }
@@ -125,13 +118,19 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
-  void _navigateToAdmin() {
-    Navigator.push(
+  // --- KORRIGIERTE LOGIK FÜR AUTO-UPDATE ---
+  void _navigateToAdmin() async {
+    // Navigiere zum Admin-Bereich und warte, bis der Nutzer zurückkehrt.
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-    ).then((_) {
+    );
+
+    // Sobald der Nutzer zurückkehrt (nachdem der Admin-Bildschirm geschlossen wurde),
+    // wird diese Zeile ausgeführt. Wir laden die Jagden neu, um alle Änderungen anzuzeigen.
+    if (mounted) {
       _loadHunts();
-    });
+    }
   }
 
   @override

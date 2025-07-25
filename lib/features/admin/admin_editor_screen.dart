@@ -75,7 +75,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       if (clue.isRiddle) {
         _questionController.text = clue.question!;
         _rewardTextController.text = clue.rewardText ?? '';
-        _riddleType = clue.riddleType; // Wichtig: Rätseltyp setzen
+        _riddleType = clue.riddleType;
 
         if (clue.riddleType == RiddleType.GPS) {
             _latitudeController.text = clue.latitude?.toString() ?? '';
@@ -128,12 +128,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         _option4Controller.text.trim(),
       ].where((o) => o.isNotEmpty).toList();
 
-      // RiddleType basierend auf Eingaben bestimmen
-      RiddleType finalRiddleType = _riddleType;
-      if (_isRiddle && _riddleType == RiddleType.TEXT && options.isNotEmpty) {
-        finalRiddleType = RiddleType.MULTIPLE_CHOICE;
-      }
-
       final clue = Clue(
         code: _codeController.text.trim(),
         type: _type,
@@ -141,19 +135,18 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
         isFinalClue: _isFinalClue,
         
-        // Rätsel-Daten basierend auf _isRiddle Flag
         question: _isRiddle ? _questionController.text.trim() : null,
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
         
-        // Daten basierend auf dem Rätsel-Typ speichern
-        riddleType: _isRiddle ? finalRiddleType : RiddleType.TEXT,
-        answer: _isRiddle && finalRiddleType != RiddleType.GPS ? _answerController.text.trim() : null,
-        options: _isRiddle && finalRiddleType == RiddleType.MULTIPLE_CHOICE ? options : null,
-        hint1: _isRiddle && finalRiddleType != RiddleType.GPS && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
-        hint2: _isRiddle && finalRiddleType != RiddleType.GPS && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
-        latitude: _isRiddle && finalRiddleType == RiddleType.GPS ? double.tryParse(_latitudeController.text) : null,
-        longitude: _isRiddle && finalRiddleType == RiddleType.GPS ? double.tryParse(_longitudeController.text) : null,
-        radius: _isRiddle && finalRiddleType == RiddleType.GPS ? double.tryParse(_radiusController.text) : null,
+        // KORRIGIERTE LOGIK: Speichert den vom Admin ausgewählten Rätseltyp
+        riddleType: _isRiddle ? _riddleType : RiddleType.TEXT,
+        answer: _isRiddle && _riddleType != RiddleType.GPS ? _answerController.text.trim() : null,
+        options: _isRiddle && _riddleType == RiddleType.MULTIPLE_CHOICE ? options : null,
+        hint1: _isRiddle && _riddleType != RiddleType.GPS && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
+        hint2: _isRiddle && _riddleType != RiddleType.GPS && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
+        latitude: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_latitudeController.text) : null,
+        longitude: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_longitudeController.text) : null,
+        radius: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_radiusController.text) : null,
       );
 
       final updatedMap = {clue.code: clue};
@@ -309,7 +302,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           ),
           const SizedBox(height: 16),
 
-          // --- Bedingte Anzeige der Rätsel-Felder ---
           if (_riddleType == RiddleType.GPS)
             _buildGpsRiddleFields()
           else
@@ -335,12 +327,18 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           TextFormField(
             controller: _rewardTextController,
             decoration: InputDecoration(
-              labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text', 
+              labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text (optional)', 
               hintText: 'z.B. Der nächste Code lautet B4...', 
               contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
             ),
             maxLines: 3,
-            validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Text erforderlich' : null,
+            // KORRIGIERTE VALIDIERUNG
+            validator: (v) {
+              if (_isRiddle && _isFinalClue && (v == null || v.isEmpty)) {
+                return 'Finaler Text ist für den letzten Hinweis erforderlich.';
+              }
+              return null;
+            },
           ),
         ],
       ),
@@ -356,7 +354,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           validator: (v) => (_riddleType != RiddleType.GPS && _isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
         ),
         const SizedBox(height: 16),
-        _buildMultipleChoiceFields(),
+        if (_riddleType == RiddleType.MULTIPLE_CHOICE)
+          _buildMultipleChoiceFields(),
         const SizedBox(height: 16),
         _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
         TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
@@ -454,7 +453,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   Widget _buildMultipleChoiceFields() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 8),
-      Text('Multiple-Choice Optionen (optional, macht aus Text-Antwort automatisch Multiple-Choice)', style: Theme.of(context).textTheme.bodySmall),
+      Text('Multiple-Choice Optionen', style: Theme.of(context).textTheme.bodySmall),
       const SizedBox(height: 8),
       TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
       const SizedBox(height: 8),
