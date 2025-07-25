@@ -118,7 +118,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
-  // --- KORRIGIERTE LOGIK FÜR AUTO-UPDATE ---
+  // --- KORRIGIERTE LOGIK FÜR AUTO-UPDATE --- 
   void _navigateToAdmin() async {
     // Navigiere zum Admin-Bereich und warte, bis der Nutzer zurückkehrt.
     await Navigator.push(
