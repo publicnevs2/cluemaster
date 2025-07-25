@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import 'clue_detail_screen.dart';
-import 'gps_navigation_screen.dart'; // NEU: Import für den GPS-Bildschirm
 
 class ClueListScreen extends StatefulWidget {
   final Hunt hunt;
@@ -31,13 +30,16 @@ class _ClueListScreenState extends State<ClueListScreen> {
                 final code = viewedEntries[index].key;
                 final clue = viewedEntries[index].value;
 
-                // --- NEUE LOGIK: Icon basierend auf dem Hinweis-Typ auswählen ---
+                // --- NEUE LOGIK (Konzept 2.0): Icon basierend auf dem Rätsel-Typ ---
                 IconData leadingIcon;
-                if (clue.isGpsClue) {
+                if (clue.isGpsRiddle) {
+                  // Wenn es ein GPS-Rätsel ist, zeige ein Standort-Icon
                   leadingIcon = Icons.location_on_outlined;
                 } else if (clue.isRiddle) {
+                  // Ansonsten das normale Rätsel-Icon
                   leadingIcon = Icons.question_answer_outlined;
                 } else {
+                  // Oder das "gesehen"-Icon für reine Hinweise
                   leadingIcon = Icons.visibility_outlined;
                 }
 
@@ -46,7 +48,7 @@ class _ClueListScreenState extends State<ClueListScreen> {
                     leadingIcon,
                     color: clue.solved ? Colors.greenAccent : Colors.white,
                   ),
-                  title: Text(clue.isGpsClue ? 'GPS-Ziel: $code' : 'Code: $code'),
+                  title: Text('Code: $code'),
                   subtitle: Text(
                     clue.question ?? clue.description ?? clue.content,
                     maxLines: 1,
@@ -56,24 +58,15 @@ class _ClueListScreenState extends State<ClueListScreen> {
                       ? const Icon(Icons.check_circle, color: Colors.greenAccent)
                       : (clue.isRiddle ? const Icon(Icons.lock_open_outlined) : null),
                   onTap: () {
-                    // --- NEUE LOGIK: Zum richtigen Bildschirm navigieren ---
-                    if (clue.isGpsClue) {
-                      // Wenn es ein GPS-Hinweis ist, öffne den Navigationsbildschirm
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => GpsNavigationScreen(hunt: widget.hunt, clue: clue),
-                        ),
-                      );
-                    } else {
-                      // Ansonsten öffne den normalen Detailbildschirm
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ClueDetailScreen(hunt: widget.hunt, clue: clue),
-                        ),
-                      );
-                    }
+                    // --- VEREINFACHTE LOGIK (Konzept 2.0) ---
+                    // Navigiere IMMER zum Detailbildschirm.
+                    // Dieser entscheidet dann, was zu tun ist.
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ClueDetailScreen(hunt: widget.hunt, clue: clue),
+                      ),
+                    );
                   },
                 );
               },

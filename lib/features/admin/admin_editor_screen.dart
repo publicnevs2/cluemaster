@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-import 'package:geolocator/geolocator.dart'; // NEU: Import für GPS
-import 'package:permission_handler/permission_handler.dart'; // NEU: Import für Berechtigungen
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../data/models/clue.dart';
 
@@ -33,12 +33,16 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
 
-  // --- Bestehende Controller ---
+  // --- Standard-Controller ---
   final _codeController = TextEditingController();
   String _type = 'text';
   final _contentController = TextEditingController();
   final _descriptionController = TextEditingController();
+  bool _isFinalClue = false;
+
+  // --- Rätsel-Controller ---
   bool _isRiddle = false;
+  RiddleType _riddleType = RiddleType.TEXT;
   final _questionController = TextEditingController();
   final _answerController = TextEditingController();
   final _option1Controller = TextEditingController();
@@ -48,10 +52,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _hint1Controller = TextEditingController();
   final _hint2Controller = TextEditingController();
   final _rewardTextController = TextEditingController();
-  bool _isFinalClue = false;
 
-  // --- NEUE Controller und Variablen für GPS ---
-  UnlockMethod _unlockMethod = UnlockMethod.CODE;
+  // --- GPS-Controller ---
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _radiusController = TextEditingController();
@@ -69,26 +71,27 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _descriptionController.text = clue.description ?? '';
       _isRiddle = clue.isRiddle;
       _isFinalClue = clue.isFinalClue;
-      
-      // NEU: GPS-Felder initialisieren
-      _unlockMethod = clue.unlockMethod;
-      if (clue.isGpsClue) {
-        _latitudeController.text = clue.latitude.toString();
-        _longitudeController.text = clue.longitude.toString();
-        _radiusController.text = clue.radius.toString();
-      }
 
       if (clue.isRiddle) {
         _questionController.text = clue.question!;
-        _answerController.text = clue.answer!;
-        _hint1Controller.text = clue.hint1 ?? '';
-        _hint2Controller.text = clue.hint2 ?? '';
         _rewardTextController.text = clue.rewardText ?? '';
-        if (clue.isMultipleChoice) {
-          _option1Controller.text = clue.options![0];
-          _option2Controller.text = clue.options!.length > 1 ? clue.options![1] : '';
-          _option3Controller.text = clue.options!.length > 2 ? clue.options![2] : '';
-          _option4Controller.text = clue.options!.length > 3 ? clue.options![3] : '';
+        _riddleType = clue.riddleType; // Wichtig: Rätseltyp setzen
+
+        if (clue.riddleType == RiddleType.GPS) {
+            _latitudeController.text = clue.latitude?.toString() ?? '';
+            _longitudeController.text = clue.longitude?.toString() ?? '';
+            _radiusController.text = clue.radius?.toString() ?? '';
+        } else {
+            _answerController.text = clue.answer ?? '';
+            _hint1Controller.text = clue.hint1 ?? '';
+            _hint2Controller.text = clue.hint2 ?? '';
+            if (clue.isMultipleChoice) {
+              _riddleType = RiddleType.MULTIPLE_CHOICE;
+              _option1Controller.text = clue.options![0];
+              _option2Controller.text = clue.options!.length > 1 ? clue.options![1] : '';
+              _option3Controller.text = clue.options!.length > 2 ? clue.options![2] : '';
+              _option4Controller.text = clue.options!.length > 3 ? clue.options![3] : '';
+            }
         }
       }
     }
@@ -110,7 +113,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _hint2Controller.dispose();
     _rewardTextController.dispose();
     _audioRecorder.dispose();
-    // NEU: GPS-Controller entsorgen
     _latitudeController.dispose();
     _longitudeController.dispose();
     _radiusController.dispose();
@@ -126,23 +128,32 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         _option4Controller.text.trim(),
       ].where((o) => o.isNotEmpty).toList();
 
+      // RiddleType basierend auf Eingaben bestimmen
+      RiddleType finalRiddleType = _riddleType;
+      if (_isRiddle && _riddleType == RiddleType.TEXT && options.isNotEmpty) {
+        finalRiddleType = RiddleType.MULTIPLE_CHOICE;
+      }
+
       final clue = Clue(
         code: _codeController.text.trim(),
         type: _type,
         content: _contentController.text.trim(),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-        question: _isRiddle ? _questionController.text.trim() : null,
-        answer: _isRiddle ? _answerController.text.trim() : null,
-        options: _isRiddle && options.isNotEmpty ? options : null,
-        hint1: _isRiddle && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
-        hint2: _isRiddle && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
-        rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
         isFinalClue: _isFinalClue,
-        // NEU: GPS-Daten speichern
-        unlockMethod: _unlockMethod,
-        latitude: _unlockMethod == UnlockMethod.GPS ? double.tryParse(_latitudeController.text) : null,
-        longitude: _unlockMethod == UnlockMethod.GPS ? double.tryParse(_longitudeController.text) : null,
-        radius: _unlockMethod == UnlockMethod.GPS ? double.tryParse(_radiusController.text) : null,
+        
+        // Rätsel-Daten basierend auf _isRiddle Flag
+        question: _isRiddle ? _questionController.text.trim() : null,
+        rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
+        
+        // Daten basierend auf dem Rätsel-Typ speichern
+        riddleType: _isRiddle ? finalRiddleType : RiddleType.TEXT,
+        answer: _isRiddle && finalRiddleType != RiddleType.GPS ? _answerController.text.trim() : null,
+        options: _isRiddle && finalRiddleType == RiddleType.MULTIPLE_CHOICE ? options : null,
+        hint1: _isRiddle && finalRiddleType != RiddleType.GPS && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
+        hint2: _isRiddle && finalRiddleType != RiddleType.GPS && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
+        latitude: _isRiddle && finalRiddleType == RiddleType.GPS ? double.tryParse(_latitudeController.text) : null,
+        longitude: _isRiddle && finalRiddleType == RiddleType.GPS ? double.tryParse(_longitudeController.text) : null,
+        radius: _isRiddle && finalRiddleType == RiddleType.GPS ? double.tryParse(_radiusController.text) : null,
       );
 
       final updatedMap = {clue.code: clue};
@@ -151,24 +162,16 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     }
   }
   
-  // --- NEUE METHODE: Aktuellen Standort abrufen ---
   Future<void> _getCurrentLocation() async {
     setState(() => _isFetchingLocation = true);
-
     try {
-      // 1. Berechtigung prüfen
       var permission = await Permission.location.request();
       if (permission.isGranted) {
-        // 2. Standort abrufen
-        Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high);
-        
-        // 3. Controller aktualisieren
+        Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
         setState(() {
           _latitudeController.text = position.latitude.toString();
           _longitudeController.text = position.longitude.toString();
         });
-
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Standort-Berechtigung wurde verweigert.'),
@@ -185,7 +188,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     }
   }
 
-
   Future<void> _pickMedia(ImageSource source) async {
     XFile? mediaFile;
     if (_type == 'image') {
@@ -193,7 +195,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     } else if (_type == 'video') {
       mediaFile = await _imagePicker.pickVideo(source: source);
     }
-    
     if (mediaFile != null) {
       await _saveMediaFile(mediaFile.path, mediaFile.name, _contentController);
     }
@@ -237,28 +238,20 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildSectionHeader('Freischalt-Methode'),
-            DropdownButtonFormField<UnlockMethod>(
-              value: _unlockMethod,
-              items: const [
-                DropdownMenuItem(value: UnlockMethod.CODE, child: Text('Code / QR-Code')),
-                DropdownMenuItem(value: UnlockMethod.GPS, child: Text('GPS-Standort')),
-              ],
-              onChanged: (value) => setState(() => _unlockMethod = value!),
-              decoration: const InputDecoration(labelText: 'Wie wird die Station freigeschaltet?', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+            _buildSectionHeader('Basis-Informationen'),
+            TextFormField(
+              controller: _codeController,
+              decoration: const InputDecoration(labelText: 'Eindeutiger Code der Station', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              validator: (value) {
+                final code = value?.trim() ?? '';
+                if (code.isEmpty) return 'Der Code ist ein Pflichtfeld.';
+                if (widget.codeToEdit == null && widget.existingCodes.contains(code)) return 'Dieser Code existiert bereits.';
+                if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) return 'Dieser Code existiert bereits.';
+                return null;
+              },
             ),
-
             const Divider(height: 40, thickness: 1),
-
-            // --- Bedingte Anzeige der Felder ---
-            if (_unlockMethod == UnlockMethod.CODE)
-              _buildCodeSection()
-            else
-              _buildGpsSection(),
-
-            const Divider(height: 40, thickness: 1),
-            
-            _buildSectionHeader('Stations-Inhalt (wird nach Freischaltung angezeigt)'),
+            _buildSectionHeader('Stations-Inhalt (wird nach Code-Eingabe angezeigt)'),
             DropdownButtonFormField<String>(
               value: _type,
               items: const [
@@ -279,113 +272,115 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             const Divider(height: 40, thickness: 1),
             CheckboxListTile(
               title: const Text('Optionales Rätsel hinzufügen'),
-              subtitle: const Text('Wenn aktiviert, muss der Spieler erst eine Frage beantworten.'),
+              subtitle: const Text('Der Spieler muss nach dem Inhalt eine Aufgabe lösen.'),
               value: _isRiddle,
               onChanged: (value) => setState(() => _isRiddle = value ?? false),
               controlAffinity: ListTileControlAffinity.leading,
             ),
-            if (_isRiddle) ...[
-              _buildSectionHeader('Rätsel-Details'),
-              TextFormField(
-                controller: _questionController,
-                decoration: const InputDecoration(labelText: 'Frage zum Hinweis', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-                validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Frage erforderlich' : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _answerController,
-                decoration: const InputDecoration(labelText: 'Korrekte Antwort', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-                validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildMultipleChoiceFields(),
-              const SizedBox(height: 16),
-              _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
-              TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
-              const SizedBox(height: 8),
-              TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
-              const SizedBox(height: 16),
-              
-              const Divider(height: 40, thickness: 1),
-              _buildSectionHeader('Belohnung / Finale'),
-              CheckboxListTile(
-                title: const Text('Dies ist der finale Hinweis der Mission'),
-                subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
-                value: _isFinalClue,
-                onChanged: (value) {
-                  setState(() => _isFinalClue = value ?? false);
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _isFinalClue 
-                  ? 'Die finale Botschaft wird durch den "Stations-Inhalt" oben und den "Finalen Erfolgs-Text" unten definiert.'
-                  : 'Die Belohnung wird durch den "Stations-Inhalt" oben und den "Belohnungs-Text" unten definiert.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _rewardTextController,
-                decoration: InputDecoration(
-                  labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text', 
-                  hintText: 'z.B. Schatz gefunden! Der Code für die Truhe ist 1234', 
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
-                ),
-                maxLines: 3,
-                validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Text erforderlich' : null,
-              ),
-            ],
+            if (_isRiddle) _buildRiddleSection(),
           ],
         ),
       ),
     );
   }
 
-  // --- NEUE WIDGETS für die Sektionen ---
-  Widget _buildCodeSection() {
+  Widget _buildRiddleSection() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('Rätsel-Details'),
+          TextFormField(
+            controller: _questionController,
+            decoration: const InputDecoration(labelText: 'Aufgabenstellung / Frage', hintText: 'z.B. Finde den steinernen Wächter...', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+            validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Aufgabenstellung erforderlich' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<RiddleType>(
+            value: _riddleType,
+            items: const [
+              DropdownMenuItem(value: RiddleType.TEXT, child: Text('Text-Antwort')),
+              DropdownMenuItem(value: RiddleType.MULTIPLE_CHOICE, child: Text('Multiple-Choice')),
+              DropdownMenuItem(value: RiddleType.GPS, child: Text('GPS-Ort finden')),
+            ],
+            onChanged: (value) => setState(() => _riddleType = value!),
+            decoration: const InputDecoration(labelText: 'Art des Rätsels', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          ),
+          const SizedBox(height: 16),
+
+          // --- Bedingte Anzeige der Rätsel-Felder ---
+          if (_riddleType == RiddleType.GPS)
+            _buildGpsRiddleFields()
+          else
+            _buildTextRiddleFields(),
+
+          const Divider(height: 40, thickness: 1),
+          _buildSectionHeader('Belohnung / Finale'),
+          CheckboxListTile(
+            title: const Text('Dies ist der finale Hinweis der Mission'),
+            subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
+            value: _isFinalClue,
+            onChanged: (value) => setState(() => _isFinalClue = value ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _isFinalClue 
+              ? 'Die finale Botschaft wird durch den "Stations-Inhalt" oben und den "Finalen Erfolgs-Text" unten definiert.'
+              : 'Die Belohnung wird durch den "Stations-Inhalt" oben und den "Belohnungs-Text" unten definiert.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _rewardTextController,
+            decoration: InputDecoration(
+              labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text', 
+              hintText: 'z.B. Der nächste Code lautet B4...', 
+              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
+            ),
+            maxLines: 3,
+            validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Text erforderlich' : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextRiddleFields() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Code-Einstellungen'),
         TextFormField(
-          controller: _codeController,
-          decoration: const InputDecoration(labelText: 'Code der Station', hintText: 'z.B. A1, Baumhaus, etc.', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-          validator: (value) {
-            final code = value?.trim() ?? '';
-            if (code.isEmpty) {
-              return 'Der Code ist ein Pflichtfeld.';
-            }
-            if (widget.codeToEdit == null && widget.existingCodes.contains(code)) {
-              return 'Dieser Code existiert bereits.';
-            }
-            if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) {
-              return 'Dieser Code existiert bereits.';
-            }
-            return null;
-          },
+          controller: _answerController,
+          decoration: const InputDecoration(labelText: 'Korrekte Antwort', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          validator: (v) => (_riddleType != RiddleType.GPS && _isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
         ),
+        const SizedBox(height: 16),
+        _buildMultipleChoiceFields(),
+        const SizedBox(height: 16),
+        _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
+        TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+        const SizedBox(height: 8),
+        TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
       ],
     );
   }
 
-  Widget _buildGpsSection() {
+  Widget _buildGpsRiddleFields() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('GPS-Einstellungen'),
         TextFormField(
           controller: _latitudeController,
           decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (_unlockMethod == UnlockMethod.GPS && (v == null || v.isEmpty)) ? 'Breitengrad erforderlich' : null,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Breitengrad erforderlich' : null,
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _longitudeController,
           decoration: const InputDecoration(labelText: 'Längengrad (Longitude)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (_unlockMethod == UnlockMethod.GPS && (v == null || v.isEmpty)) ? 'Längengrad erforderlich' : null,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Längengrad erforderlich' : null,
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -393,7 +388,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: (v) => (_unlockMethod == UnlockMethod.GPS && (v == null || v.isEmpty)) ? 'Radius erforderlich' : null,
+          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Radius erforderlich' : null,
         ),
         const SizedBox(height: 16),
         Center(
@@ -408,7 +403,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       ],
     );
   }
-
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -460,7 +454,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   Widget _buildMultipleChoiceFields() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 8),
-      const Text('Multiple-Choice Optionen (optional)', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Multiple-Choice Optionen (optional, macht aus Text-Antwort automatisch Multiple-Choice)', style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 8),
       TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
       const SizedBox(height: 8),
       TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),

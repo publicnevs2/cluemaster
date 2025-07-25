@@ -1,10 +1,11 @@
 // ============================================================
-// SECTION: Enum für die Freischalt-Methode
+// SECTION: Enum für den Rätsel-Typ (NEU)
 // ============================================================
-/// Definiert, wie ein Hinweis freigeschaltet werden kann.
-enum UnlockMethod {
-  CODE, // Standard: durch Eingabe des `code`
-  GPS,  // Neu: durch Erreichen eines geografischen Standorts
+/// Definiert, welche Art von Rätsel ein Hinweis enthalten kann.
+enum RiddleType {
+  TEXT,           // Standard-Textfrage
+  MULTIPLE_CHOICE, // Multiple-Choice-Frage
+  GPS,            // GPS-Ortungs-Rätsel
 }
 
 // ============================================================
@@ -21,36 +22,36 @@ class Clue {
   // ============================================================
   // SECTION: HINWEIS (Was der Spieler immer sieht)
   // ============================================================
-  final String type; // 'text', 'image', 'audio', 'video'
-  final String content; // Der Inhalt des Hinweises (Text oder Dateipfad)
-  final String? description; // Optionale Beschreibung zum Hinweis
+  final String type;
+  final String content;
+  final String? description;
 
   // ============================================================
   // SECTION: OPTIONALES RÄTSEL
   // ============================================================
-  final String? question;
+  final String? question; // Die Frage. Wenn dieses Feld leer ist, ist es kein Rätsel.
+  final RiddleType riddleType; // NEU: Bestimmt die Art des Rätsels
+  
+  // Felder für TEXT & MULTIPLE_CHOICE Rätsel
   final String? answer;
   final List<String>? options;
   final String? hint1;
   final String? hint2;
 
+  // Felder für GPS Rätsel
+  final double? latitude;
+  final double? longitude;
+  final double? radius;
+
   // ============================================================
-  // SECTION: BELOHNUNG (Was nach dem Lösen eines Rätsels angezeigt wird)
+  // SECTION: BELOHNUNG
   // ============================================================
   final String? rewardText;
 
   // ============================================================
-  // SECTION: FINALE (v1.42)
+  // SECTION: FINALE
   // ============================================================
   final bool isFinalClue;
-
-  // ============================================================
-  // SECTION: GPS-ERWEITERUNG (NEU)
-  // ============================================================
-  final UnlockMethod unlockMethod;
-  final double? latitude;
-  final double? longitude;
-  final double? radius; // in Metern
 
   // ============================================================
   // SECTION: Konstruktor
@@ -63,37 +64,35 @@ class Clue {
     required this.content,
     this.description,
     this.question,
+    this.riddleType = RiddleType.TEXT, // Standard ist TEXT
     this.answer,
     this.options,
     this.hint1,
     this.hint2,
-    this.rewardText,
-    this.isFinalClue = false,
-    // GPS-Felder im Konstruktor
-    this.unlockMethod = UnlockMethod.CODE, // Standard ist CODE
     this.latitude,
     this.longitude,
     this.radius,
+    this.rewardText,
+    this.isFinalClue = false,
   });
 
   // ============================================================
   // SECTION: Hilfs-Methoden (Getters)
   // ============================================================
 
-  /// Prüft, ob dieser Hinweis ein Rätsel ist.
-  bool get isRiddle => question != null && question!.isNotEmpty && answer != null;
+  /// Prüft, ob dieser Hinweis ein Rätsel ist (egal welcher Art).
+  bool get isRiddle => question != null && question!.isNotEmpty;
+
+  /// Prüft, ob das Rätsel ein GPS-Rätsel ist.
+  bool get isGpsRiddle => isRiddle && riddleType == RiddleType.GPS;
 
   /// Prüft, ob das Rätsel ein Multiple-Choice-Rätsel ist.
-  bool get isMultipleChoice => isRiddle && options != null && options!.isNotEmpty;
-  
-  /// NEU: Prüft, ob dieser Hinweis per GPS freigeschaltet wird.
-  bool get isGpsClue => unlockMethod == UnlockMethod.GPS && latitude != null && longitude != null;
+  bool get isMultipleChoice => isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
 
   // ============================================================
   // SECTION: JSON-Konvertierung
   // ============================================================
 
-  /// Erstellt ein Clue-Objekt aus JSON-Daten.
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
     return Clue(
       code: code,
@@ -103,24 +102,22 @@ class Clue {
       content: json['content'],
       description: json['description'],
       question: json['question'],
+      riddleType: RiddleType.values.firstWhere(
+            (e) => e.toString() == json['riddleType'],
+            orElse: () => RiddleType.TEXT // Fallback für alte Daten
+      ),
       answer: json['answer'],
       options: json['options'] != null ? List<String>.from(json['options']) : null,
       hint1: json['hint1'],
       hint2: json['hint2'],
-      rewardText: json['rewardText'],
-      isFinalClue: json['isFinalClue'] ?? false,
-      // NEU: GPS-Felder aus JSON lesen
-      unlockMethod: UnlockMethod.values.firstWhere(
-            (e) => e.toString() == json['unlockMethod'],
-            orElse: () => UnlockMethod.CODE // Fallback für alte Daten
-      ),
       latitude: json['latitude'],
       longitude: json['longitude'],
       radius: json['radius'],
+      rewardText: json['rewardText'],
+      isFinalClue: json['isFinalClue'] ?? false,
     );
   }
 
-  /// Wandelt das Clue-Objekt in ein JSON-Format um.
   Map<String, dynamic> toJson() {
     return {
       'solved': solved,
@@ -129,17 +126,16 @@ class Clue {
       'content': content,
       if (description != null) 'description': description,
       if (question != null) 'question': question,
+      'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,
       if (options != null) 'options': options,
       if (hint1 != null) 'hint1': hint1,
       if (hint2 != null) 'hint2': hint2,
-      if (rewardText != null) 'rewardText': rewardText,
-      'isFinalClue': isFinalClue,
-      // NEU: GPS-Felder in JSON schreiben
-      'unlockMethod': unlockMethod.toString(),
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (radius != null) 'radius': radius,
+      if (rewardText != null) 'rewardText': rewardText,
+      'isFinalClue': isFinalClue,
     };
   }
 }

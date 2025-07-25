@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:clue_master/features/clue/mission_success_screen.dart';
+import 'package:clue_master/features/clue/gps_navigation_screen.dart'; // NEU: Import für den GPS-Bildschirm
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -37,14 +38,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   void initState() {
     super.initState();
     _isSolved = widget.clue.solved;
-    
-    // NEUE LOGIK (v1.43): Markiert den Hinweis beim ersten Öffnen als "gesehen".
+
     if (!widget.clue.hasBeenViewed) {
       widget.clue.hasBeenViewed = true;
-      _saveHuntProgress(); // Speichert diese Änderung sofort.
+      _saveHuntProgress();
     }
 
-    // Startet die Einblend-Animation
     Timer(const Duration(milliseconds: 100), () {
       if (mounted) setState(() => _contentVisible = true);
     });
@@ -58,16 +57,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     super.dispose();
   }
 
-  /// Speichert den aktuellen Zustand der Jagd.
   Future<void> _saveHuntProgress() async {
     final allHunts = await _clueService.loadHunts();
     final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
     if (huntIndex != -1) {
-      // Make sure the clue object within the hunt is updated
       final clueKey = widget.clue.code;
       if (allHunts[huntIndex].clues.containsKey(clueKey)) {
-         allHunts[huntIndex].clues[clueKey] = widget.clue;
-         await _clueService.saveHunts(allHunts);
+        allHunts[huntIndex].clues[clueKey] = widget.clue;
+        await _clueService.saveHunts(allHunts);
       }
     }
   }
@@ -78,23 +75,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
-      Vibration.vibrate(duration: 100);
-      widget.clue.solved = true;
-      
-      await _saveHuntProgress(); // Speichert den "solved"-Status.
-      if (!mounted) return;
-
-      if (widget.clue.isFinalClue) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
-      } else {
-        _soundService.playSound(SoundEffect.success);
-        setState(() => _isSolved = true);
-        
-        // --- ÄNDERUNG ---
-        // Kein Navigator.pop() mehr. Die App bleibt auf diesem Bildschirm,
-        // bis der Benutzer selbst den "Zurück"-Button drückt.
-        // ---
-      }
+      _solveRiddle();
     } else {
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       _soundService.playSound(SoundEffect.failure);
@@ -121,6 +102,43 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       });
     }
   }
+  
+  // NEU: Logik zum Starten der GPS-Navigation
+  void _startGpsNavigation() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GpsNavigationScreen(hunt: widget.hunt, clue: widget.clue),
+      ),
+    );
+
+    // Wenn der GPS-Screen 'true' zurückgibt, war die Navigation erfolgreich
+    if (result == true) {
+      _solveRiddle();
+    }
+  }
+  
+  // NEU: Zentrale Funktion zum Lösen eines Rätsels
+  void _solveRiddle() async {
+    if (!mounted || _isSolved) return;
+
+    Vibration.vibrate(duration: 100);
+    _soundService.playSound(SoundEffect.success);
+    
+    setState(() {
+      widget.clue.solved = true;
+      _isSolved = true;
+    });
+    
+    await _saveHuntProgress();
+    if (!mounted) return;
+
+    if (widget.clue.isFinalClue) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
+    }
+    // Kein Navigator.pop() mehr, der Spieler bleibt auf der Seite, um die Belohnung zu sehen.
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +196,43 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildRiddleWidget() {
+    // --- NEUE LOGIK: Wählt das richtige Widget basierend auf dem Rätseltyp ---
+    switch (widget.clue.riddleType) {
+      case RiddleType.GPS:
+        return _buildGpsRiddlePrompt();
+      case RiddleType.MULTIPLE_CHOICE:
+        return _buildTextualRiddleWidget(isMultipleChoice: true);
+      case RiddleType.TEXT:
+      default:
+        return _buildTextualRiddleWidget(isMultipleChoice: false);
+    }
+  }
+  
+  // NEU: Widget für die GPS-Aufforderung
+  Widget _buildGpsRiddlePrompt() {
+    return Column(
+      children: [
+        Text(
+          widget.clue.question!,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.explore_outlined),
+          label: const Text('Navigation zum Zielort starten'),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            textStyle: const TextStyle(fontSize: 16),
+          ),
+          onPressed: _startGpsNavigation,
+        ),
+      ],
+    );
+  }
+
+  // ANGEPASST: Bündelt die Logik für Text- und Multiple-Choice-Rätsel
+  Widget _buildTextualRiddleWidget({required bool isMultipleChoice}) {
     return Column(
       children: [
         Text(
@@ -186,7 +241,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        widget.clue.isMultipleChoice
+        isMultipleChoice
             ? _buildMultipleChoiceOptions()
             : _buildTextAnswerField(),
         if (_errorMessage != null)
@@ -216,11 +271,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.greenAccent)),
             const SizedBox(height: 16),
-            // DEINE LOGIK: Zeigt den ursprünglichen Hinweis-Inhalt als Belohnung an.
-            _buildMediaWidget(
-              type: widget.clue.type,
-              content: widget.clue.content,
-              description: widget.clue.rewardText,
+            Text(
+              widget.clue.rewardText ?? 'Keine Belohnungsinformation.',
+              style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -251,8 +305,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
             controller: _answerController,
             keyboardType: TextInputType.text,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
-                hintText: 'Antwort...'),
+            decoration: const InputDecoration(hintText: 'Antwort...'),
             onSubmitted: (_) => _checkAnswer(),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),

@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'package:clue_master/core/services/clue_service.dart';
-import 'package:clue_master/core/services/sound_service.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:vibration/vibration.dart';
+import '../../core/services/sound_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
-import 'clue_detail_screen.dart';
 
 class GpsNavigationScreen extends StatefulWidget {
   final Hunt hunt;
@@ -19,7 +17,6 @@ class GpsNavigationScreen extends StatefulWidget {
 }
 
 class _GpsNavigationScreenState extends State<GpsNavigationScreen> {
-  final ClueService _clueService = ClueService();
   final SoundService _soundService = SoundService();
 
   StreamSubscription<Position>? _positionStreamSubscription;
@@ -34,20 +31,18 @@ class _GpsNavigationScreenState extends State<GpsNavigationScreen> {
 
   @override
   void dispose() {
-    _positionStreamSubscription?.cancel(); // Wichtig: Stream beenden!
+    _positionStreamSubscription?.cancel();
     _soundService.dispose();
     super.dispose();
   }
 
   Future<void> _startGpsTracking() async {
-    // 1. Prüfen, ob der Standortdienst aktiviert ist
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() => _statusMessage = 'Bitte aktiviere die Standortermittlung (GPS).');
       return;
     }
 
-    // 2. Berechtigungen prüfen und anfordern
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -62,12 +57,11 @@ class _GpsNavigationScreenState extends State<GpsNavigationScreen> {
       return;
     }
 
-    // 3. Standort-Updates abonnieren
     setState(() => _statusMessage = 'Suche nach Ziel...');
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 1, // Update bei jeder Meter-Änderung
+        distanceFilter: 1,
       ),
     ).listen((Position position) {
       if (!mounted) return;
@@ -84,47 +78,31 @@ class _GpsNavigationScreenState extends State<GpsNavigationScreen> {
         _statusMessage = 'Auf dem Weg zum Ziel...';
       });
 
-      // 4. Prüfen, ob das Ziel erreicht wurde
       if (distance <= (widget.clue.radius ?? 20.0)) {
-        _unlockClue();
+        _onTargetReached();
       }
     });
   }
 
-  Future<void> _unlockClue() async {
-    // Stream stoppen, um mehrfaches Auslösen zu verhindern
+  Future<void> _onTargetReached() async {
     await _positionStreamSubscription?.cancel();
     _positionStreamSubscription = null;
 
-    if (!mounted || widget.clue.solved) return;
+    if (!mounted) return;
 
-    // Feedback geben und Zustand aktualisieren
+    // Feedback geben
     Vibration.vibrate(duration: 500);
     _soundService.playSound(SoundEffect.success);
-    widget.clue.solved = true;
     
-    // Fortschritt speichern
-    final allHunts = await _clueService.loadHunts();
-    final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
-    if (huntIndex != -1) {
-      allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
-      await _clueService.saveHunts(allHunts);
-    }
-    
-    // Zum Detailbildschirm weiterleiten, um die Belohnung anzuzeigen
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ClueDetailScreen(hunt: widget.hunt, clue: widget.clue),
-      ),
-    );
+    // Zum Detailbildschirm zurückkehren und das Erfolgs-Signal 'true' senden.
+    Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Navigiere zu: ${widget.clue.code}'),
+        title: Text('Navigiere zu: ${widget.clue.question}'),
       ),
       body: Center(
         child: Padding(
