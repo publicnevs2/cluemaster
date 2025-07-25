@@ -9,12 +9,21 @@ enum RiddleType {
   GPS,
 }
 
-/// NEU: Definiert, welcher visuelle Effekt auf einen Bild-Hinweis angewendet wird.
+/// Definiert, welcher visuelle Effekt auf einen Bild-Hinweis angewendet wird.
 enum ImageEffect {
-  NONE,           // Kein Effekt, normales Bild
-  PUZZLE,         // 9-teiliges Schiebepuzzle
-  INVERT_COLORS,  // Farben invertieren
-  BLACK_AND_WHITE,// Schwarz-Weiß-Filter
+  NONE,
+  PUZZLE,
+  INVERT_COLORS,
+  BLACK_AND_WHITE,
+}
+
+/// NEU: Definiert, welcher Effekt auf einen Text-Hinweis angewendet wird.
+enum TextEffect {
+  NONE,           // Normaler Text
+  MORSE_CODE,     // Text als Morsecode
+  REVERSE,        // Kompletter Text rückwärts
+  NO_VOWELS,      // Alle Vokale entfernt
+  MIRROR_WORDS,   // Buchstaben jedes Wortes spiegeln
 }
 
 
@@ -35,7 +44,8 @@ class Clue {
   final String type;
   final String content;
   final String? description;
-  final ImageEffect imageEffect; // NEU: Feld für den Bildeffekt
+  final ImageEffect imageEffect;
+  final TextEffect textEffect; // NEU: Feld für den Text-Effekt
 
   // ============================================================
   // SECTION: OPTIONALES RÄTSEL
@@ -43,13 +53,11 @@ class Clue {
   final String? question;
   final RiddleType riddleType;
   
-  // Felder für TEXT & MULTIPLE_CHOICE Rätsel
   final String? answer;
   final List<String>? options;
   final String? hint1;
   final String? hint2;
 
-  // Felder für GPS Rätsel
   final double? latitude;
   final double? longitude;
   final double? radius;
@@ -70,7 +78,8 @@ class Clue {
     required this.type,
     required this.content,
     this.description,
-    this.imageEffect = ImageEffect.NONE, // NEU: Standardwert ist NONE
+    this.imageEffect = ImageEffect.NONE,
+    this.textEffect = TextEffect.NONE, // NEU: Standardwert ist NONE
     this.question,
     this.riddleType = RiddleType.TEXT,
     this.answer,
@@ -103,15 +112,18 @@ class Clue {
       type: json['type'],
       content: json['content'],
       description: json['description'],
-      imageEffect: ImageEffect.values.firstWhere( // NEU: Aus JSON lesen
+      imageEffect: ImageEffect.values.firstWhere(
             (e) => e.toString() == json['imageEffect'],
             orElse: () => ImageEffect.NONE
+      ),
+      textEffect: TextEffect.values.firstWhere( // NEU: Aus JSON lesen
+            (e) => e.toString() == json['textEffect'],
+            orElse: () => TextEffect.NONE
       ),
       question: json['question'],
       riddleType: RiddleType.values.firstWhere(
             (e) => e.toString() == json['riddleType'],
             orElse: () {
-              // Intelligenter Fallback für alte Multiple-Choice-Rätsel
               if (json['options'] != null && (json['options'] as List).isNotEmpty) {
                 return RiddleType.MULTIPLE_CHOICE;
               }
@@ -137,7 +149,8 @@ class Clue {
       'type': type,
       'content': content,
       if (description != null) 'description': description,
-      'imageEffect': imageEffect.toString(), // NEU: In JSON schreiben
+      'imageEffect': imageEffect.toString(),
+      'textEffect': textEffect.toString(), // NEU: In JSON schreiben
       if (question != null) 'question': question,
       'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,

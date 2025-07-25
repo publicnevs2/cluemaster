@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:image/image.dart' as img; // NEU: Import für das image-Paket (fürs Puzzle)
+import 'package:image/image.dart' as img;
 import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:clue_master/features/clue/gps_navigation_screen.dart';
 import 'package:flutter/material.dart';
@@ -155,12 +155,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   duration: const Duration(milliseconds: 500),
                   child: Column(
                     children: [
-                      // HIER WIRD JETZT AUCH DER BILD-EFFEKT ÜBERGEBEN
                       _buildMediaWidget(
-                        type: widget.clue.type,
-                        content: widget.clue.content,
-                        description: widget.clue.description,
-                        imageEffect: widget.clue.imageEffect,
+                        clue: widget.clue, // Übergeben den ganzen Clue
                       ),
                       const SizedBox(height: 16),
                       if (widget.clue.isRiddle) ...[
@@ -338,27 +334,22 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 }
 
-// --- HIER FINDEN DIE ÄNDERUNGEN STATT ---
-Widget _buildMediaWidget({
-  required String type,
-  required String content,
-  String? description,
-  ImageEffect imageEffect = ImageEffect.NONE, // Parameter hinzugefügt
-}) {
+// ============================================================
+// SECTION: Media Widget & Effekt-Logik
+// ============================================================
+
+Widget _buildMediaWidget({required Clue clue}) {
   Widget mediaWidget;
-  switch (type) {
+  switch (clue.type) {
     case 'text':
-      mediaWidget = Text(content,
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+      mediaWidget = _buildTextWidgetWithEffect(clue.content, clue.textEffect);
       break;
     case 'image':
-      // Das eigentliche Bild-Widget wird erstellt
-      final image = content.startsWith('file://')
-          ? Image.file(File(content.replaceFirst('file://', '')))
-          : Image.asset(content);
+      final image = clue.content.startsWith('file://')
+          ? Image.file(File(clue.content.replaceFirst('file://', '')))
+          : Image.asset(clue.content);
 
-      // Je nach Effekt wird das Bild in ein anderes Widget gewickelt
-      switch (imageEffect) {
+      switch (clue.imageEffect) {
         case ImageEffect.BLACK_AND_WHITE:
           mediaWidget = ColorFiltered(
             colorFilter: const ColorFilter.matrix([
@@ -382,7 +373,7 @@ Widget _buildMediaWidget({
           );
           break;
         case ImageEffect.PUZZLE:
-          mediaWidget = ImagePuzzleWidget(imagePath: content);
+          mediaWidget = ImagePuzzleWidget(imagePath: clue.content);
           break;
         case ImageEffect.NONE:
         default:
@@ -390,10 +381,10 @@ Widget _buildMediaWidget({
       }
       break;
     case 'audio':
-      mediaWidget = AudioPlayerWidget(path: content, description: description);
+      mediaWidget = AudioPlayerWidget(path: clue.content);
       break;
     case 'video':
-      mediaWidget = VideoPlayerWidget(path: content, description: description);
+      mediaWidget = VideoPlayerWidget(path: clue.content);
       break;
     default:
       mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
@@ -402,9 +393,9 @@ Widget _buildMediaWidget({
   return Column(
     children: [
       mediaWidget,
-      if (description != null && description.isNotEmpty) ...[
+      if (clue.description != null && clue.description!.isNotEmpty) ...[
         const SizedBox(height: 12),
-        Text(description,
+        Text(clue.description!,
             style:
                 const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
             textAlign: TextAlign.center),
@@ -413,7 +404,68 @@ Widget _buildMediaWidget({
   );
 }
 
-// --- NEUES WIDGET FÜR DAS BILD-PUZZLE ---
+// --- NEUE WIDGETS UND LOGIK FÜR TEXT-EFFEKTE ---
+
+Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
+  switch (effect) {
+    case TextEffect.MORSE_CODE:
+      return MorseCodeWidget(text: content);
+    case TextEffect.REVERSE:
+      return Text(content.split('').reversed.join(''), style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+    case TextEffect.NO_VOWELS:
+      return Text(content.replaceAll(RegExp(r'[aeiouAEIOU]'), ''), style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+    case TextEffect.MIRROR_WORDS:
+      final mirrored = content.split(' ').map((word) => word.split('').reversed.join('')).join(' ');
+      return Text(mirrored, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+    case TextEffect.NONE:
+    default:
+      return Text(content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+  }
+}
+
+class MorseCodeWidget extends StatelessWidget {
+  final String text;
+  const MorseCodeWidget({super.key, required this.text});
+
+  static const Map<String, String> _morseCodeMap = {
+    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
+    'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
+    'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+    'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
+    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
+  };
+
+  String _toMorseCode(String input) {
+    return input.toUpperCase().split('').map((char) => _morseCodeMap[char] ?? '').join(' ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          _toMorseCode(text),
+          style: const TextStyle(fontSize: 24, fontFamily: 'SpecialElite'),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        IconButton(
+          icon: const Icon(Icons.volume_up_outlined, size: 40),
+          onPressed: () {
+            // HINWEIS: Sound-Logik für Morsecode ist hier noch nicht implementiert.
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
+            ));
+          },
+        ),
+      ],
+    );
+  }
+}
+
+
+// --- Bestehende Widgets für Medien & Puzzle ---
+
 class ImagePuzzleWidget extends StatefulWidget {
   final String imagePath;
   const ImagePuzzleWidget({super.key, required this.imagePath});
@@ -433,7 +485,6 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
   }
 
   Future<void> _createPuzzle() async {
-    // Bild laden
     Uint8List imageBytes;
     if (widget.imagePath.startsWith('file://')) {
       imageBytes = await File(widget.imagePath.replaceFirst('file://', '')).readAsBytes();
@@ -445,7 +496,6 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
     final originalImage = img.decodeImage(imageBytes);
     if (originalImage == null) return;
 
-    // Bild in 9 Teile zerschneiden
     final pieceWidth = originalImage.width ~/ 3;
     final pieceHeight = originalImage.height ~/ 3;
     final pieces = <Uint8List>[];
@@ -456,7 +506,6 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
       }
     }
 
-    // Teile mischen
     pieces.shuffle(Random());
 
     setState(() {
@@ -467,14 +516,12 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
   void _onPieceTap(int index) {
     setState(() {
       if (_selectedPieceIndex == null) {
-        // Erstes Teil auswählen
         _selectedPieceIndex = index;
       } else {
-        // Zweites Teil auswählen -> tauschen
         final temp = _puzzlePieces![_selectedPieceIndex!];
         _puzzlePieces![_selectedPieceIndex!] = _puzzlePieces![index];
         _puzzlePieces![index] = temp;
-        _selectedPieceIndex = null; // Auswahl zurücksetzen
+        _selectedPieceIndex = null;
       }
     });
   }
@@ -521,11 +568,9 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
   }
 }
 
-
 class AudioPlayerWidget extends StatefulWidget {
   final String path;
-  final String? description;
-  const AudioPlayerWidget({super.key, required this.path, this.description});
+  const AudioPlayerWidget({super.key, required this.path});
 
   @override
   State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
@@ -549,7 +594,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         await _player.setAsset(widget.path);
       }
     } catch (e) {
-      // ignore: avoid_print
       print("Fehler beim Laden der Audio-Datei: $e");
     }
   }
@@ -607,8 +651,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
 class VideoPlayerWidget extends StatefulWidget {
   final String path;
-  final String? description;
-  const VideoPlayerWidget({super.key, required this.path, this.description});
+  const VideoPlayerWidget({super.key, required this.path});
 
   @override
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();

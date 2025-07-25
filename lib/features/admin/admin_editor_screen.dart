@@ -39,7 +39,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _contentController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isFinalClue = false;
-  ImageEffect _imageEffect = ImageEffect.NONE; // NEU: Variable für Bildeffekt
+  ImageEffect _imageEffect = ImageEffect.NONE;
+  TextEffect _textEffect = TextEffect.NONE; // NEU: Variable für Text-Effekt
 
   // --- Rätsel-Controller ---
   bool _isRiddle = false;
@@ -71,7 +72,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _contentController.text = clue.content;
       _descriptionController.text = clue.description ?? '';
       _isFinalClue = clue.isFinalClue;
-      _imageEffect = clue.imageEffect; // NEU: Bildeffekt initialisieren
+      _imageEffect = clue.imageEffect;
+      _textEffect = clue.textEffect; // NEU: Text-Effekt initialisieren
       _isRiddle = clue.isRiddle;
 
       if (clue.isRiddle) {
@@ -101,7 +103,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
 
   @override
   void dispose() {
-    // Alle Controller entsorgen
     _codeController.dispose();
     _contentController.dispose();
     _descriptionController.dispose();
@@ -136,7 +137,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         content: _contentController.text.trim(),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
         isFinalClue: _isFinalClue,
-        imageEffect: _type == 'image' ? _imageEffect : ImageEffect.NONE, // NEU: Bildeffekt speichern
+        imageEffect: _type == 'image' ? _imageEffect : ImageEffect.NONE,
+        textEffect: _type == 'text' ? _textEffect : TextEffect.NONE, // NEU: Text-Effekt speichern
         
         question: _isRiddle ? _questionController.text.trim() : null,
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
@@ -423,6 +425,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
             ),
             const SizedBox(height: 8),
+            // NEU: Text-Effekt Auswahl
+            _buildTextEffectField(),
             TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
           ]
         else
@@ -448,7 +452,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 ),
             ]),
             const SizedBox(height: 8),
-            // NEU: Bildeffekt-Auswahl
             if (_type == 'image')
               _buildImageEffectField(),
             TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
@@ -457,7 +460,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     );
   }
   
-  // NEUES WIDGET für die Bildeffekt-Auswahl
   Widget _buildImageEffectField() {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
@@ -471,6 +473,25 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         ],
         onChanged: (value) => setState(() => _imageEffect = value!),
         decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+      ),
+    );
+  }
+
+  // NEUES WIDGET für die Text-Effekt-Auswahl
+  Widget _buildTextEffectField() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: DropdownButtonFormField<TextEffect>(
+        value: _textEffect,
+        items: const [
+          DropdownMenuItem(value: TextEffect.NONE, child: Text('Kein Effekt')),
+          DropdownMenuItem(value: TextEffect.MORSE_CODE, child: Text('Morsecode')),
+          DropdownMenuItem(value: TextEffect.REVERSE, child: Text('Text rückwärts')),
+          DropdownMenuItem(value: TextEffect.NO_VOWELS, child: Text('Ohne Vokale')),
+          DropdownMenuItem(value: TextEffect.MIRROR_WORDS, child: Text('Wörter spiegeln')),
+        ],
+        onChanged: (value) => setState(() => _textEffect = value!),
+        decoration: const InputDecoration(labelText: 'Optionaler Text-Effekt', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
       ),
     );
   }
