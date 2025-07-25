@@ -61,7 +61,7 @@ class _GpsNavigationScreenState extends State<GpsNavigationScreen> {
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 1,
+        distanceFilter: 0,
       ),
     ).listen((Position position) {
       if (!mounted) return;
