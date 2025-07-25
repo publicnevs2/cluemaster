@@ -36,9 +36,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.clue.solved) {
-      _isSolved = true;
-    }
+    _isSolved = widget.clue.solved;
     
     // NEUE LOGIK (v1.43): Markiert den Hinweis beim ersten Öffnen als "gesehen".
     if (!widget.clue.hasBeenViewed) {
@@ -65,8 +63,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     final allHunts = await _clueService.loadHunts();
     final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
     if (huntIndex != -1) {
-      allHunts[huntIndex].clues[widget.clue.code] = widget.clue;
-      await _clueService.saveHunts(allHunts);
+      // Make sure the clue object within the hunt is updated
+      final clueKey = widget.clue.code;
+      if (allHunts[huntIndex].clues.containsKey(clueKey)) {
+         allHunts[huntIndex].clues[clueKey] = widget.clue;
+         await _clueService.saveHunts(allHunts);
+      }
     }
   }
 
@@ -87,11 +89,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       } else {
         _soundService.playSound(SoundEffect.success);
         setState(() => _isSolved = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Richtig! Belohnung freigeschaltet!'),
-              backgroundColor: Colors.green),
-        );
+        
+        // --- ÄNDERUNG ---
+        // Kein Navigator.pop() mehr. Die App bleibt auf diesem Bildschirm,
+        // bis der Benutzer selbst den "Zurück"-Button drückt.
+        // ---
       }
     } else {
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
@@ -487,4 +489,3 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     );
   }
 }
- 
