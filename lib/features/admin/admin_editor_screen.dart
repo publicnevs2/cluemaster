@@ -39,6 +39,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _contentController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isFinalClue = false;
+  ImageEffect _imageEffect = ImageEffect.NONE; // NEU: Variable für Bildeffekt
 
   // --- Rätsel-Controller ---
   bool _isRiddle = false;
@@ -69,8 +70,9 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _type = clue.type;
       _contentController.text = clue.content;
       _descriptionController.text = clue.description ?? '';
-      _isRiddle = clue.isRiddle;
       _isFinalClue = clue.isFinalClue;
+      _imageEffect = clue.imageEffect; // NEU: Bildeffekt initialisieren
+      _isRiddle = clue.isRiddle;
 
       if (clue.isRiddle) {
         _questionController.text = clue.question!;
@@ -134,11 +136,11 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         content: _contentController.text.trim(),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
         isFinalClue: _isFinalClue,
+        imageEffect: _type == 'image' ? _imageEffect : ImageEffect.NONE, // NEU: Bildeffekt speichern
         
         question: _isRiddle ? _questionController.text.trim() : null,
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
         
-        // KORRIGIERTE LOGIK: Speichert den vom Admin ausgewählten Rätseltyp
         riddleType: _isRiddle ? _riddleType : RiddleType.TEXT,
         answer: _isRiddle && _riddleType != RiddleType.GPS ? _answerController.text.trim() : null,
         options: _isRiddle && _riddleType == RiddleType.MULTIPLE_CHOICE ? options : null,
@@ -332,7 +334,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
             ),
             maxLines: 3,
-            // KORRIGIERTE VALIDIERUNG
             validator: (v) {
               if (_isRiddle && _isFinalClue && (v == null || v.isEmpty)) {
                 return 'Finaler Text ist für den letzten Hinweis erforderlich.';
@@ -411,43 +412,67 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   }
 
   Widget _buildMediaContentField() {
-    if (_type == 'text') {
-      return Column(children: [
-        TextFormField(
-          controller: _contentController,
-          decoration: const InputDecoration(labelText: 'Inhalt (Text)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-          maxLines: 3,
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
-      ]);
-    } else {
-      return Column(children: [
-        TextFormField(
-          controller: _contentController,
-          readOnly: true,
-          decoration: InputDecoration(labelText: 'Dateipfad (${_type})', contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
-        ),
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          if (_type == 'image' || _type == 'video') ...[
-            ElevatedButton.icon(icon: const Icon(Icons.photo_library), label: const Text('Galerie'), onPressed: () => _pickMedia(ImageSource.gallery)),
-            ElevatedButton.icon(icon: const Icon(Icons.camera_alt), label: const Text('Kamera'), onPressed: () => _pickMedia(ImageSource.camera)),
-          ],
-          if (_type == 'audio')
-            ElevatedButton.icon(
-              icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-              label: Text(_isRecording ? 'Stopp' : 'Aufnehmen'),
-              onPressed: _toggleRecording,
-              style: ElevatedButton.styleFrom(backgroundColor: _isRecording ? Colors.red : null),
+    return Column(
+      children: [
+        if (_type == 'text')
+          ...[
+            TextFormField(
+              controller: _contentController,
+              decoration: const InputDecoration(labelText: 'Inhalt (Text)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              maxLines: 3,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
             ),
-        ]),
-        const SizedBox(height: 8),
-        TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
-      ]);
-    }
+            const SizedBox(height: 8),
+            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+          ]
+        else
+          ...[
+            TextFormField(
+              controller: _contentController,
+              readOnly: true,
+              decoration: InputDecoration(labelText: 'Dateipfad (${_type})', contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
+            ),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              if (_type == 'image' || _type == 'video') ...[
+                ElevatedButton.icon(icon: const Icon(Icons.photo_library), label: const Text('Galerie'), onPressed: () => _pickMedia(ImageSource.gallery)),
+                ElevatedButton.icon(icon: const Icon(Icons.camera_alt), label: const Text('Kamera'), onPressed: () => _pickMedia(ImageSource.camera)),
+              ],
+              if (_type == 'audio')
+                ElevatedButton.icon(
+                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                  label: Text(_isRecording ? 'Stopp' : 'Aufnehmen'),
+                  onPressed: _toggleRecording,
+                  style: ElevatedButton.styleFrom(backgroundColor: _isRecording ? Colors.red : null),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            // NEU: Bildeffekt-Auswahl
+            if (_type == 'image')
+              _buildImageEffectField(),
+            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+          ]
+      ],
+    );
+  }
+  
+  // NEUES WIDGET für die Bildeffekt-Auswahl
+  Widget _buildImageEffectField() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: DropdownButtonFormField<ImageEffect>(
+        value: _imageEffect,
+        items: const [
+          DropdownMenuItem(value: ImageEffect.NONE, child: Text('Kein Effekt')),
+          DropdownMenuItem(value: ImageEffect.PUZZLE, child: Text('Puzzle (9 Teile)')),
+          DropdownMenuItem(value: ImageEffect.INVERT_COLORS, child: Text('Farben invertieren')),
+          DropdownMenuItem(value: ImageEffect.BLACK_AND_WHITE, child: Text('Schwarz-Weiß')),
+        ],
+        onChanged: (value) => setState(() => _imageEffect = value!),
+        decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+      ),
+    );
   }
 
   Widget _buildMultipleChoiceFields() {

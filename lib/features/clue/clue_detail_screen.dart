@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img; // NEU: Import für das image-Paket (fürs Puzzle)
 import 'package:clue_master/features/clue/mission_success_screen.dart';
-import 'package:clue_master/features/clue/gps_navigation_screen.dart'; // NEU: Import für den GPS-Bildschirm
+import 'package:clue_master/features/clue/gps_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -103,7 +106,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
   
-  // NEU: Logik zum Starten der GPS-Navigation
   void _startGpsNavigation() async {
     final result = await Navigator.push<bool>(
       context,
@@ -112,13 +114,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       ),
     );
 
-    // Wenn der GPS-Screen 'true' zurückgibt, war die Navigation erfolgreich
     if (result == true) {
       _solveRiddle();
     }
   }
   
-  // NEU: Zentrale Funktion zum Lösen eines Rätsels
   void _solveRiddle() async {
     if (!mounted || _isSolved) return;
 
@@ -136,7 +136,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     if (widget.clue.isFinalClue) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
     }
-    // Kein Navigator.pop() mehr, der Spieler bleibt auf der Seite, um die Belohnung zu sehen.
   }
 
 
@@ -156,10 +155,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   duration: const Duration(milliseconds: 500),
                   child: Column(
                     children: [
+                      // HIER WIRD JETZT AUCH DER BILD-EFFEKT ÜBERGEBEN
                       _buildMediaWidget(
                         type: widget.clue.type,
                         content: widget.clue.content,
                         description: widget.clue.description,
+                        imageEffect: widget.clue.imageEffect,
                       ),
                       const SizedBox(height: 16),
                       if (widget.clue.isRiddle) ...[
@@ -196,7 +197,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildRiddleWidget() {
-    // --- NEUE LOGIK: Wählt das richtige Widget basierend auf dem Rätseltyp ---
     switch (widget.clue.riddleType) {
       case RiddleType.GPS:
         return _buildGpsRiddlePrompt();
@@ -208,7 +208,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
   
-  // NEU: Widget für die GPS-Aufforderung
   Widget _buildGpsRiddlePrompt() {
     return Column(
       children: [
@@ -231,7 +230,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  // ANGEPASST: Bündelt die Logik für Text- und Multiple-Choice-Rätsel
   Widget _buildTextualRiddleWidget({required bool isMultipleChoice}) {
     return Column(
       children: [
@@ -340,8 +338,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 }
 
-Widget _buildMediaWidget(
-    {required String type, required String content, String? description}) {
+// --- HIER FINDEN DIE ÄNDERUNGEN STATT ---
+Widget _buildMediaWidget({
+  required String type,
+  required String content,
+  String? description,
+  ImageEffect imageEffect = ImageEffect.NONE, // Parameter hinzugefügt
+}) {
   Widget mediaWidget;
   switch (type) {
     case 'text':
@@ -349,14 +352,49 @@ Widget _buildMediaWidget(
           style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
       break;
     case 'image':
-      mediaWidget = content.startsWith('file://')
+      // Das eigentliche Bild-Widget wird erstellt
+      final image = content.startsWith('file://')
           ? Image.file(File(content.replaceFirst('file://', '')))
           : Image.asset(content);
+
+      // Je nach Effekt wird das Bild in ein anderes Widget gewickelt
+      switch (imageEffect) {
+        case ImageEffect.BLACK_AND_WHITE:
+          mediaWidget = ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0.2126, 0.7152, 0.0722, 0, 0,
+              0.2126, 0.7152, 0.0722, 0, 0,
+              0.2126, 0.7152, 0.0722, 0, 0,
+              0,      0,      0,      1, 0,
+            ]),
+            child: image,
+          );
+          break;
+        case ImageEffect.INVERT_COLORS:
+          mediaWidget = ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              -1, 0, 0, 0, 255,
+              0, -1, 0, 0, 255,
+              0, 0, -1, 0, 255,
+              0, 0, 0, 1, 0,
+            ]),
+            child: image,
+          );
+          break;
+        case ImageEffect.PUZZLE:
+          mediaWidget = ImagePuzzleWidget(imagePath: content);
+          break;
+        case ImageEffect.NONE:
+        default:
+          mediaWidget = image;
+      }
       break;
     case 'audio':
-      return AudioPlayerWidget(path: content, description: description);
+      mediaWidget = AudioPlayerWidget(path: content, description: description);
+      break;
     case 'video':
-      return VideoPlayerWidget(path: content, description: description);
+      mediaWidget = VideoPlayerWidget(path: content, description: description);
+      break;
     default:
       mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
   }
@@ -374,6 +412,115 @@ Widget _buildMediaWidget(
     ],
   );
 }
+
+// --- NEUES WIDGET FÜR DAS BILD-PUZZLE ---
+class ImagePuzzleWidget extends StatefulWidget {
+  final String imagePath;
+  const ImagePuzzleWidget({super.key, required this.imagePath});
+
+  @override
+  State<ImagePuzzleWidget> createState() => _ImagePuzzleWidgetState();
+}
+
+class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
+  List<Uint8List>? _puzzlePieces;
+  int? _selectedPieceIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _createPuzzle();
+  }
+
+  Future<void> _createPuzzle() async {
+    // Bild laden
+    Uint8List imageBytes;
+    if (widget.imagePath.startsWith('file://')) {
+      imageBytes = await File(widget.imagePath.replaceFirst('file://', '')).readAsBytes();
+    } else {
+      final byteData = await rootBundle.load(widget.imagePath);
+      imageBytes = byteData.buffer.asUint8List();
+    }
+    
+    final originalImage = img.decodeImage(imageBytes);
+    if (originalImage == null) return;
+
+    // Bild in 9 Teile zerschneiden
+    final pieceWidth = originalImage.width ~/ 3;
+    final pieceHeight = originalImage.height ~/ 3;
+    final pieces = <Uint8List>[];
+    for (int y = 0; y < 3; y++) {
+      for (int x = 0; x < 3; x++) {
+        final piece = img.copyCrop(originalImage, x: x * pieceWidth, y: y * pieceHeight, width: pieceWidth, height: pieceHeight);
+        pieces.add(Uint8List.fromList(img.encodePng(piece)));
+      }
+    }
+
+    // Teile mischen
+    pieces.shuffle(Random());
+
+    setState(() {
+      _puzzlePieces = pieces;
+    });
+  }
+
+  void _onPieceTap(int index) {
+    setState(() {
+      if (_selectedPieceIndex == null) {
+        // Erstes Teil auswählen
+        _selectedPieceIndex = index;
+      } else {
+        // Zweites Teil auswählen -> tauschen
+        final temp = _puzzlePieces![_selectedPieceIndex!];
+        _puzzlePieces![_selectedPieceIndex!] = _puzzlePieces![index];
+        _puzzlePieces![index] = temp;
+        _selectedPieceIndex = null; // Auswahl zurücksetzen
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_puzzlePieces == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 1.0,
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+            ),
+            itemCount: 9,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () => _onPieceTap(index),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: _selectedPieceIndex == index
+                        ? Border.all(color: Colors.amber, width: 4)
+                        : null,
+                  ),
+                  child: Image.memory(_puzzlePieces![index], fit: BoxFit.cover),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Tippe zwei Teile an, um sie zu tauschen.',
+          style: TextStyle(fontStyle: FontStyle.italic),
+        ),
+      ],
+    );
+  }
+}
+
 
 class AudioPlayerWidget extends StatefulWidget {
   final String path;

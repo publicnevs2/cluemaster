@@ -1,12 +1,22 @@
 // ============================================================
-// SECTION: Enum für den Rätsel-Typ (NEU)
+// SECTION: Enums für Rätsel-Typen und Effekte
 // ============================================================
+
 /// Definiert, welche Art von Rätsel ein Hinweis enthalten kann.
 enum RiddleType {
-  TEXT,           // Standard-Textfrage
-  MULTIPLE_CHOICE, // Multiple-Choice-Frage
-  GPS,            // GPS-Ortungs-Rätsel
+  TEXT,
+  MULTIPLE_CHOICE,
+  GPS,
 }
+
+/// NEU: Definiert, welcher visuelle Effekt auf einen Bild-Hinweis angewendet wird.
+enum ImageEffect {
+  NONE,           // Kein Effekt, normales Bild
+  PUZZLE,         // 9-teiliges Schiebepuzzle
+  INVERT_COLORS,  // Farben invertieren
+  BLACK_AND_WHITE,// Schwarz-Weiß-Filter
+}
+
 
 // ============================================================
 // SECTION: Clue Klasse
@@ -25,12 +35,13 @@ class Clue {
   final String type;
   final String content;
   final String? description;
+  final ImageEffect imageEffect; // NEU: Feld für den Bildeffekt
 
   // ============================================================
   // SECTION: OPTIONALES RÄTSEL
   // ============================================================
-  final String? question; // Die Frage. Wenn dieses Feld leer ist, ist es kein Rätsel.
-  final RiddleType riddleType; // NEU: Bestimmt die Art des Rätsels
+  final String? question;
+  final RiddleType riddleType;
   
   // Felder für TEXT & MULTIPLE_CHOICE Rätsel
   final String? answer;
@@ -44,13 +55,9 @@ class Clue {
   final double? radius;
 
   // ============================================================
-  // SECTION: BELOHNUNG
+  // SECTION: BELOHNUNG & FINALE
   // ============================================================
   final String? rewardText;
-
-  // ============================================================
-  // SECTION: FINALE
-  // ============================================================
   final bool isFinalClue;
 
   // ============================================================
@@ -63,8 +70,9 @@ class Clue {
     required this.type,
     required this.content,
     this.description,
+    this.imageEffect = ImageEffect.NONE, // NEU: Standardwert ist NONE
     this.question,
-    this.riddleType = RiddleType.TEXT, // Standard ist TEXT
+    this.riddleType = RiddleType.TEXT,
     this.answer,
     this.options,
     this.hint1,
@@ -79,14 +87,8 @@ class Clue {
   // ============================================================
   // SECTION: Hilfs-Methoden (Getters)
   // ============================================================
-
-  /// Prüft, ob dieser Hinweis ein Rätsel ist (egal welcher Art).
   bool get isRiddle => question != null && question!.isNotEmpty;
-
-  /// Prüft, ob das Rätsel ein GPS-Rätsel ist.
   bool get isGpsRiddle => isRiddle && riddleType == RiddleType.GPS;
-
-  /// Prüft, ob das Rätsel ein Multiple-Choice-Rätsel ist.
   bool get isMultipleChoice => isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
 
   // ============================================================
@@ -101,10 +103,20 @@ class Clue {
       type: json['type'],
       content: json['content'],
       description: json['description'],
+      imageEffect: ImageEffect.values.firstWhere( // NEU: Aus JSON lesen
+            (e) => e.toString() == json['imageEffect'],
+            orElse: () => ImageEffect.NONE
+      ),
       question: json['question'],
       riddleType: RiddleType.values.firstWhere(
             (e) => e.toString() == json['riddleType'],
-            orElse: () => RiddleType.TEXT // Fallback für alte Daten
+            orElse: () {
+              // Intelligenter Fallback für alte Multiple-Choice-Rätsel
+              if (json['options'] != null && (json['options'] as List).isNotEmpty) {
+                return RiddleType.MULTIPLE_CHOICE;
+              }
+              return RiddleType.TEXT;
+            }
       ),
       answer: json['answer'],
       options: json['options'] != null ? List<String>.from(json['options']) : null,
@@ -125,6 +137,7 @@ class Clue {
       'type': type,
       'content': content,
       if (description != null) 'description': description,
+      'imageEffect': imageEffect.toString(), // NEU: In JSON schreiben
       if (question != null) 'question': question,
       'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,
