@@ -1,60 +1,63 @@
-    name: clue_master
-    description: "A new Flutter project."
-    publish_to: 'none'
-    
-    version: 1.0.0+1
-    
-    environment:
-      sdk: '>=3.2.0 <4.0.0'
-    
-    dependencies:
-      flutter:
-        sdk: flutter
-    
-      path_provider: ^2.1.0
-      cupertino_icons: ^1.0.0
-      image_picker: ^1.0.0
-      uuid: ^4.0.0
-      record: ^5.0.0
-      just_audio: ^0.9.36
-      audio_session: ^0.1.0
-      mobile_scanner: ^5.1.1
-      video_player: ^2.8.6
-      intl: ^0.19.0
-      qr_flutter: ^4.1.0
-      pinput: ^4.0.0
-      vibration: ^3.1.3 # Deine stabile Version
-      auto_size_text: ^3.0.0 # <-- NEU für selbstanpassende Titel
-    
-      # Pakete für das Teilen
-      archive: ^3.4.9
-      share_plus: ^7.2.2
-    
-      # Paket für den Import
-      file_picker: ^10.2.0
-      
-      confetti: ^0.7.0 # <-- FÜGE DIESE ZEILE HINZU
-    
-    dev_dependencies:
-      flutter_test:
-        sdk: flutter
-      flutter_lints: ^3.0.0
-    
-    dependency_overrides:
-      record_linux: 1.1.1
-      record_platform_interface: 1.3.0
-    
-    flutter:
-      uses-material-design: true
-      assets:
-        - assets/hunts.json
-        - assets/codes.json
-        - assets/images/
-        - assets/audio/
-        - assets/fonts/
-    
+name: clue_master
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # GPS-Funktionalität
+  geolocator: ^12.0.0 # <-- NEU für GPS-Standort
+  permission_handler: ^11.3.1 # <-- NEU für die Abfrage von Berechtigungen
+
+  path_provider: ^2.1.0
+  cupertino_icons: ^1.0.0
+  image_picker: ^1.0.0
+  uuid: ^4.0.0
+  record: ^5.0.0
+  just_audio: ^0.9.36
+  audio_session: ^0.1.0
+  mobile_scanner: ^5.1.1
+  video_player: ^2.8.6
+  intl: ^0.19.0
+  qr_flutter: ^4.1.0
+  pinput: ^4.0.0
+  vibration: ^3.1.3 # Deine stabile Version
+  auto_size_text: ^3.0.0 # <-- NEU für selbstanpassende Titel
+
+  # Pakete für das Teilen
+  archive: ^3.4.9
+  share_plus: ^7.2.2
+
+  # Paket für den Import
+  file_picker: ^10.2.0
+  
+  confetti: ^0.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+dependency_overrides:
+  record_linux: 1.1.1
+  record_platform_interface: 1.3.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/hunts.json
+    - assets/codes.json
+    - assets/images/
+    - assets/audio/
+    - assets/fonts/
+
+  fonts:
+    - family: SpecialElite
       fonts:
-        - family: SpecialElite
-          fonts:
-            - asset: assets/fonts/SpecialElite-Regular.ttf
-    
+        - asset: assets/fonts/SpecialElite-Regular.ttf

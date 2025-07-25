@@ -1,4 +1,13 @@
 // ============================================================
+// SECTION: Enum für die Freischalt-Methode
+// ============================================================
+/// Definiert, wie ein Hinweis freigeschaltet werden kann.
+enum UnlockMethod {
+  CODE, // Standard: durch Eingabe des `code`
+  GPS,  // Neu: durch Erreichen eines geografischen Standorts
+}
+
+// ============================================================
 // SECTION: Clue Klasse
 // ============================================================
 class Clue {
@@ -7,8 +16,6 @@ class Clue {
   // ============================================================
   final String code;
   bool solved;
-  
-  // NEUES FELD (v1.43): Speichert, ob der Hinweis schon einmal angesehen wurde.
   bool hasBeenViewed;
 
   // ============================================================
@@ -21,11 +28,11 @@ class Clue {
   // ============================================================
   // SECTION: OPTIONALES RÄTSEL
   // ============================================================
-  final String? question; // Die Frage. Wenn dieses Feld leer ist, ist es kein Rätsel.
-  final String? answer;   // Die korrekte Antwort.
-  final List<String>? options; // Antwortmöglichkeiten für Multiple-Choice.
-  final String? hint1; // Hilfe nach 2 falschen Versuchen.
-  final String? hint2; // Hilfe nach 4 falschen Versuchen.
+  final String? question;
+  final String? answer;
+  final List<String>? options;
+  final String? hint1;
+  final String? hint2;
 
   // ============================================================
   // SECTION: BELOHNUNG (Was nach dem Lösen eines Rätsels angezeigt wird)
@@ -35,8 +42,15 @@ class Clue {
   // ============================================================
   // SECTION: FINALE (v1.42)
   // ============================================================
-  /// Markiert diesen Hinweis als den letzten der Mission.
   final bool isFinalClue;
+
+  // ============================================================
+  // SECTION: GPS-ERWEITERUNG (NEU)
+  // ============================================================
+  final UnlockMethod unlockMethod;
+  final double? latitude;
+  final double? longitude;
+  final double? radius; // in Metern
 
   // ============================================================
   // SECTION: Konstruktor
@@ -44,7 +58,7 @@ class Clue {
   Clue({
     required this.code,
     this.solved = false,
-    this.hasBeenViewed = false, // NEU: Standardwert ist false
+    this.hasBeenViewed = false,
     required this.type,
     required this.content,
     this.description,
@@ -55,6 +69,11 @@ class Clue {
     this.hint2,
     this.rewardText,
     this.isFinalClue = false,
+    // GPS-Felder im Konstruktor
+    this.unlockMethod = UnlockMethod.CODE, // Standard ist CODE
+    this.latitude,
+    this.longitude,
+    this.radius,
   });
 
   // ============================================================
@@ -66,6 +85,9 @@ class Clue {
 
   /// Prüft, ob das Rätsel ein Multiple-Choice-Rätsel ist.
   bool get isMultipleChoice => isRiddle && options != null && options!.isNotEmpty;
+  
+  /// NEU: Prüft, ob dieser Hinweis per GPS freigeschaltet wird.
+  bool get isGpsClue => unlockMethod == UnlockMethod.GPS && latitude != null && longitude != null;
 
   // ============================================================
   // SECTION: JSON-Konvertierung
@@ -76,7 +98,7 @@ class Clue {
     return Clue(
       code: code,
       solved: json['solved'] ?? false,
-      hasBeenViewed: json['hasBeenViewed'] ?? false, // NEU: Aus JSON lesen
+      hasBeenViewed: json['hasBeenViewed'] ?? false,
       type: json['type'],
       content: json['content'],
       description: json['description'],
@@ -87,6 +109,14 @@ class Clue {
       hint2: json['hint2'],
       rewardText: json['rewardText'],
       isFinalClue: json['isFinalClue'] ?? false,
+      // NEU: GPS-Felder aus JSON lesen
+      unlockMethod: UnlockMethod.values.firstWhere(
+            (e) => e.toString() == json['unlockMethod'],
+            orElse: () => UnlockMethod.CODE // Fallback für alte Daten
+      ),
+      latitude: json['latitude'],
+      longitude: json['longitude'],
+      radius: json['radius'],
     );
   }
 
@@ -94,7 +124,7 @@ class Clue {
   Map<String, dynamic> toJson() {
     return {
       'solved': solved,
-      'hasBeenViewed': hasBeenViewed, // NEU: In JSON schreiben
+      'hasBeenViewed': hasBeenViewed,
       'type': type,
       'content': content,
       if (description != null) 'description': description,
@@ -105,6 +135,11 @@ class Clue {
       if (hint2 != null) 'hint2': hint2,
       if (rewardText != null) 'rewardText': rewardText,
       'isFinalClue': isFinalClue,
+      // NEU: GPS-Felder in JSON schreiben
+      'unlockMethod': unlockMethod.toString(),
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (radius != null) 'radius': radius,
     };
   }
 }

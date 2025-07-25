@@ -1,8 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:geolocator/geolocator.dart'; // NEU: Import für GPS
+import 'package:permission_handler/permission_handler.dart'; // NEU: Import für Berechtigungen
+
 import '../../data/models/clue.dart';
 
 class AdminEditorScreen extends StatefulWidget {
@@ -28,6 +32,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _imagePicker = ImagePicker();
   final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
+
+  // --- Bestehende Controller ---
   final _codeController = TextEditingController();
   String _type = 'text';
   final _contentController = TextEditingController();
@@ -42,9 +48,15 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _hint1Controller = TextEditingController();
   final _hint2Controller = TextEditingController();
   final _rewardTextController = TextEditingController();
-
-  // VEREINFACHT: Nur noch die Checkbox für das Finale
   bool _isFinalClue = false;
+
+  // --- NEUE Controller und Variablen für GPS ---
+  UnlockMethod _unlockMethod = UnlockMethod.CODE;
+  final _latitudeController = TextEditingController();
+  final _longitudeController = TextEditingController();
+  final _radiusController = TextEditingController();
+  bool _isFetchingLocation = false;
+
 
   @override
   void initState() {
@@ -56,7 +68,15 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _contentController.text = clue.content;
       _descriptionController.text = clue.description ?? '';
       _isRiddle = clue.isRiddle;
-      _isFinalClue = clue.isFinalClue; // Feld initialisieren
+      _isFinalClue = clue.isFinalClue;
+      
+      // NEU: GPS-Felder initialisieren
+      _unlockMethod = clue.unlockMethod;
+      if (clue.isGpsClue) {
+        _latitudeController.text = clue.latitude.toString();
+        _longitudeController.text = clue.longitude.toString();
+        _radiusController.text = clue.radius.toString();
+      }
 
       if (clue.isRiddle) {
         _questionController.text = clue.question!;
@@ -90,6 +110,10 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _hint2Controller.dispose();
     _rewardTextController.dispose();
     _audioRecorder.dispose();
+    // NEU: GPS-Controller entsorgen
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    _radiusController.dispose();
     super.dispose();
   }
 
@@ -113,8 +137,12 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         hint1: _isRiddle && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
         hint2: _isRiddle && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
-        // VEREINFACHT: Nur noch das Flag speichern
         isFinalClue: _isFinalClue,
+        // NEU: GPS-Daten speichern
+        unlockMethod: _unlockMethod,
+        latitude: _unlockMethod == UnlockMethod.GPS ? double.tryParse(_latitudeController.text) : null,
+        longitude: _unlockMethod == UnlockMethod.GPS ? double.tryParse(_longitudeController.text) : null,
+        radius: _unlockMethod == UnlockMethod.GPS ? double.tryParse(_radiusController.text) : null,
       );
 
       final updatedMap = {clue.code: clue};
@@ -122,6 +150,41 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       Navigator.pop(context);
     }
   }
+  
+  // --- NEUE METHODE: Aktuellen Standort abrufen ---
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isFetchingLocation = true);
+
+    try {
+      // 1. Berechtigung prüfen
+      var permission = await Permission.location.request();
+      if (permission.isGranted) {
+        // 2. Standort abrufen
+        Position position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
+        
+        // 3. Controller aktualisieren
+        setState(() {
+          _latitudeController.text = position.latitude.toString();
+          _longitudeController.text = position.longitude.toString();
+        });
+
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Standort-Berechtigung wurde verweigert.'),
+          backgroundColor: Colors.red,
+        ));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Standort konnte nicht abgerufen werden: $e'),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      setState(() => _isFetchingLocation = false);
+    }
+  }
+
 
   Future<void> _pickMedia(ImageSource source) async {
     XFile? mediaFile;
@@ -174,25 +237,28 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildSectionHeader('Hinweis (wird immer angezeigt)'),
-            TextFormField(
-              controller: _codeController,
-              decoration: const InputDecoration(labelText: 'Code der Station', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
-              validator: (value) {
-                final code = value?.trim() ?? '';
-                if (code.isEmpty) {
-                  return 'Der Code ist ein Pflichtfeld.';
-                }
-                if (widget.codeToEdit == null && widget.existingCodes.contains(code)) {
-                  return 'Dieser Code existiert bereits.';
-                }
-                if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) {
-                  return 'Dieser Code existiert bereits.';
-                }
-                return null;
-              },
+            _buildSectionHeader('Freischalt-Methode'),
+            DropdownButtonFormField<UnlockMethod>(
+              value: _unlockMethod,
+              items: const [
+                DropdownMenuItem(value: UnlockMethod.CODE, child: Text('Code / QR-Code')),
+                DropdownMenuItem(value: UnlockMethod.GPS, child: Text('GPS-Standort')),
+              ],
+              onChanged: (value) => setState(() => _unlockMethod = value!),
+              decoration: const InputDecoration(labelText: 'Wie wird die Station freigeschaltet?', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
             ),
-            const SizedBox(height: 16),
+
+            const Divider(height: 40, thickness: 1),
+
+            // --- Bedingte Anzeige der Felder ---
+            if (_unlockMethod == UnlockMethod.CODE)
+              _buildCodeSection()
+            else
+              _buildGpsSection(),
+
+            const Divider(height: 40, thickness: 1),
+            
+            _buildSectionHeader('Stations-Inhalt (wird nach Freischaltung angezeigt)'),
             DropdownButtonFormField<String>(
               value: _type,
               items: const [
@@ -205,7 +271,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 _type = value!;
                 _contentController.clear();
               }),
-              decoration: const InputDecoration(labelText: 'Typ des Hinweises', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              decoration: const InputDecoration(labelText: 'Typ des Inhalts', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
             ),
             const SizedBox(height: 8),
             _buildMediaContentField(),
@@ -254,8 +320,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               const SizedBox(height: 8),
               Text(
                 _isFinalClue 
-                  ? 'Die finale Botschaft wird durch den "Hinweis" oben (Text, Bild, Audio, Video) und den "Finalen Erfolgs-Text" unten definiert.'
-                  : 'Die Belohnung wird durch den "Hinweis" oben und den "Belohnungs-Text" unten definiert.',
+                  ? 'Die finale Botschaft wird durch den "Stations-Inhalt" oben und den "Finalen Erfolgs-Text" unten definiert.'
+                  : 'Die Belohnung wird durch den "Stations-Inhalt" oben und den "Belohnungs-Text" unten definiert.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
@@ -276,6 +342,74 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     );
   }
 
+  // --- NEUE WIDGETS für die Sektionen ---
+  Widget _buildCodeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Code-Einstellungen'),
+        TextFormField(
+          controller: _codeController,
+          decoration: const InputDecoration(labelText: 'Code der Station', hintText: 'z.B. A1, Baumhaus, etc.', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          validator: (value) {
+            final code = value?.trim() ?? '';
+            if (code.isEmpty) {
+              return 'Der Code ist ein Pflichtfeld.';
+            }
+            if (widget.codeToEdit == null && widget.existingCodes.contains(code)) {
+              return 'Dieser Code existiert bereits.';
+            }
+            if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) {
+              return 'Dieser Code existiert bereits.';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGpsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('GPS-Einstellungen'),
+        TextFormField(
+          controller: _latitudeController,
+          decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          validator: (v) => (_unlockMethod == UnlockMethod.GPS && (v == null || v.isEmpty)) ? 'Breitengrad erforderlich' : null,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _longitudeController,
+          decoration: const InputDecoration(labelText: 'Längengrad (Longitude)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          validator: (v) => (_unlockMethod == UnlockMethod.GPS && (v == null || v.isEmpty)) ? 'Längengrad erforderlich' : null,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _radiusController,
+          decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (v) => (_unlockMethod == UnlockMethod.GPS && (v == null || v.isEmpty)) ? 'Radius erforderlich' : null,
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: _isFetchingLocation 
+            ? const CircularProgressIndicator()
+            : ElevatedButton.icon(
+                icon: const Icon(Icons.my_location),
+                label: const Text('Aktuellen Standort eintragen'),
+                onPressed: _getCurrentLocation,
+              ),
+        ),
+      ],
+    );
+  }
+
+
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
@@ -288,7 +422,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       return Column(children: [
         TextFormField(
           controller: _contentController,
-          decoration: const InputDecoration(labelText: 'Hinweis-Text', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          decoration: const InputDecoration(labelText: 'Inhalt (Text)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
           maxLines: 3,
           validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
         ),
