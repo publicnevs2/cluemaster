@@ -48,9 +48,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   late Hunt _currentHunt;
   late Map<String, String> _normalizedMap;
   bool _showError = false;
-  bool _isAnimating = false;
-  // NEU: Verhindert, dass didPopNext und die Animation sich in die Quere kommen.
-  bool _isNavigatingBack = false; 
+
+  // Das zentrale Kontroll-Flag. Wenn true, sind alle User-Interaktionen blockiert.
+  bool _isBusy = false;
 
   @override
   void initState() {
@@ -76,16 +76,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  // ANGEPASST: Lädt Daten nur neu, wenn nicht gerade eine Animation vorbereitet wird.
   @override
   void didPopNext() {
-    // Wenn wir von einer Seite zurückkehren, auf der eine Animation ausgelöst
-    // wurde, überlassen wir die Kontrolle dem _submitCode Prozess.
-    if (!_isNavigatingBack) {
+    if (!_isBusy) {
       _refreshHuntData();
     }
-    // Flag zurücksetzen
-    _isNavigatingBack = false;
   }
 
   @override
@@ -102,10 +97,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       for (var code in _currentHunt.clues.keys) code.toLowerCase(): code,
     };
   }
-  
-  // Lädt die Daten von der Festplatte und aktualisiert die UI.
+
   Future<void> _refreshHuntData() async {
     final allHunts = await _clueService.loadHunts();
+    if (!mounted) return;
     final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name,
         orElse: () => _currentHunt);
     setState(() {
@@ -114,19 +109,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  // UX-VERBESSERUNG: Langsamer tippen, längere Pause am Ende.
   void _startCodeAnimation(String code) {
-    if (_isAnimating) return;
-
+    // KORREKTUR: Der fehlerhafte Check wurde entfernt.
+    // Die Funktion sperrt jetzt sofort die UI und startet die Animation.
     setState(() {
-      _isAnimating = true;
+      _isBusy = true;
       _showError = false;
       _codeController.clear();
     });
 
     int charIndex = 0;
-    // Tipp-Geschwindigkeit verlangsamt für bessere "Experience"
-    Timer.periodic(const Duration(milliseconds: 300), (timer) {
+    Timer.periodic(const Duration(milliseconds: 250), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -134,98 +127,100 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       
       if (charIndex < code.length) {
         _soundService.playSound(SoundEffect.buttonClick);
-        _codeController.text += code[charIndex];
+        setState(() {
+          _codeController.text += code[charIndex];
+        });
         charIndex++;
       } else {
         timer.cancel();
-        // Längere Pause am Ende für mehr Dramaturgie.
-        Future.delayed(const Duration(milliseconds: 800), () {
+        Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) {
-            _submitCode(code);
-            setState(() => _isAnimating = false);
+            _processCode(code);
           }
         });
       }
     });
   }
 
-  // STARK ANGEPASST: Behandelt jetzt die neue Logik und verhindert Flimmern.
-  Future<void> _submitCode([String? code]) async {
-    if (_isAnimating && code == null) return;
-    
+  void _submitManualCode() {
+    if (_isBusy) return;
     Vibration.vibrate(duration: 50);
-    if(code == null) _soundService.playSound(SoundEffect.buttonClick);
-    
-    final input = code ?? _codeController.text.trim();
-    if (input.isEmpty) return;
+    _soundService.playSound(SoundEffect.buttonClick);
+    _processCode(_codeController.text);
+  }
+
+  Future<void> _processCode(String code) async {
+    // Stellt sicher, dass die App als "beschäftigt" markiert ist.
+    if (!_isBusy) {
+      setState(() { _isBusy = true; });
+    }
+
+    final input = code.trim();
+    if (input.isEmpty) {
+      setState(() { _isBusy = false; }); // Bei leerer Eingabe sofort freigeben.
+      return;
+    }
     
     final norm = input.toLowerCase();
 
     if (_normalizedMap.containsKey(norm)) {
-      if(code == null) _soundService.playSound(SoundEffect.clueUnlocked);
-      
+      if (!code.toUpperCase().contains('START')) {
+         _soundService.playSound(SoundEffect.clueUnlocked);
+      }
       final originalCode = _normalizedMap[norm]!;
       final clue = _currentHunt.clues[originalCode]!;
 
       if (!mounted) return;
 
-      // Wir setzen das Flag, um didPopNext zu signalisieren, dass wir die Kontrolle haben.
-      _isNavigatingBack = true;
       final nextCodeToAnimate = await Navigator.push<String>(
         context,
-        MaterialPageRoute(
-            builder: (_) => ClueDetailScreen(hunt: _currentHunt, clue: clue)),
+        MaterialPageRoute(builder: (_) => ClueDetailScreen(hunt: _currentHunt, clue: clue)),
       );
       
-      // UX-VERBESSERUNG: Flimmern verhindern.
-      // Anstatt die ganze Jagd von der Festplatte neu zu laden (_refreshHuntData),
-      // aktualisieren wir nur den Status des Hinweises, den wir gerade besucht haben,
-      // direkt im Speicher. Das ist viel schneller.
       setState(() {
         clue.hasBeenViewed = true;
         if (clue.solved) {
            _currentHunt.clues[originalCode]!.solved = true;
         }
+        _showError = false;
+        _codeController.clear();
       });
 
-      _codeController.clear();
-      setState(() => _showError = false);
-      
       if (nextCodeToAnimate != null && nextCodeToAnimate.isNotEmpty) {
+        // Die nächste Animation wird gestartet. _isBusy bleibt true.
         _startCodeAnimation(nextCodeToAnimate);
       } else {
-        // Wenn keine Animation folgt, den Fokus wieder auf die Eingabe setzen.
+        // Die Kette ist beendet. App für manuelle Eingabe freigeben.
         _codeFocusNode.requestFocus();
+        setState(() { _isBusy = false; });
       }
-
     } else {
       _soundService.playSound(SoundEffect.failure);
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
-      setState(() => _showError = true);
-      _codeController.clear();
+      setState(() {
+        _showError = true;
+        _codeController.clear();
+        _isBusy = false; // Bei Fehler App wieder freigeben
+      });
       _codeFocusNode.requestFocus();
     }
   }
 
   Future<void> _scanAndSubmit() async {
-    if (_isAnimating) return;
-
-    Vibration.vibrate(duration: 50);
-    _soundService.playSound(SoundEffect.buttonClick);
+    if (_isBusy) return;
     final code = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const QrScannerScreen()),
     );
     if (code != null && code.isNotEmpty) {
-      _submitCode(code);
+      _processCode(code);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final totalClues = _currentHunt.clues.length;
-    final viewedClues =
-        _currentHunt.clues.values.where((c) => c.hasBeenViewed).length;
+    final viewedClues = _currentHunt.clues.values.where((c) => c.hasBeenViewed).length;
     final double progress = totalClues > 0 ? viewedClues / totalClues : 0.0;
 
     final defaultPinTheme = PinTheme(
@@ -239,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[800]!),
         borderRadius: BorderRadius.circular(8),
-        color: _isAnimating ? Colors.amber.withOpacity(0.1) : Colors.grey[900],
+        color: _isBusy ? Colors.amber.withOpacity(0.1) : Colors.grey[900],
       ),
     );
 
@@ -317,7 +312,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               const SizedBox(height: 24),
               const Text('Missions-Code eingeben:', style: TextStyle(fontSize: 20)),
               const SizedBox(height: 24),
-
               Pinput(
                 controller: _codeController,
                 focusNode: _codeFocusNode,
@@ -327,18 +321,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   UpperCaseTextFormatter(),
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 ],
+                enabled: !_isBusy, 
+                onCompleted: (pin) => _submitManualCode(),
+                onChanged: (_) {
+                  if (_showError) setState(() => _showError = false);
+                },
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: focusedPinTheme,
                 errorPinTheme: errorPinTheme,
                 forceErrorState: _showError,
-                enabled: !_isAnimating, 
-                onCompleted: (pin) => _submitCode(pin),
-                onChanged: (_) {
-                  if (_showError) setState(() => _showError = false);
-                },
-                pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
               ),
-
               SizedBox(
                 height: 40,
                 child: _showError
@@ -351,12 +343,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       )
                     : null,
               ),
-
               const Text('oder'),
               const SizedBox(height: 8),
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: Colors.amber[200]),
-                onPressed: _isAnimating ? null : _scanAndSubmit,
+                onPressed: _isBusy ? null : _scanAndSubmit,
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('QR-Code scannen'),
               ),

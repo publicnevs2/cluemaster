@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -79,7 +78,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
-      _solveRiddle();
+      await _solveRiddle();
     } else {
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       _soundService.playSound(SoundEffect.failure);
@@ -94,16 +93,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           setState(() => _errorMessage = null);
         }
       });
-
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
     }
   }
   
@@ -116,26 +105,31 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
 
     if (result == true) {
-      _solveRiddle();
+      await _solveRiddle();
     }
   }
   
-  void _solveRiddle() async {
+  Future<void> _solveRiddle() async {
     if (!mounted || _isSolved) return;
 
     Vibration.vibrate(duration: 100);
     _soundService.playSound(SoundEffect.success);
     
-    setState(() {
-      widget.clue.solved = true;
-      _isSolved = true;
-    });
+    // Zuerst den Zustand im Objekt ändern. Das ist wichtig, damit der HomeScreen
+    // beim Zurückkehren den korrekten Status hat.
+    widget.clue.solved = true;
     
+    // Den neuen Zustand speichern.
     await _saveHuntProgress();
-    if (!mounted) return;
 
-    if (widget.clue.isFinalClue) {
-      // Verzögerung vor dem finalen Screen für bessere UX
+    // UI aktualisieren, um den "Gelöst"-Zustand anzuzeigen.
+    if(mounted) {
+      setState(() {
+        _isSolved = true;
+      });
+    }
+
+    if (widget.clue.isFinalClue && mounted) {
       Future.delayed(const Duration(milliseconds: 800), () {
         if(mounted) {
            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
@@ -144,9 +138,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    // Dynamischer Button-Text
+    final bool hasNextCode = _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
+    final String buttonText = hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
+
     return Scaffold(
       appBar: AppBar(title: const Text('Eingehende Nachricht')),
       body: SafeArea(
@@ -161,9 +158,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   duration: const Duration(milliseconds: 500),
                   child: Column(
                     children: [
-                      _buildMediaWidget(
-                        clue: widget.clue,
-                      ),
+                      _buildMediaWidget(clue: widget.clue),
                       const SizedBox(height: 16),
                       if (widget.clue.isRiddle) ...[
                         const Divider(height: 24, thickness: 1, color: Colors.white24),
@@ -188,15 +183,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     Vibration.vibrate(duration: 50);
                     _soundService.playSound(SoundEffect.buttonClick);
                     
-                    // HIER DIE ANPASSUNG: Wir geben jetzt den `nextClueCode` zurück.
-                    // Nur wenn das Rätsel gelöst wurde und ein nächster Code existiert.
-                    String? codeToAnimate = (_isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false)) 
-                                        ? widget.clue.nextClueCode
-                                        : null;
-                                        
-                    Navigator.of(context).pop(codeToAnimate);
+                    Navigator.of(context).pop(widget.clue.nextClueCode);
                   },
-                  child: const Text('Zurück zur Code-Eingabe'),
+                  child: Text(buttonText),
                 ),
               ),
           ],
@@ -205,6 +194,32 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
+  // KORRIGIERT: Der Text "RÄTSEL GELÖST!" wurde entfernt und durch ein Icon ersetzt.
+  Widget _buildRewardWidget() {
+    return Card(
+      color: Colors.green.withOpacity(0.2),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+             Icon(Icons.check_circle_outline, color: Colors.greenAccent.withOpacity(0.8), size: 40),
+             const SizedBox(height: 12),
+            Text(
+              widget.clue.rewardText ?? 'Gut gemacht!',
+              style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Der Rest der Datei (_buildRiddleWidget, _buildMediaWidget, etc.) kann
+  // von deinem vorherigen Code übernommen werden, da er unverändert ist.
+  // Ich füge ihn hier zur Vollständigkeit ein.
+  
   Widget _buildRiddleWidget() {
     switch (widget.clue.riddleType) {
       case RiddleType.GPS:
@@ -265,34 +280,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  Widget _buildRewardWidget() {
-    return Card(
-      color: Colors.green.withOpacity(0.2),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const Text("RÄTSEL GELÖST!",
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.greenAccent)),
-            const SizedBox(height: 16),
-            Text(
-              // Zeigt den `rewardText` oder einen Standardtext an.
-              widget.clue.rewardText ?? 'Gut gemacht! Kehre zur Code-Eingabe zurück, um fortzufahren.',
-              style: const TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildMultipleChoiceOptions() {
     return Column(
-      children: widget.clue.options!.map((option) {
+      children: (widget.clue.options ?? []).map((option) {
         return Container(
           width: double.infinity,
           margin: const EdgeInsets.symmetric(vertical: 4.0),
@@ -347,9 +337,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 }
-// ============================================================
-// SECTION: Media Widget & Effekt-Logik
-// ============================================================
+// Media Widgets hier einfügen...
+// Der Rest der Datei (Media Widgets) bleibt unverändert.
 
 Widget _buildMediaWidget({required Clue clue}) {
   Widget mediaWidget;
@@ -417,8 +406,6 @@ Widget _buildMediaWidget({required Clue clue}) {
   );
 }
 
-// --- NEUE WIDGETS UND LOGIK FÜR TEXT-EFFEKTE ---
-
 Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
   switch (effect) {
     case TextEffect.MORSE_CODE:
@@ -465,7 +452,6 @@ class MorseCodeWidget extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.volume_up_outlined, size: 40),
           onPressed: () {
-            // HINWEIS: Sound-Logik für Morsecode ist hier noch nicht implementiert.
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
             ));
@@ -475,9 +461,6 @@ class MorseCodeWidget extends StatelessWidget {
     );
   }
 }
-
-
-// --- Bestehende Widgets für Medien & Puzzle ---
 
 class ImagePuzzleWidget extends StatefulWidget {
   final String imagePath;
