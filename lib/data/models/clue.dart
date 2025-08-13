@@ -17,7 +17,7 @@ enum ImageEffect {
   BLACK_AND_WHITE,
 }
 
-/// NEU: Definiert, welcher Effekt auf einen Text-Hinweis angewendet wird.
+/// Definiert, welcher Effekt auf einen Text-Hinweis angewendet wird.
 enum TextEffect {
   NONE,           // Normaler Text
   MORSE_CODE,     // Text als Morsecode
@@ -45,7 +45,7 @@ class Clue {
   final String content;
   final String? description;
   final ImageEffect imageEffect;
-  final TextEffect textEffect; // NEU: Feld für den Text-Effekt
+  final TextEffect textEffect;
 
   // ============================================================
   // SECTION: OPTIONALES RÄTSEL
@@ -63,9 +63,10 @@ class Clue {
   final double? radius;
 
   // ============================================================
-  // SECTION: BELOHNUNG & FINALE
+  // SECTION: BELOHNUNG & NÄCHSTER SCHRITT
   // ============================================================
-  final String? rewardText;
+  final String? rewardText;      // Text, der nach dem Lösen angezeigt wird.
+  final String? nextClueCode;    // NEU: Separater Code für den nächsten Hinweis.
   final bool isFinalClue;
 
   // ============================================================
@@ -79,7 +80,7 @@ class Clue {
     required this.content,
     this.description,
     this.imageEffect = ImageEffect.NONE,
-    this.textEffect = TextEffect.NONE, // NEU: Standardwert ist NONE
+    this.textEffect = TextEffect.NONE,
     this.question,
     this.riddleType = RiddleType.TEXT,
     this.answer,
@@ -90,6 +91,7 @@ class Clue {
     this.longitude,
     this.radius,
     this.rewardText,
+    this.nextClueCode, // NEU
     this.isFinalClue = false,
   });
 
@@ -116,7 +118,7 @@ class Clue {
             (e) => e.toString() == json['imageEffect'],
             orElse: () => ImageEffect.NONE
       ),
-      textEffect: TextEffect.values.firstWhere( // NEU: Aus JSON lesen
+      textEffect: TextEffect.values.firstWhere(
             (e) => e.toString() == json['textEffect'],
             orElse: () => TextEffect.NONE
       ),
@@ -138,6 +140,7 @@ class Clue {
       longitude: json['longitude'],
       radius: json['radius'],
       rewardText: json['rewardText'],
+      nextClueCode: json['nextClueCode'], // NEU: Aus JSON lesen
       isFinalClue: json['isFinalClue'] ?? false,
     );
   }
@@ -150,7 +153,7 @@ class Clue {
       'content': content,
       if (description != null) 'description': description,
       'imageEffect': imageEffect.toString(),
-      'textEffect': textEffect.toString(), // NEU: In JSON schreiben
+      'textEffect': textEffect.toString(),
       if (question != null) 'question': question,
       'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,
@@ -161,6 +164,7 @@ class Clue {
       if (longitude != null) 'longitude': longitude,
       if (radius != null) 'radius': radius,
       if (rewardText != null) 'rewardText': rewardText,
+      if (nextClueCode != null) 'nextClueCode': nextClueCode, // NEU: In JSON schreiben
       'isFinalClue': isFinalClue,
     };
   }

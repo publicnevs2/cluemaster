@@ -14,7 +14,6 @@ import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
 import '../../main.dart';
 
-// Dieser Formatter wandelt jede Eingabe automatisch in Großbuchstaben um.
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -28,13 +27,12 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 
 class HomeScreen extends StatefulWidget {
   final Hunt hunt;
-  // NEU: Optionaler Parameter, um die Animation von außen zu starten.
   final String? codeToAnimate;
 
   const HomeScreen({
     super.key,
     required this.hunt,
-    this.codeToAnimate, // NEU
+    this.codeToAnimate,
   });
 
   @override
@@ -50,9 +48,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   late Hunt _currentHunt;
   late Map<String, String> _normalizedMap;
   bool _showError = false;
-
-  // NEU: Statusvariable, die anzeigt, ob gerade eine Animation läuft.
   bool _isAnimating = false;
+  // NEU: Verhindert, dass didPopNext und die Animation sich in die Quere kommen.
+  bool _isNavigatingBack = false; 
 
   @override
   void initState() {
@@ -60,15 +58,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _currentHunt = widget.hunt;
     _initializeClues();
 
-    // NEU: Prüfen, ob die Seite mit einem zu animierenden Code aufgerufen wurde.
     if (widget.codeToAnimate != null && widget.codeToAnimate!.isNotEmpty) {
-      // Wir starten die Animation erst, nachdem der erste Frame gezeichnet wurde,
-      // um einen sauberen Übergang zu gewährleisten.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _startCodeAnimation(widget.codeToAnimate!);
       });
     } else {
-       // Wenn keine Animation stattfindet, Fokus setzen.
       _codeFocusNode.requestFocus();
     }
   }
@@ -82,10 +76,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  // Diese Methode wird aufgerufen, wenn man zum HomeScreen zurückkehrt.
+  // ANGEPASST: Lädt Daten nur neu, wenn nicht gerade eine Animation vorbereitet wird.
   @override
   void didPopNext() {
-    _refreshHuntData();
+    // Wenn wir von einer Seite zurückkehren, auf der eine Animation ausgelöst
+    // wurde, überlassen wir die Kontrolle dem _submitCode Prozess.
+    if (!_isNavigatingBack) {
+      _refreshHuntData();
+    }
+    // Flag zurücksetzen
+    _isNavigatingBack = false;
   }
 
   @override
@@ -98,13 +98,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   void _initializeClues() {
-    setState(() {
-      _normalizedMap = {
-        for (var code in _currentHunt.clues.keys) code.toLowerCase(): code,
-      };
-    });
+    _normalizedMap = {
+      for (var code in _currentHunt.clues.keys) code.toLowerCase(): code,
+    };
   }
-
+  
+  // Lädt die Daten von der Festplatte und aktualisiert die UI.
   Future<void> _refreshHuntData() async {
     final allHunts = await _clueService.loadHunts();
     final updatedHunt = allHunts.firstWhere((h) => h.name == widget.hunt.name,
@@ -115,19 +114,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
-  // NEU: Die komplette Animations-Logik
+  // UX-VERBESSERUNG: Langsamer tippen, längere Pause am Ende.
   void _startCodeAnimation(String code) {
     if (_isAnimating) return;
 
     setState(() {
       _isAnimating = true;
-      _showError = false; // Fehler-Status zurücksetzen
+      _showError = false;
       _codeController.clear();
     });
 
     int charIndex = 0;
-    // Ein Timer, der alle 200 Millisekunden ein Zeichen "tippt".
-    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+    // Tipp-Geschwindigkeit verlangsamt für bessere "Experience"
+    Timer.periodic(const Duration(milliseconds: 300), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -139,22 +138,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         charIndex++;
       } else {
         timer.cancel();
-        // Nach der Animation wird automatisch die Code-Prüfung ausgelöst.
-        Future.delayed(const Duration(milliseconds: 400), () {
+        // Längere Pause am Ende für mehr Dramaturgie.
+        Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
             _submitCode(code);
-            // Animation-Status wird nach der Überprüfung zurückgesetzt.
-             setState(() => _isAnimating = false);
+            setState(() => _isAnimating = false);
           }
         });
       }
     });
   }
 
-
-  // ANGEPASST: Die Methode wartet jetzt auf ein Ergebnis vom ClueDetailScreen.
+  // STARK ANGEPASST: Behandelt jetzt die neue Logik und verhindert Flimmern.
   Future<void> _submitCode([String? code]) async {
-    // Wenn eine Animation läuft, wird die Eingabe ignoriert.
     if (_isAnimating && code == null) return;
     
     Vibration.vibrate(duration: 50);
@@ -173,21 +169,33 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
       if (!mounted) return;
 
-      // HIER DIE WICHTIGE ÄNDERUNG: Wir warten auf ein Ergebnis (den nächsten Code).
+      // Wir setzen das Flag, um didPopNext zu signalisieren, dass wir die Kontrolle haben.
+      _isNavigatingBack = true;
       final nextCodeToAnimate = await Navigator.push<String>(
         context,
         MaterialPageRoute(
             builder: (_) => ClueDetailScreen(hunt: _currentHunt, clue: clue)),
       );
+      
+      // UX-VERBESSERUNG: Flimmern verhindern.
+      // Anstatt die ganze Jagd von der Festplatte neu zu laden (_refreshHuntData),
+      // aktualisieren wir nur den Status des Hinweises, den wir gerade besucht haben,
+      // direkt im Speicher. Das ist viel schneller.
+      setState(() {
+        clue.hasBeenViewed = true;
+        if (clue.solved) {
+           _currentHunt.clues[originalCode]!.solved = true;
+        }
+      });
 
-      // Nach der Rückkehr von der Detail-Seite:
       _codeController.clear();
       setState(() => _showError = false);
-      _codeFocusNode.requestFocus();
-
-      // Wenn ein Code zurückgegeben wurde, starte die nächste Animation.
+      
       if (nextCodeToAnimate != null && nextCodeToAnimate.isNotEmpty) {
         _startCodeAnimation(nextCodeToAnimate);
+      } else {
+        // Wenn keine Animation folgt, den Fokus wieder auf die Eingabe setzen.
+        _codeFocusNode.requestFocus();
       }
 
     } else {
@@ -200,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Future<void> _scanAndSubmit() async {
-    if (_isAnimating) return; // Verhindert Scan während der Animation
+    if (_isAnimating) return;
 
     Vibration.vibrate(duration: 50);
     _soundService.playSound(SoundEffect.buttonClick);
@@ -231,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[800]!),
         borderRadius: BorderRadius.circular(8),
-        color: _isAnimating ? Colors.amber.withOpacity(0.1) : Colors.grey[900], // NEU: Visuelles Feedback
+        color: _isAnimating ? Colors.amber.withOpacity(0.1) : Colors.grey[900],
       ),
     );
 
@@ -313,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               Pinput(
                 controller: _codeController,
                 focusNode: _codeFocusNode,
-                length: 6, // Wichtig: Die Animation stoppt bei dieser Länge.
+                length: 6,
                 keyboardType: TextInputType.text,
                 inputFormatters: [
                   UpperCaseTextFormatter(),
@@ -323,7 +331,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 focusedPinTheme: focusedPinTheme,
                 errorPinTheme: errorPinTheme,
                 forceErrorState: _showError,
-                // NEU: Deaktiviert die manuelle Eingabe während der Animation.
                 enabled: !_isAnimating, 
                 onCompleted: (pin) => _submitCode(pin),
                 onChanged: (_) {
@@ -349,7 +356,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               const SizedBox(height: 8),
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: Colors.amber[200]),
-                // NEU: Button wird während der Animation deaktiviert.
                 onPressed: _isAnimating ? null : _scanAndSubmit,
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('QR-Code scannen'),

@@ -40,7 +40,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _descriptionController = TextEditingController();
   bool _isFinalClue = false;
   ImageEffect _imageEffect = ImageEffect.NONE;
-  TextEffect _textEffect = TextEffect.NONE; // NEU: Variable für Text-Effekt
+  TextEffect _textEffect = TextEffect.NONE;
 
   // --- Rätsel-Controller ---
   bool _isRiddle = false;
@@ -54,6 +54,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _hint1Controller = TextEditingController();
   final _hint2Controller = TextEditingController();
   final _rewardTextController = TextEditingController();
+  // NEU: Controller für den Code des nächsten Hinweises
+  final _nextClueCodeController = TextEditingController(); 
 
   // --- GPS-Controller ---
   final _latitudeController = TextEditingController();
@@ -73,13 +75,15 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _descriptionController.text = clue.description ?? '';
       _isFinalClue = clue.isFinalClue;
       _imageEffect = clue.imageEffect;
-      _textEffect = clue.textEffect; // NEU: Text-Effekt initialisieren
+      _textEffect = clue.textEffect;
       _isRiddle = clue.isRiddle;
 
       if (clue.isRiddle) {
         _questionController.text = clue.question!;
         _rewardTextController.text = clue.rewardText ?? '';
         _riddleType = clue.riddleType;
+        // NEU: Initialisieren des neuen Feldes
+        _nextClueCodeController.text = clue.nextClueCode ?? ''; 
 
         if (clue.riddleType == RiddleType.GPS) {
             _latitudeController.text = clue.latitude?.toString() ?? '';
@@ -115,6 +119,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _hint1Controller.dispose();
     _hint2Controller.dispose();
     _rewardTextController.dispose();
+    _nextClueCodeController.dispose(); // NEU: Controller entsorgen
     _audioRecorder.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
@@ -138,10 +143,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
         isFinalClue: _isFinalClue,
         imageEffect: _type == 'image' ? _imageEffect : ImageEffect.NONE,
-        textEffect: _type == 'text' ? _textEffect : TextEffect.NONE, // NEU: Text-Effekt speichern
+        textEffect: _type == 'text' ? _textEffect : TextEffect.NONE,
         
         question: _isRiddle ? _questionController.text.trim() : null,
+        
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
+        // NEU: Wert aus dem Controller auslesen und speichern
+        nextClueCode: _isRiddle && _nextClueCodeController.text.trim().isNotEmpty ? _nextClueCodeController.text.trim() : null,
         
         riddleType: _isRiddle ? _riddleType : RiddleType.TEXT,
         answer: _isRiddle && _riddleType != RiddleType.GPS ? _answerController.text.trim() : null,
@@ -312,7 +320,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             _buildTextRiddleFields(),
 
           const Divider(height: 40, thickness: 1),
-          _buildSectionHeader('Belohnung / Finale'),
+          _buildSectionHeader('Belohnung & Nächster Schritt'),
           CheckboxListTile(
             title: const Text('Dies ist der finale Hinweis der Mission'),
             subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
@@ -320,19 +328,12 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             onChanged: (value) => setState(() => _isFinalClue = value ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           ),
-          const SizedBox(height: 8),
-          Text(
-            _isFinalClue 
-              ? 'Die finale Botschaft wird durch den "Stations-Inhalt" oben und den "Finalen Erfolgs-Text" unten definiert.'
-              : 'Die Belohnung wird durch den "Stations-Inhalt" oben und den "Belohnungs-Text" unten definiert.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _rewardTextController,
             decoration: InputDecoration(
               labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text (optional)', 
-              hintText: 'z.B. Der nächste Code lautet B4...', 
+              hintText: 'z.B. Gut gemacht, Agent!', 
               contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
             ),
             maxLines: 3,
@@ -343,6 +344,26 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               return null;
             },
           ),
+          
+          // NEU: Das Textfeld für den Code des nächsten Hinweises
+          if (!_isFinalClue) ...[
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _nextClueCodeController,
+              decoration: const InputDecoration(
+                labelText: 'Code für nächsten Hinweis (optional)',
+                hintText: 'z.B. ADLER3',
+                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              ),
+            ),
+             Padding(
+               padding: const EdgeInsets.only(top: 4.0, left: 12.0),
+               child: Text(
+                'Wird hier ein Code eingetragen, wird dieser nach dem Lösen des Rätsels automatisch eingetippt.',
+                style: Theme.of(context).textTheme.bodySmall,
+                           ),
+             ),
+          ],
         ],
       ),
     );
@@ -425,7 +446,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
             ),
             const SizedBox(height: 8),
-            // NEU: Text-Effekt Auswahl
             _buildTextEffectField(),
             TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
           ]
@@ -477,7 +497,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     );
   }
 
-  // NEUES WIDGET für die Text-Effekt-Auswahl
   Widget _buildTextEffectField() {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),

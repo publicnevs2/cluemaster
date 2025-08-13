@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -134,7 +135,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     if (!mounted) return;
 
     if (widget.clue.isFinalClue) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
+      // Verzögerung vor dem finalen Screen für bessere UX
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if(mounted) {
+           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
+        }
+      });
     }
   }
 
@@ -171,7 +177,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                 ),
               ),
             ),
-            // HIER IST DIE EINZIGE WIRKLICH WICHTIGE ÄNDERUNG
             if (!widget.clue.isRiddle || _isSolved)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -183,14 +188,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     Vibration.vibrate(duration: 50);
                     _soundService.playSound(SoundEffect.buttonClick);
                     
-                    // Wir geben den Belohnungstext (den nächsten Code) zurück.
-                    // Hat das gelöste Rätsel einen `rewardText`, wird dieser zurückgegeben.
-                    // Andernfalls (oder wenn es kein Rätsel war), wird `null` zurückgegeben.
-                    String? nextCode = (_isSolved && (widget.clue.rewardText?.isNotEmpty ?? false)) 
-                                        ? widget.clue.rewardText 
+                    // HIER DIE ANPASSUNG: Wir geben jetzt den `nextClueCode` zurück.
+                    // Nur wenn das Rätsel gelöst wurde und ein nächster Code existiert.
+                    String? codeToAnimate = (_isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false)) 
+                                        ? widget.clue.nextClueCode
                                         : null;
                                         
-                    Navigator.of(context).pop(nextCode);
+                    Navigator.of(context).pop(codeToAnimate);
                   },
                   child: const Text('Zurück zur Code-Eingabe'),
                 ),
@@ -275,7 +279,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                     color: Colors.greenAccent)),
             const SizedBox(height: 16),
             Text(
-              widget.clue.rewardText ?? 'Keine Belohnungsinformation.',
+              // Zeigt den `rewardText` oder einen Standardtext an.
+              widget.clue.rewardText ?? 'Gut gemacht! Kehre zur Code-Eingabe zurück, um fortzufahren.',
               style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
@@ -342,9 +347,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 }
-
 // ============================================================
-// SECTION: Media Widget & Effekt-Logik (UNVERÄNDERT)
+// SECTION: Media Widget & Effekt-Logik
 // ============================================================
 
 Widget _buildMediaWidget({required Clue clue}) {
@@ -413,6 +417,8 @@ Widget _buildMediaWidget({required Clue clue}) {
   );
 }
 
+// --- NEUE WIDGETS UND LOGIK FÜR TEXT-EFFEKTE ---
+
 Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
   switch (effect) {
     case TextEffect.MORSE_CODE:
@@ -459,6 +465,7 @@ class MorseCodeWidget extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.volume_up_outlined, size: 40),
           onPressed: () {
+            // HINWEIS: Sound-Logik für Morsecode ist hier noch nicht implementiert.
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
             ));
@@ -468,6 +475,9 @@ class MorseCodeWidget extends StatelessWidget {
     );
   }
 }
+
+
+// --- Bestehende Widgets für Medien & Puzzle ---
 
 class ImagePuzzleWidget extends StatefulWidget {
   final String imagePath;
