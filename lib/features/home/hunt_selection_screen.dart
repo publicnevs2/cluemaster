@@ -38,9 +38,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
-  /// Startet die Navigation zu einer Jagd, entweder zum Briefing oder direkt zum Spiel.
   void _navigateToGame(Hunt hunt) async {
-    // Navigiere zum Spiel (Briefing oder Home)
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -54,11 +52,9 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       ),
     );
     
-    // Nach der Rückkehr vom Spiel, lade die Jagden neu, um den Fortschritt zu aktualisieren.
     _loadHunts();
   }
 
-  /// Prüft den Fortschritt einer Jagd und fragt den Spieler ggf., ob er fortsetzen oder neu starten möchte.
   void _selectHunt(Hunt hunt) async {
     final hasProgress = hunt.clues.values.any((clue) => clue.hasBeenViewed);
 
@@ -102,32 +98,26 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Import abgebrochen.')),
       );
-    } else if (result == "EXISTS") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fehler: Eine Jagd mit diesem Namen existiert bereits.'), backgroundColor: Colors.orange),
-      );
+    // --- ÄNDERUNG: "EXISTS"-Fall entfernt ---
     } else if (result == "ERROR") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Fehler: Die Datei konnte nicht importiert werden.'), backgroundColor: Colors.red),
       );
     } else {
+      // Diese Erfolgsmeldung funktioniert jetzt für Original und Kopie
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Die Jagd "$result" wurde erfolgreich importiert.'), backgroundColor: Colors.green),
       );
       _loadHunts();
     }
   }
-
-  // --- KORRIGIERTE LOGIK FÜR AUTO-UPDATE --- 
+ 
   void _navigateToAdmin() async {
-    // Navigiere zum Admin-Bereich und warte, bis der Nutzer zurückkehrt.
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
     );
 
-    // Sobald der Nutzer zurückkehrt (nachdem der Admin-Bildschirm geschlossen wurde),
-    // wird diese Zeile ausgeführt. Wir laden die Jagden neu, um alle Änderungen anzuzeigen.
     if (mounted) {
       _loadHunts();
     }

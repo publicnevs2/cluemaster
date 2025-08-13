@@ -42,15 +42,11 @@ class ClueService {
     print("💾 Alle Schnitzeljagden gespeichert.");
   }
 
-  // NEUE METHODE (v1.43): Setzt den Fortschritt für eine Jagd zurück.
-  /// Setzt den Fortschritt für eine bestimmte Jagd zurück, indem 'solved' und 'hasBeenViewed'
-  /// bei allen Hinweisen auf false gesetzt werden.
   Future<void> resetHuntProgress(Hunt hunt) async {
     final allHunts = await loadHunts();
     final huntIndex = allHunts.indexWhere((h) => h.name == hunt.name);
 
     if (huntIndex != -1) {
-      // Setze bei jedem Hinweis 'solved' und 'hasBeenViewed' zurück.
       allHunts[huntIndex].clues.forEach((code, clue) {
         clue.solved = false;
         clue.hasBeenViewed = false;
@@ -85,22 +81,11 @@ class ClueService {
           }
         }
         
-        // Erstelle eine neue Clue-Instanz mit zurückgesetztem Fortschritt
-        updatedClues[entry.key] = Clue(
-          code: clue.code,
-          solved: false, // Fortschritt zurücksetzen
-          hasBeenViewed: false, // Fortschritt zurücksetzen
-          type: clue.type,
-          content: newContent, // Aktualisierter Medienpfad
-          description: clue.description,
-          question: clue.question,
-          answer: clue.answer,
-          options: clue.options,
-          hint1: clue.hint1,
-          hint2: clue.hint2,
-          rewardText: clue.rewardText,
-          isFinalClue: clue.isFinalClue,
-        );
+        final clueJson = clue.toJson();
+        clueJson['content'] = newContent;
+        clueJson['solved'] = false;
+        clueJson['hasBeenViewed'] = false;
+        updatedClues[entry.key] = Clue.fromJson(entry.key, clueJson);
       }
       exportHunt.clues = updatedClues;
 
@@ -160,7 +145,8 @@ class ClueService {
       if (huntJsonFile == null) throw Exception("Datei 'hunt.json' nicht im Archiv gefunden.");
       
       final huntJsonString = utf8.decode(huntJsonFile.content as List<int>);
-      final importedHunt = Hunt.fromJson(jsonDecode(huntJsonString));
+      final importedHuntData = jsonDecode(huntJsonString);
+      Hunt huntToSave = Hunt.fromJson(importedHuntData);
 
       final appDir = await getApplicationDocumentsDirectory();
       for (var file in archive.files) {
@@ -172,7 +158,7 @@ class ClueService {
       }
 
       final Map<String, Clue> updatedClues = {};
-      for (var entry in importedHunt.clues.entries) {
+      for (var entry in huntToSave.clues.entries) {
         final clue = entry.value;
         String newContent = clue.content;
         if (clue.content.startsWith('media/')) {
@@ -182,16 +168,33 @@ class ClueService {
         clueJson['content'] = newContent;
         updatedClues[entry.key] = Clue.fromJson(entry.key, clueJson);
       }
-      importedHunt.clues = updatedClues;
+      huntToSave.clues = updatedClues;
 
       final allHunts = await loadHunts();
-      if (allHunts.any((h) => h.name.toLowerCase() == importedHunt.name.toLowerCase())) {
-        return "EXISTS";
+      
+      // --- KORRIGIERTE LOGIK ---
+      if (allHunts.any((h) => h.name.toLowerCase() == huntToSave.name.toLowerCase())) {
+        String originalName = huntToSave.name;
+        int counter = 1;
+        String newName;
+        do {
+          newName = '$originalName ($counter)';
+          counter++;
+        } while (allHunts.any((h) => h.name.toLowerCase() == newName.toLowerCase()));
+        
+        // Erstelle eine NEUE Hunt-Instanz mit dem neuen Namen
+        huntToSave = Hunt(
+          name: newName,
+          clues: huntToSave.clues,
+          briefingText: huntToSave.briefingText,
+        );
       }
-      allHunts.add(importedHunt);
+      // --- ENDE KORREKTUR ---
+
+      allHunts.add(huntToSave);
       await saveHunts(allHunts);
       
-      return importedHunt.name;
+      return huntToSave.name;
     } catch (e) {
       // ignore: avoid_print
       print("❌ Fehler beim Importieren der Jagd: $e");
@@ -213,7 +216,7 @@ class ClueService {
     } catch (e) {
       // ignore: avoid_print
       print("❌ Fehler beim Laden des Admin-Passworts: $e");
-      return 'admin123'; // Sicherer Standardwert
+      return 'admin123';
     }
   }
 
@@ -222,7 +225,7 @@ class ClueService {
     final file = File('${dir.path}/$_settingsFileName');
     final settings = {'admin_password': password};
     await file.writeAsString(jsonEncode(settings));
-    // ignore: avoid_print
+    // ignore: avoid_print 
     print("🔑 Admin-Passwort aktualisiert.");
   }
 }
