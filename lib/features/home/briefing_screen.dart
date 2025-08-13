@@ -17,17 +17,43 @@ class BriefingScreen extends StatefulWidget {
 class _BriefingScreenState extends State<BriefingScreen> {
   final SoundService _soundService = SoundService();
 
+  // FINALE UND KORRIGIERTE LOGIK
   void _acceptMission() {
     Vibration.vibrate(duration: 50);
-    // Hier könnten wir einen speziellen "bestätigt"-Sound abspielen,
-    // für den Moment nutzen wir den Standard-Klick.
     _soundService.playSound(SoundEffect.buttonClick);
 
-    // Ersetzt den Briefing-Screen durch den Home-Screen, damit der Spieler
-    // mit dem Zurück-Button nicht wieder zum Briefing kommt.
+    String? firstClueCode; // Der Start-Code, kann null sein.
+
+    if (widget.hunt.clues.isNotEmpty) {
+      // Wir erstellen eine Liste der Codes in Großbuchstaben für den Vergleich.
+      final upperCaseCodes = widget.hunt.clues.keys.map((k) => k.toUpperCase()).toList();
+      final originalCodes = widget.hunt.clues.keys.toList();
+
+      // Priorität 1: Suche nach "STARTX"
+      int index = upperCaseCodes.indexOf('STARTX');
+      
+      // Priorität 2: Wenn "STARTX" nicht gefunden wurde, suche nach "START"
+      if (index == -1) {
+        index = upperCaseCodes.indexOf('START');
+      }
+
+      // Wenn einer der beiden Start-Codes gefunden wurde, nimm den originalen Code.
+      // Ansonsten nimm als Fallback den allerersten Code in der Liste.
+      if (index != -1) {
+        firstClueCode = originalCodes[index];
+      } else {
+        firstClueCode = originalCodes.first;
+      }
+    }
+
+    // Wir übergeben den gefundenen Code sicher an den HomeScreen.
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => HomeScreen(hunt: widget.hunt)),
+      MaterialPageRoute(
+          builder: (_) => HomeScreen(
+                hunt: widget.hunt,
+                codeToAnimate: firstClueCode,
+              )),
     );
   }
 
@@ -52,11 +78,13 @@ class _BriefingScreenState extends State<BriefingScreen> {
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: Colors.black,
-                  child: const Center(child: Icon(Icons.error_outline, color: Colors.red, size: 50)),
+                  child: const Center(
+                      child: Icon(Icons.error_outline,
+                          color: Colors.red, size: 50)),
                 );
               },
             ),
-          
+
           // Schwarzer Overlay für bessere Lesbarkeit des Textes
           Container(
             color: Colors.black.withOpacity(0.7),
@@ -98,7 +126,8 @@ class _BriefingScreenState extends State<BriefingScreen> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
-                      textStyle: const TextStyle(fontSize: 18, fontFamily: 'SpecialElite'),
+                      textStyle: const TextStyle(
+                          fontSize: 18, fontFamily: 'SpecialElite'),
                     ),
                     onPressed: _acceptMission,
                     child: const Text('MISSION ANNEHMEN'),

@@ -156,7 +156,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   child: Column(
                     children: [
                       _buildMediaWidget(
-                        clue: widget.clue, // Übergeben den ganzen Clue
+                        clue: widget.clue,
                       ),
                       const SizedBox(height: 16),
                       if (widget.clue.isRiddle) ...[
@@ -171,6 +171,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                 ),
               ),
             ),
+            // HIER IST DIE EINZIGE WIRKLICH WICHTIGE ÄNDERUNG
             if (!widget.clue.isRiddle || _isSolved)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -181,7 +182,15 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   onPressed: () {
                     Vibration.vibrate(duration: 50);
                     _soundService.playSound(SoundEffect.buttonClick);
-                    Navigator.of(context).pop();
+                    
+                    // Wir geben den Belohnungstext (den nächsten Code) zurück.
+                    // Hat das gelöste Rätsel einen `rewardText`, wird dieser zurückgegeben.
+                    // Andernfalls (oder wenn es kein Rätsel war), wird `null` zurückgegeben.
+                    String? nextCode = (_isSolved && (widget.clue.rewardText?.isNotEmpty ?? false)) 
+                                        ? widget.clue.rewardText 
+                                        : null;
+                                        
+                    Navigator.of(context).pop(nextCode);
                   },
                   child: const Text('Zurück zur Code-Eingabe'),
                 ),
@@ -335,7 +344,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 }
 
 // ============================================================
-// SECTION: Media Widget & Effekt-Logik
+// SECTION: Media Widget & Effekt-Logik (UNVERÄNDERT)
 // ============================================================
 
 Widget _buildMediaWidget({required Clue clue}) {
@@ -404,8 +413,6 @@ Widget _buildMediaWidget({required Clue clue}) {
   );
 }
 
-// --- NEUE WIDGETS UND LOGIK FÜR TEXT-EFFEKTE ---
-
 Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
   switch (effect) {
     case TextEffect.MORSE_CODE:
@@ -452,7 +459,6 @@ class MorseCodeWidget extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.volume_up_outlined, size: 40),
           onPressed: () {
-            // HINWEIS: Sound-Logik für Morsecode ist hier noch nicht implementiert.
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
             ));
@@ -462,9 +468,6 @@ class MorseCodeWidget extends StatelessWidget {
     );
   }
 }
-
-
-// --- Bestehende Widgets für Medien & Puzzle ---
 
 class ImagePuzzleWidget extends StatefulWidget {
   final String imagePath;

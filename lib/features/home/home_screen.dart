@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
@@ -16,7 +17,8 @@ import '../../main.dart';
 // Dieser Formatter wandelt jede Eingabe automatisch in Großbuchstaben um.
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     return TextEditingValue(
       text: newValue.text.toUpperCase(),
       selection: newValue.selection,
@@ -26,7 +28,14 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 
 class HomeScreen extends StatefulWidget {
   final Hunt hunt;
-  const HomeScreen({super.key, required this.hunt});
+  // NEU: Optionaler Parameter, um die Animation von außen zu starten.
+  final String? codeToAnimate;
+
+  const HomeScreen({
+    super.key,
+    required this.hunt,
+    this.codeToAnimate, // NEU
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -42,11 +51,26 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   late Map<String, String> _normalizedMap;
   bool _showError = false;
 
+  // NEU: Statusvariable, die anzeigt, ob gerade eine Animation läuft.
+  bool _isAnimating = false;
+
   @override
   void initState() {
     super.initState();
     _currentHunt = widget.hunt;
     _initializeClues();
+
+    // NEU: Prüfen, ob die Seite mit einem zu animierenden Code aufgerufen wurde.
+    if (widget.codeToAnimate != null && widget.codeToAnimate!.isNotEmpty) {
+      // Wir starten die Animation erst, nachdem der erste Frame gezeichnet wurde,
+      // um einen sauberen Übergang zu gewährleisten.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startCodeAnimation(widget.codeToAnimate!);
+      });
+    } else {
+       // Wenn keine Animation stattfindet, Fokus setzen.
+      _codeFocusNode.requestFocus();
+    }
   }
 
   @override
@@ -58,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  // Diese Methode wird aufgerufen, wenn man zum HomeScreen zurückkehrt.
   @override
   void didPopNext() {
     _refreshHuntData();
@@ -90,26 +115,81 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
+  // NEU: Die komplette Animations-Logik
+  void _startCodeAnimation(String code) {
+    if (_isAnimating) return;
+
+    setState(() {
+      _isAnimating = true;
+      _showError = false; // Fehler-Status zurücksetzen
+      _codeController.clear();
+    });
+
+    int charIndex = 0;
+    // Ein Timer, der alle 200 Millisekunden ein Zeichen "tippt".
+    Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      if (charIndex < code.length) {
+        _soundService.playSound(SoundEffect.buttonClick);
+        _codeController.text += code[charIndex];
+        charIndex++;
+      } else {
+        timer.cancel();
+        // Nach der Animation wird automatisch die Code-Prüfung ausgelöst.
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) {
+            _submitCode(code);
+            // Animation-Status wird nach der Überprüfung zurückgesetzt.
+             setState(() => _isAnimating = false);
+          }
+        });
+      }
+    });
+  }
+
+
+  // ANGEPASST: Die Methode wartet jetzt auf ein Ergebnis vom ClueDetailScreen.
   Future<void> _submitCode([String? code]) async {
+    // Wenn eine Animation läuft, wird die Eingabe ignoriert.
+    if (_isAnimating && code == null) return;
+    
     Vibration.vibrate(duration: 50);
-    _soundService.playSound(SoundEffect.buttonClick);
+    if(code == null) _soundService.playSound(SoundEffect.buttonClick);
+    
     final input = code ?? _codeController.text.trim();
     if (input.isEmpty) return;
+    
     final norm = input.toLowerCase();
 
     if (_normalizedMap.containsKey(norm)) {
-      _soundService.playSound(SoundEffect.clueUnlocked);
+      if(code == null) _soundService.playSound(SoundEffect.clueUnlocked);
+      
       final originalCode = _normalizedMap[norm]!;
       final clue = _currentHunt.clues[originalCode]!;
 
       if (!mounted) return;
-      Navigator.push(
+
+      // HIER DIE WICHTIGE ÄNDERUNG: Wir warten auf ein Ergebnis (den nächsten Code).
+      final nextCodeToAnimate = await Navigator.push<String>(
         context,
         MaterialPageRoute(
             builder: (_) => ClueDetailScreen(hunt: _currentHunt, clue: clue)),
       );
+
+      // Nach der Rückkehr von der Detail-Seite:
       _codeController.clear();
       setState(() => _showError = false);
+      _codeFocusNode.requestFocus();
+
+      // Wenn ein Code zurückgegeben wurde, starte die nächste Animation.
+      if (nextCodeToAnimate != null && nextCodeToAnimate.isNotEmpty) {
+        _startCodeAnimation(nextCodeToAnimate);
+      }
+
     } else {
       _soundService.playSound(SoundEffect.failure);
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
@@ -120,6 +200,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Future<void> _scanAndSubmit() async {
+    if (_isAnimating) return; // Verhindert Scan während der Animation
+
     Vibration.vibrate(duration: 50);
     _soundService.playSound(SoundEffect.buttonClick);
     final code = await Navigator.push<String>(
@@ -133,26 +215,30 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    // NEUE FORTSCHRITTSBERECHNUNG (v1.43)
     final totalClues = _currentHunt.clues.length;
-    final viewedClues = _currentHunt.clues.values.where((c) => c.hasBeenViewed).length;
+    final viewedClues =
+        _currentHunt.clues.values.where((c) => c.hasBeenViewed).length;
     final double progress = totalClues > 0 ? viewedClues / totalClues : 0.0;
 
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
-      textStyle: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600, fontFamily: 'SpecialElite'),
+      textStyle: const TextStyle(
+          fontSize: 20,
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'SpecialElite'),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[800]!),
         borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[900],
+        color: _isAnimating ? Colors.amber.withOpacity(0.1) : Colors.grey[900], // NEU: Visuelles Feedback
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: Colors.amber),
     );
-    
+
     final errorPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: Colors.redAccent),
     );
@@ -203,10 +289,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // --- NEUE FORTSCHRITTSANZEIGE (v1.43) ---
               Text(
                 'Fortschritt: ${(progress * 100).toStringAsFixed(0)}%',
-                style: TextStyle(fontSize: 22, color: Colors.amber[200], letterSpacing: 1.5),
+                style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.amber[200],
+                    letterSpacing: 1.5),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -218,15 +306,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   minHeight: 6,
                 ),
               ),
-              // --- ENDE NEUE ANZEIGE ---
               const SizedBox(height: 24),
               const Text('Missions-Code eingeben:', style: TextStyle(fontSize: 20)),
               const SizedBox(height: 24),
-              
+
               Pinput(
                 controller: _codeController,
                 focusNode: _codeFocusNode,
-                length: 6,
+                length: 6, // Wichtig: Die Animation stoppt bei dieser Länge.
                 keyboardType: TextInputType.text,
                 inputFormatters: [
                   UpperCaseTextFormatter(),
@@ -236,31 +323,34 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 focusedPinTheme: focusedPinTheme,
                 errorPinTheme: errorPinTheme,
                 forceErrorState: _showError,
-                autofocus: true,
+                // NEU: Deaktiviert die manuelle Eingabe während der Animation.
+                enabled: !_isAnimating, 
                 onCompleted: (pin) => _submitCode(pin),
                 onChanged: (_) {
                   if (_showError) setState(() => _showError = false);
                 },
                 pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
               ),
-              
+
               SizedBox(
                 height: 40,
                 child: _showError
                     ? const Center(
                         child: Text(
                           'CODE UNGÜLTIG',
-                          style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                          style: TextStyle(
+                              color: Colors.redAccent, fontSize: 16),
                         ),
                       )
                     : null,
               ),
-              
+
               const Text('oder'),
               const SizedBox(height: 8),
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: Colors.amber[200]),
-                onPressed: _scanAndSubmit,
+                // NEU: Button wird während der Animation deaktiviert.
+                onPressed: _isAnimating ? null : _scanAndSubmit,
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('QR-Code scannen'),
               ),
