@@ -1,3 +1,5 @@
+// lib/data/models/hunt.dart
+
 // ============================================================
 // SECTION: Imports
 // ============================================================
@@ -28,6 +30,10 @@ class Hunt {
   /// Optionaler Pfad zu einem Bild für das Missions-Briefing.
   final String? briefingImageUrl;
 
+  // NEU: Optionale Zielzeit in Minuten für die Statistik
+  final int? targetTimeInMinutes;
+
+
   // ============================================================
   // SECTION: Konstruktor
   // ============================================================
@@ -36,6 +42,7 @@ class Hunt {
     this.clues = const {}, // Standardmäßig eine leere Map
     this.briefingText,
     this.briefingImageUrl,
+    this.targetTimeInMinutes, // NEU
   });
 
   // ============================================================
@@ -53,9 +60,10 @@ class Hunt {
     return Hunt(
       name: json['name'],
       clues: cluesMap,
-      // NEUE FELDER AUS JSON LESEN
       briefingText: json['briefingText'] as String?,
       briefingImageUrl: json['briefingImageUrl'] as String?,
+      // NEU: Liest die Zielzeit aus der JSON-Datei
+      targetTimeInMinutes: json['targetTimeInMinutes'] as int?,
     );
   }
 
@@ -68,10 +76,11 @@ class Hunt {
 
     return {
       'name': name,
-      'clues': cluesJson,
-      // NEUE FELDER IN JSON SCHREIBEN
       'briefingText': briefingText,
       'briefingImageUrl': briefingImageUrl,
+      // NEU: Schreibt die Zielzeit nur in die Datei, wenn sie auch existiert
+      if (targetTimeInMinutes != null) 'targetTimeInMinutes': targetTimeInMinutes,
+      'clues': cluesJson,
     };
   }
 }

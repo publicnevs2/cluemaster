@@ -7,6 +7,8 @@ import '../../data/models/hunt.dart';
 import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
 import 'briefing_screen.dart';
+// NEUER IMPORT für den Statistik-Bildschirm
+import 'package:clue_master/features/clue/statistics_screen.dart';
 
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
@@ -114,9 +116,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     }
   }
 
-  // =======================================================
-  // KORRIGIERTER TEIL: Automatischer Refresh
-  // =======================================================
   void _navigateToAdmin() async {
     // Navigiere zum Admin-Login-Screen und WARTE auf eine Rückmeldung.
     final refreshIsNeeded = await Navigator.push<bool>(
@@ -139,7 +138,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
           maxLines: 1,
         ),
         actions: [
-          // NEU: Manueller Refresh-Button
+          // Manueller Refresh-Button
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Liste neu laden',
@@ -153,6 +152,23 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
               );
             },
           ),
+          
+          // ===============================================
+          // NEU: Der Button zur Ruhmeshalle
+          // ===============================================
+          IconButton(
+            icon: const Icon(Icons.emoji_events_outlined), // Ein Pokal-Icon
+            tooltip: 'Meine Erfolge',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+              );
+            },
+          ),
+          // ===============================================
+
+          // Admin-Bereich Button
           IconButton(
             icon: const Icon(Icons.admin_panel_settings),
             tooltip: 'Admin-Bereich',

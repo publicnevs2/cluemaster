@@ -6,6 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
+
+// NEUE IMPORTS
+import 'package:intl/intl.dart';
+import '../../data/models/hunt_progress.dart';
+
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
@@ -48,15 +53,23 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   late Hunt _currentHunt;
   late Map<String, String> _normalizedMap;
   bool _showError = false;
-
-  // Das zentrale Kontroll-Flag. Wenn true, sind alle User-Interaktionen blockiert.
   bool _isBusy = false;
+
+  // =======================================================
+  // NEUE STATE-VARIABLEN FÜR DIE STATISTIK
+  // =======================================================
+  late HuntProgress _huntProgress;
+  Timer? _stopwatchTimer;
+  String _elapsedTime = "00:00:00";
 
   @override
   void initState() {
     super.initState();
     _currentHunt = widget.hunt;
     _initializeClues();
+
+    // KORREKTUR: Initialisiert das Logbuch korrekt ohne Startzeit.
+    _huntProgress = HuntProgress(huntName: widget.hunt.name);
 
     if (widget.codeToAnimate != null && widget.codeToAnimate!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -81,6 +94,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (!_isBusy) {
       _refreshHuntData();
     }
+    // Starte die Stoppuhr wieder, wenn sie schon lief.
+    _startStopwatch();
   }
 
   @override
@@ -89,6 +104,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _codeController.dispose();
     _codeFocusNode.dispose();
     _soundService.dispose();
+    // Stoppuhr sicher anhalten, um Speicherlecks zu vermeiden.
+    _stopwatchTimer?.cancel();
     super.dispose();
   }
 
@@ -109,9 +126,33 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     });
   }
 
+  // =======================================================
+  // NEUE METHODEN FÜR DIE STOPPUHR
+  // =======================================================
+  
+  void _startStopwatch() {
+    if (_huntProgress.startTime == null || _stopwatchTimer?.isActive == true) return;
+
+    _stopwatchTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      // Nutze die duration-Hilfsmethode aus dem HuntProgress-Modell
+      final duration = _huntProgress.duration;
+      String twoDigits(int n) => n.toString().padLeft(2, '0');
+      final hours = twoDigits(duration.inHours);
+      final minutes = twoDigits(duration.inMinutes.remainder(60));
+      final seconds = twoDigits(duration.inSeconds.remainder(60));
+      if (mounted) {
+        setState(() {
+          _elapsedTime = "$hours:$minutes:$seconds";
+        });
+      }
+    });
+  }
+
+  void _stopStopwatch() {
+    _stopwatchTimer?.cancel();
+  }
+
   void _startCodeAnimation(String code) {
-    // KORREKTUR: Der fehlerhafte Check wurde entfernt.
-    // Die Funktion sperrt jetzt sofort die UI und startet die Animation.
     setState(() {
       _isBusy = true;
       _showError = false;
@@ -150,57 +191,73 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Future<void> _processCode(String code) async {
-    // Stellt sicher, dass die App als "beschäftigt" markiert ist.
     if (!_isBusy) {
       setState(() { _isBusy = true; });
     }
 
     final input = code.trim();
     if (input.isEmpty) {
-      setState(() { _isBusy = false; }); // Bei leerer Eingabe sofort freigeben.
+      setState(() { _isBusy = false; });
       return;
     }
     
     final norm = input.toLowerCase();
 
     if (_normalizedMap.containsKey(norm)) {
+      // STARTPUNKT DER STATISTIK
+      if (_huntProgress.startTime == null) {
+        setState(() {
+          _huntProgress.startTime = DateTime.now();
+          _startStopwatch();
+        });
+      }
+
       if (!code.toUpperCase().contains('START')) {
-         _soundService.playSound(SoundEffect.clueUnlocked);
+          _soundService.playSound(SoundEffect.clueUnlocked);
       }
       final originalCode = _normalizedMap[norm]!;
       final clue = _currentHunt.clues[originalCode]!;
 
       if (!mounted) return;
 
+      _stopStopwatch();
+
       final nextCodeToAnimate = await Navigator.push<String>(
         context,
-        MaterialPageRoute(builder: (_) => ClueDetailScreen(hunt: _currentHunt, clue: clue)),
+        MaterialPageRoute(builder: (_) => ClueDetailScreen(
+          hunt: _currentHunt, 
+          clue: clue,
+          huntProgress: _huntProgress,
+        )),
       );
       
       setState(() {
         clue.hasBeenViewed = true;
         if (clue.solved) {
-           _currentHunt.clues[originalCode]!.solved = true;
+            _currentHunt.clues[originalCode]!.solved = true;
         }
         _showError = false;
         _codeController.clear();
       });
 
       if (nextCodeToAnimate != null && nextCodeToAnimate.isNotEmpty) {
-        // Die nächste Animation wird gestartet. _isBusy bleibt true.
         _startCodeAnimation(nextCodeToAnimate);
       } else {
-        // Die Kette ist beendet. App für manuelle Eingabe freigeben.
         _codeFocusNode.requestFocus();
         setState(() { _isBusy = false; });
       }
     } else {
+      // ZÄHLEN DER FEHLVERSUCHE
+      setState(() {
+        _huntProgress.failedAttempts++;
+      });
+
       _soundService.playSound(SoundEffect.failure);
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       setState(() {
         _showError = true;
         _codeController.clear();
-        _isBusy = false; // Bei Fehler App wieder freigeben
+        _isBusy = false;
       });
       _codeFocusNode.requestFocus();
     }
@@ -248,7 +305,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     return Scaffold(
       appBar: AppBar(
-        title: AutoSizeText(_currentHunt.name, maxLines: 1),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AutoSizeText(_currentHunt.name, maxLines: 1, style: const TextStyle(fontSize: 18)),
+            if (_huntProgress.startTime != null)
+              Text(
+                'Zeit: $_elapsedTime',
+                style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8), letterSpacing: 1.2),
+              ),
+          ],
+        ),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -257,7 +324,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => ClueListScreen(hunt: _currentHunt)),
+                      builder: (_) => ClueListScreen(
+                        hunt: _currentHunt, 
+                        huntProgress: _huntProgress,
+                      )),
                 );
               } else if (value == 'admin') {
                 Navigator.push(
@@ -285,6 +355,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ],
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4.0),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey[800],
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -298,16 +376,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     fontSize: 22,
                     color: Colors.amber[200],
                     letterSpacing: 1.5),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[800],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
-                  minHeight: 6,
-                ),
               ),
               const SizedBox(height: 24),
               const Text('Missions-Code eingeben:', style: TextStyle(fontSize: 20)),

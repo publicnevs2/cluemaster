@@ -7,12 +7,16 @@ import 'package:archive/archive_io.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 
+// NEUER IMPORT für unser neues Datenmodell
+import '../../data/models/hunt_progress.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/clue.dart';
 
 class ClueService {
   static const String _huntsFileName = 'hunts.json';
   static const String _settingsFileName = 'admin_settings.json';
+  // NEUER DATEINAME für die Statistik-Historie
+  static const String _progressHistoryFileName = 'progress_history.json';
 
   Future<List<Hunt>> loadHunts() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -54,6 +58,44 @@ class ClueService {
       await saveHunts(allHunts);
       // ignore: avoid_print
       print("🔄 Fortschritt für '${hunt.name}' zurückgesetzt.");
+    }
+  }
+
+  // =======================================================
+  // NEUE METHODEN für die Statistik-Historie
+  // =======================================================
+
+  /// **Speichert einen neuen abgeschlossenen Spielfortschritt in der Historie.**
+  Future<void> saveHuntProgress(HuntProgress progress) async {
+    final allProgress = await loadHuntProgress();
+    allProgress.add(progress);
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$_progressHistoryFileName');
+    final List<Map<String, dynamic>> jsonList =
+        allProgress.map((p) => p.toJson()).toList();
+    await file.writeAsString(jsonEncode(jsonList));
+    // ignore: avoid_print
+    print("🏆 Neuer Erfolg für '${progress.huntName}' in der Ruhmeshalle gespeichert.");
+  }
+
+  /// **Lädt die Liste aller bisherigen Spielfortschritte aus der Datei.**
+  Future<List<HuntProgress>> loadHuntProgress() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$_progressHistoryFileName');
+    try {
+      if (!await file.exists()) {
+        return [];
+      }
+      final jsonStr = await file.readAsString();
+      if (jsonStr.isEmpty) {
+        return [];
+      }
+      final List<dynamic> decodedList = jsonDecode(jsonStr);
+      return decodedList.map((json) => HuntProgress.fromJson(json)).toList();
+    } catch (e) {
+      // ignore: avoid_print
+      print("❌ Fehler beim Laden der Statistik-Historie: $e");
+      return [];
     }
   }
 
@@ -172,7 +214,6 @@ class ClueService {
 
       final allHunts = await loadHunts();
       
-      // --- KORRIGIERTE LOGIK ---
       if (allHunts.any((h) => h.name.toLowerCase() == huntToSave.name.toLowerCase())) {
         String originalName = huntToSave.name;
         int counter = 1;
@@ -182,14 +223,14 @@ class ClueService {
           counter++;
         } while (allHunts.any((h) => h.name.toLowerCase() == newName.toLowerCase()));
         
-        // Erstelle eine NEUE Hunt-Instanz mit dem neuen Namen
         huntToSave = Hunt(
           name: newName,
           clues: huntToSave.clues,
           briefingText: huntToSave.briefingText,
+          briefingImageUrl: huntToSave.briefingImageUrl,
+          targetTimeInMinutes: huntToSave.targetTimeInMinutes,
         );
       }
-      // --- ENDE KORREKTUR ---
 
       allHunts.add(huntToSave);
       await saveHunts(allHunts);
