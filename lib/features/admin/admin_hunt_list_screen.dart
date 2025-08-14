@@ -217,7 +217,7 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
           label: const Text('Neue Jagd'),
           icon: const Icon(Icons.add),
         ),
-      ),
+      ), 
     );
   }
 }
