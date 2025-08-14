@@ -1,3 +1,4 @@
+
 // ============================================================
 // SECTION: Enums für Rätsel-Typen und Effekte
 // ============================================================
@@ -19,11 +20,11 @@ enum ImageEffect {
 
 /// Definiert, welcher Effekt auf einen Text-Hinweis angewendet wird.
 enum TextEffect {
-  NONE,           // Normaler Text
-  MORSE_CODE,     // Text als Morsecode
-  REVERSE,        // Kompletter Text rückwärts
-  NO_VOWELS,      // Alle Vokale entfernt
-  MIRROR_WORDS,   // Buchstaben jedes Wortes spiegeln
+  NONE,          // Normaler Text
+  MORSE_CODE,    // Text als Morsecode
+  REVERSE,       // Kompletter Text rückwärts
+  NO_VOWELS,     // Alle Vokale entfernt
+  MIRROR_WORDS,  // Buchstaben jedes Wortes spiegeln
 }
 
 
@@ -44,6 +45,7 @@ class Clue {
   final String type;
   final String content;
   final String? description;
+  final String? backgroundImagePath; // NEU: Pfad zum Hintergrundbild
   final ImageEffect imageEffect;
   final TextEffect textEffect;
 
@@ -66,7 +68,7 @@ class Clue {
   // SECTION: BELOHNUNG & NÄCHSTER SCHRITT
   // ============================================================
   final String? rewardText;      // Text, der nach dem Lösen angezeigt wird.
-  final String? nextClueCode;    // NEU: Separater Code für den nächsten Hinweis.
+  final String? nextClueCode;    // Separater Code für den nächsten Hinweis.
   final bool isFinalClue;
 
   // ============================================================
@@ -79,6 +81,7 @@ class Clue {
     required this.type,
     required this.content,
     this.description,
+    this.backgroundImagePath, // NEU
     this.imageEffect = ImageEffect.NONE,
     this.textEffect = TextEffect.NONE,
     this.question,
@@ -91,7 +94,7 @@ class Clue {
     this.longitude,
     this.radius,
     this.rewardText,
-    this.nextClueCode, // NEU
+    this.nextClueCode,
     this.isFinalClue = false,
   });
 
@@ -114,6 +117,7 @@ class Clue {
       type: json['type'],
       content: json['content'],
       description: json['description'],
+      backgroundImagePath: json['backgroundImagePath'], // NEU: Aus JSON lesen
       imageEffect: ImageEffect.values.firstWhere(
             (e) => e.toString() == json['imageEffect'],
             orElse: () => ImageEffect.NONE
@@ -140,7 +144,7 @@ class Clue {
       longitude: json['longitude'],
       radius: json['radius'],
       rewardText: json['rewardText'],
-      nextClueCode: json['nextClueCode'], // NEU: Aus JSON lesen
+      nextClueCode: json['nextClueCode'],
       isFinalClue: json['isFinalClue'] ?? false,
     );
   }
@@ -152,6 +156,7 @@ class Clue {
       'type': type,
       'content': content,
       if (description != null) 'description': description,
+      if (backgroundImagePath != null) 'backgroundImagePath': backgroundImagePath, // NEU: In JSON schreiben
       'imageEffect': imageEffect.toString(),
       'textEffect': textEffect.toString(),
       if (question != null) 'question': question,
@@ -164,7 +169,7 @@ class Clue {
       if (longitude != null) 'longitude': longitude,
       if (radius != null) 'radius': radius,
       if (rewardText != null) 'rewardText': rewardText,
-      if (nextClueCode != null) 'nextClueCode': nextClueCode, // NEU: In JSON schreiben
+      if (nextClueCode != null) 'nextClueCode': nextClueCode,
       'isFinalClue': isFinalClue,
     };
   }

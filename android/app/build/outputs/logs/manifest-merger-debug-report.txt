@@ -1,0 +1,674 @@
+-- Merging decision tree log ---
+application
+INJECTED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:8:5-43:19
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+MERGED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-33:19
+MERGED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-33:19
+MERGED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-13:19
+MERGED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-13:19
+MERGED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:8:5-32:19
+MERGED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:8:5-32:19
+MERGED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:22:5-38:19
+MERGED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:22:5-38:19
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\7241513f448bf8a32b44c654550977f0\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\7241513f448bf8a32b44c654550977f0\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:8:5-24:19
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:8:5-24:19
+MERGED from [com.google.android.gms:play-services-fido:20.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a07db894f61b14931de29c332163e2a1\transformed\jetified-play-services-fido-20.0.1\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.android.gms:play-services-fido:20.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a07db894f61b14931de29c332163e2a1\transformed\jetified-play-services-fido-20.0.1\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a16e0c37825d2f1f5188eddfb1887c56\transformed\jetified-play-services-tasks-18.1.0\AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a16e0c37825d2f1f5188eddfb1887c56\transformed\jetified-play-services-tasks-18.1.0\AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:20:5-24:19
+MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:20:5-24:19
+MERGED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:22:5-29:19
+MERGED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:22:5-29:19
+MERGED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0252ae97f09afb696abb59adc71dd5\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0252ae97f09afb696abb59adc71dd5\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:28:5-36:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:28:5-36:19
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:25:5-39:19
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:25:5-39:19
+MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\mail2\.gradle\caches\8.9\transforms\a7de5efaa2ebc14152fd544865a567d0\transformed\jetified-image-1.0.0-beta1\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\mail2\.gradle\caches\8.9\transforms\a7de5efaa2ebc14152fd544865a567d0\transformed\jetified-image-1.0.0-beta1\AndroidManifest.xml:7:5-20
+	android:extractNativeLibs
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:28:18-86
+	android:name
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml
+manifest
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:1:1-51:12
+MERGED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:1:1-51:12
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml:1:1-7:12
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml:1:1-7:12
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml:1:1-7:12
+MERGED from [:device_info_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-11.5.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-15:12
+MERGED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-13:12
+MERGED from [:nfc_manager] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\nfc_manager-3.5.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:record_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\record_android-1.3.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-9:12
+MERGED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-35:12
+MERGED from [:smart_auth] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\smart_auth-2.0.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-15:12
+MERGED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-34:12
+MERGED from [:just_audio] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:audio_session] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:flutter_plugin_android_lifecycle] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.28\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:path_provider_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.17\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:permission_handler_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.1.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:vibration] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\vibration-3.1.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-9:12
+MERGED from [:video_player_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.8.7\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.media:media:1.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d03b6a4b8a13e2f74e10b515bd58b4e3\transformed\media-1.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:17:1-40:12
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\7241513f448bf8a32b44c654550977f0\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-auth-api-phone:18.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bfd12402c316d5ec5a2fae95a69ce638\transformed\jetified-play-services-auth-api-phone-18.0.1\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.mlkit:barcode-scanning:17.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\e9711b0e4e5b797bd14c178c30d96d13\transformed\jetified-barcode-scanning-17.2.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:2:1-18:12
+MERGED from [com.google.mlkit:barcode-scanning-common:17.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\4827330f64cdc3b659b855f90ee8b10b\transformed\jetified-barcode-scanning-common-17.0.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:2:1-18:12
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:2:1-26:12
+MERGED from [com.google.android.gms:play-services-auth-base:18.0.4] C:\Users\mail2\.gradle\caches\8.9\transforms\2d0505c0b3b8f084dd7df2e7f41d55b0\transformed\jetified-play-services-auth-base-18.0.4\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-fido:20.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a07db894f61b14931de29c332163e2a1\transformed\jetified-play-services-fido-20.0.1\AndroidManifest.xml:2:1-10:12
+MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:16:1-24:12
+MERGED from [com.google.mlkit:vision-interfaces:16.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\bf86189010273c34ea6dfd7ff1536e32\transformed\jetified-vision-interfaces-16.2.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a16e0c37825d2f1f5188eddfb1887c56\transformed\jetified-play-services-tasks-18.1.0\AndroidManifest.xml:2:1-6:12
+MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:16:1-26:12
+MERGED from [androidx.fragment:fragment:1.7.1] C:\Users\mail2\.gradle\caches\8.9\transforms\5e0202acd781f652e48e83e4e1c1f454\transformed\fragment-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity:1.10.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4992325831aaf7abad74d6de30000816\transformed\jetified-activity-1.10.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:17:1-36:12
+MERGED from [androidx.camera:camera-lifecycle:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\7dc7aec1b4a1704940b8f39f9aa68e0a\transformed\jetified-camera-lifecycle-1.3.3\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:17:1-36:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\dff3d6ccd2a341c869d7d810e732aa11\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a6f4f741499240e366cb072414f65b6a\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\b1dbf74d00624663c2de002bd89e1427\transformed\jetified-lifecycle-livedata-core-ktx-2.8.7\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\39600acca8736d876a6a9dd39fcbb435\transformed\lifecycle-viewmodel-2.8.7\AndroidManifest.xml:2:1-5:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\60e494f0ec3fc83073ba8f3df175c28b\transformed\jetified-lifecycle-viewmodel-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\e575939cacfd47ff75bc761ecac0dea0\transformed\lifecycle-livedata-2.8.7\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\e0eaac4615cc0ee7baba95072b89b722\transformed\lifecycle-livedata-core-2.8.7\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\0e37421a5c02d933d89b4f4bb11451de\transformed\jetified-lifecycle-runtime-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\c8f7494c9b424cd53ae091fad828303f\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.7\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-ktx:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a2b21b44f0736ff7bd505d5481e6feba\transformed\jetified-core-ktx-1.15.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.media3:media3-extractor:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ad67b7cbb1e61a4e65c8ae03f453526b\transformed\jetified-media3-extractor-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-container:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\e7d9a9290a3e4974884dda2f6c489d0a\transformed\jetified-media3-container-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-datasource:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\091093aab85001b93f2ce57dd5f3fd5f\transformed\jetified-media3-datasource-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-decoder:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ffdf772035678c7174d7c8616d767c16\transformed\jetified-media3-decoder-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-database:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\492e0e04072915d9c6051f2d48c533ae\transformed\jetified-media3-database-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-common:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bc813cefb9f12db37ebbed9df93ca3f3\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.media3:media3-exoplayer-dash:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\f10c91d58f679aa5e8148761411a4ecf\transformed\jetified-media3-exoplayer-dash-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-exoplayer-hls:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\c2b6b2702b7a165535a733c2673a9935\transformed\jetified-media3-exoplayer-hls-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-exoplayer-smoothstreaming:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\2b77969d73d205064b80da17e20dc52b\transformed\jetified-media3-exoplayer-smoothstreaming-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-exoplayer-rtsp:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0ae400ecc09ebf431f74da1ec45f63\transformed\jetified-media3-exoplayer-rtsp-1.4.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-exoplayer:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4d71dc11e216433477213af0551285e3\transformed\jetified-media3-exoplayer-1.4.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:17:1-31:12
+MERGED from [androidx.window:window-java:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\8f81c8d502a9e48a754af1b983efebc6\transformed\jetified-window-java-1.2.0\AndroidManifest.xml:17:1-21:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a0ca68f7dd8266aa6ed0503c0751d2d7\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\783625db1cbdf5e325e5cc6f945ce795\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ee1f7375e27f3f17b20ddea737d9f672\transformed\jetified-annotation-experimental-1.4.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.exifinterface:exifinterface:1.3.7] C:\Users\mail2\.gradle\caches\8.9\transforms\658b58c11a083e35980e4c36d8ef37b9\transformed\exifinterface-1.3.7\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\14056c8dfc6b89399aa37e231345f4fe\transformed\jetified-tracing-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\890967bdaee9289d02eb83cdb0061c0d\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0252ae97f09afb696abb59adc71dd5\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\3842f033481052e155e69568644fc83e\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:15:1-38:12
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:15:1-41:12
+MERGED from [com.google.android.datatransport:transport-api:2.2.1] C:\Users\mail2\.gradle\caches\8.9\transforms\83f48a0d17088a81617fdf73c2b1f96c\transformed\jetified-transport-api-2.2.1\AndroidManifest.xml:15:1-22:12
+MERGED from [com.google.firebase:firebase-components:16.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\6f1845e456d9a3f3a105ca9010f30915\transformed\jetified-firebase-components-16.1.0\AndroidManifest.xml:15:1-23:12
+MERGED from [com.google.firebase:firebase-encoders-json:17.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\dd2ec7ac9cad6c1fbc04e3c6ef9e23bd\transformed\jetified-firebase-encoders-json-17.1.0\AndroidManifest.xml:15:1-23:12
+MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\28355049e50e5afe4b38771d1f34fee7\transformed\jetified-core-1.0.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\26aa44a01e4b8294ac387943c6881174\transformed\jetified-core-viewtree-1.0.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.getkeepsafe.relinker:relinker:1.4.5] C:\Users\mail2\.gradle\caches\8.9\transforms\6ef6b9d3cf725ae279b39dcd8372050c\transformed\jetified-relinker-1.4.5\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\mail2\.gradle\caches\8.9\transforms\a7de5efaa2ebc14152fd544865a567d0\transformed\jetified-image-1.0.0-beta1\AndroidManifest.xml:2:1-9:12
+	package
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.CAMERA
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:2:5-65
+MERGED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-65
+MERGED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-65
+	android:name
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:2:22-62
+uses-permission#android.permission.ACCESS_FINE_LOCATION
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:3:5-79
+	android:name
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:3:22-76
+uses-permission#android.permission.ACCESS_COARSE_LOCATION
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:4:5-81
+	android:name
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:4:22-78
+uses-permission#android.permission.NFC
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:6:5-62
+	android:name
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:6:22-59
+queries
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:45:5-50:15
+MERGED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-13:15
+MERGED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-13:15
+intent#action:name:android.intent.action.PROCESS_TEXT+data:mimeType:text/plain
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:46:9-49:18
+action#android.intent.action.PROCESS_TEXT
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:47:13-72
+	android:name
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:47:21-70
+data
+ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:48:13-50
+	android:mimeType
+		ADDED from C:\Users\mail2\clue_master\android\app\src\main\AndroidManifest.xml:48:19-48
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml:6:5-66
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:26:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:26:5-67
+	android:name
+		ADDED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml:6:22-64
+uses-sdk
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+MERGED from [:device_info_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-11.5.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:device_info_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-11.5.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:nfc_manager] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\nfc_manager-3.5.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:nfc_manager] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\nfc_manager-3.5.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:record_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\record_android-1.3.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:record_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\record_android-1.3.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:smart_auth] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\smart_auth-2.0.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:smart_auth] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\smart_auth-2.0.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:6:5-44
+MERGED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:6:5-44
+MERGED from [:just_audio] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:just_audio] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\just_audio-0.9.46\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:audio_session] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:audio_session] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\audio_session-0.1.25\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:flutter_plugin_android_lifecycle] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.28\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:flutter_plugin_android_lifecycle] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.28\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:path_provider_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.17\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:path_provider_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.17\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:permission_handler_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.1.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:permission_handler_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.1.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:vibration] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\vibration-3.1.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:vibration] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\vibration-3.1.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:video_player_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.8.7\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [:video_player_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\video_player_android-2.8.7\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:5:5-44
+MERGED from [androidx.media:media:1.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d03b6a4b8a13e2f74e10b515bd58b4e3\transformed\media-1.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.media:media:1.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d03b6a4b8a13e2f74e10b515bd58b4e3\transformed\media-1.7.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\7241513f448bf8a32b44c654550977f0\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\7241513f448bf8a32b44c654550977f0\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-api-phone:18.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bfd12402c316d5ec5a2fae95a69ce638\transformed\jetified-play-services-auth-api-phone-18.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-api-phone:18.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bfd12402c316d5ec5a2fae95a69ce638\transformed\jetified-play-services-auth-api-phone-18.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:barcode-scanning:17.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\e9711b0e4e5b797bd14c178c30d96d13\transformed\jetified-barcode-scanning-17.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:barcode-scanning:17.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\e9711b0e4e5b797bd14c178c30d96d13\transformed\jetified-barcode-scanning-17.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:6:5-44
+MERGED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:barcode-scanning-common:17.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\4827330f64cdc3b659b855f90ee8b10b\transformed\jetified-barcode-scanning-common-17.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:barcode-scanning-common:17.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\4827330f64cdc3b659b855f90ee8b10b\transformed\jetified-barcode-scanning-common-17.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:6:5-44
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:6:5-44
+MERGED from [com.google.android.gms:play-services-auth-base:18.0.4] C:\Users\mail2\.gradle\caches\8.9\transforms\2d0505c0b3b8f084dd7df2e7f41d55b0\transformed\jetified-play-services-auth-base-18.0.4\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-base:18.0.4] C:\Users\mail2\.gradle\caches\8.9\transforms\2d0505c0b3b8f084dd7df2e7f41d55b0\transformed\jetified-play-services-auth-base-18.0.4\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-fido:20.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a07db894f61b14931de29c332163e2a1\transformed\jetified-play-services-fido-20.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-fido:20.0.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a07db894f61b14931de29c332163e2a1\transformed\jetified-play-services-fido-20.0.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.mlkit:vision-interfaces:16.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\bf86189010273c34ea6dfd7ff1536e32\transformed\jetified-vision-interfaces-16.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.mlkit:vision-interfaces:16.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\bf86189010273c34ea6dfd7ff1536e32\transformed\jetified-vision-interfaces-16.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a16e0c37825d2f1f5188eddfb1887c56\transformed\jetified-play-services-tasks-18.1.0\AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a16e0c37825d2f1f5188eddfb1887c56\transformed\jetified-play-services-tasks-18.1.0\AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:18:5-43
+MERGED from [androidx.fragment:fragment:1.7.1] C:\Users\mail2\.gradle\caches\8.9\transforms\5e0202acd781f652e48e83e4e1c1f454\transformed\fragment-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.7.1] C:\Users\mail2\.gradle\caches\8.9\transforms\5e0202acd781f652e48e83e4e1c1f454\transformed\fragment-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity:1.10.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4992325831aaf7abad74d6de30000816\transformed\jetified-activity-1.10.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.10.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4992325831aaf7abad74d6de30000816\transformed\jetified-activity-1.10.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-lifecycle:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\7dc7aec1b4a1704940b8f39f9aa68e0a\transformed\jetified-camera-lifecycle-1.3.3\AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-lifecycle:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\7dc7aec1b4a1704940b8f39f9aa68e0a\transformed\jetified-camera-lifecycle-1.3.3\AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:21:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\dff3d6ccd2a341c869d7d810e732aa11\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\dff3d6ccd2a341c869d7d810e732aa11\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a6f4f741499240e366cb072414f65b6a\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\mail2\.gradle\caches\8.9\transforms\a6f4f741499240e366cb072414f65b6a\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\b1dbf74d00624663c2de002bd89e1427\transformed\jetified-lifecycle-livedata-core-ktx-2.8.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\b1dbf74d00624663c2de002bd89e1427\transformed\jetified-lifecycle-livedata-core-ktx-2.8.7\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\39600acca8736d876a6a9dd39fcbb435\transformed\lifecycle-viewmodel-2.8.7\AndroidManifest.xml:4:5-43
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\39600acca8736d876a6a9dd39fcbb435\transformed\lifecycle-viewmodel-2.8.7\AndroidManifest.xml:4:5-43
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\60e494f0ec3fc83073ba8f3df175c28b\transformed\jetified-lifecycle-viewmodel-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\60e494f0ec3fc83073ba8f3df175c28b\transformed\jetified-lifecycle-viewmodel-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\e575939cacfd47ff75bc761ecac0dea0\transformed\lifecycle-livedata-2.8.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\e575939cacfd47ff75bc761ecac0dea0\transformed\lifecycle-livedata-2.8.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\e0eaac4615cc0ee7baba95072b89b722\transformed\lifecycle-livedata-core-2.8.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\e0eaac4615cc0ee7baba95072b89b722\transformed\lifecycle-livedata-core-2.8.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\0e37421a5c02d933d89b4f4bb11451de\transformed\jetified-lifecycle-runtime-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\0e37421a5c02d933d89b4f4bb11451de\transformed\jetified-lifecycle-runtime-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\c8f7494c9b424cd53ae091fad828303f\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\c8f7494c9b424cd53ae091fad828303f\transformed\jetified-lifecycle-viewmodel-savedstate-2.8.7\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a2b21b44f0736ff7bd505d5481e6feba\transformed\jetified-core-ktx-1.15.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a2b21b44f0736ff7bd505d5481e6feba\transformed\jetified-core-ktx-1.15.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.media3:media3-extractor:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ad67b7cbb1e61a4e65c8ae03f453526b\transformed\jetified-media3-extractor-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-extractor:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ad67b7cbb1e61a4e65c8ae03f453526b\transformed\jetified-media3-extractor-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-container:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\e7d9a9290a3e4974884dda2f6c489d0a\transformed\jetified-media3-container-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-container:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\e7d9a9290a3e4974884dda2f6c489d0a\transformed\jetified-media3-container-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-datasource:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\091093aab85001b93f2ce57dd5f3fd5f\transformed\jetified-media3-datasource-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-datasource:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\091093aab85001b93f2ce57dd5f3fd5f\transformed\jetified-media3-datasource-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-decoder:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ffdf772035678c7174d7c8616d767c16\transformed\jetified-media3-decoder-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-decoder:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ffdf772035678c7174d7c8616d767c16\transformed\jetified-media3-decoder-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-database:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\492e0e04072915d9c6051f2d48c533ae\transformed\jetified-media3-database-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-database:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\492e0e04072915d9c6051f2d48c533ae\transformed\jetified-media3-database-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-common:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bc813cefb9f12db37ebbed9df93ca3f3\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-common:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bc813cefb9f12db37ebbed9df93ca3f3\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-dash:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\f10c91d58f679aa5e8148761411a4ecf\transformed\jetified-media3-exoplayer-dash-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-dash:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\f10c91d58f679aa5e8148761411a4ecf\transformed\jetified-media3-exoplayer-dash-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-hls:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\c2b6b2702b7a165535a733c2673a9935\transformed\jetified-media3-exoplayer-hls-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-hls:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\c2b6b2702b7a165535a733c2673a9935\transformed\jetified-media3-exoplayer-hls-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-smoothstreaming:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\2b77969d73d205064b80da17e20dc52b\transformed\jetified-media3-exoplayer-smoothstreaming-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-smoothstreaming:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\2b77969d73d205064b80da17e20dc52b\transformed\jetified-media3-exoplayer-smoothstreaming-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-rtsp:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0ae400ecc09ebf431f74da1ec45f63\transformed\jetified-media3-exoplayer-rtsp-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer-rtsp:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0ae400ecc09ebf431f74da1ec45f63\transformed\jetified-media3-exoplayer-rtsp-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4d71dc11e216433477213af0551285e3\transformed\jetified-media3-exoplayer-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4d71dc11e216433477213af0551285e3\transformed\jetified-media3-exoplayer-1.4.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window:window-java:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\8f81c8d502a9e48a754af1b983efebc6\transformed\jetified-window-java-1.2.0\AndroidManifest.xml:19:5-44
+MERGED from [androidx.window:window-java:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\8f81c8d502a9e48a754af1b983efebc6\transformed\jetified-window-java-1.2.0\AndroidManifest.xml:19:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a0ca68f7dd8266aa6ed0503c0751d2d7\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\a0ca68f7dd8266aa6ed0503c0751d2d7\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\783625db1cbdf5e325e5cc6f945ce795\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\783625db1cbdf5e325e5cc6f945ce795\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ee1f7375e27f3f17b20ddea737d9f672\transformed\jetified-annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ee1f7375e27f3f17b20ddea737d9f672\transformed\jetified-annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.exifinterface:exifinterface:1.3.7] C:\Users\mail2\.gradle\caches\8.9\transforms\658b58c11a083e35980e4c36d8ef37b9\transformed\exifinterface-1.3.7\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.exifinterface:exifinterface:1.3.7] C:\Users\mail2\.gradle\caches\8.9\transforms\658b58c11a083e35980e4c36d8ef37b9\transformed\exifinterface-1.3.7\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\14056c8dfc6b89399aa37e231345f4fe\transformed\jetified-tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\14056c8dfc6b89399aa37e231345f4fe\transformed\jetified-tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\890967bdaee9289d02eb83cdb0061c0d\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\890967bdaee9289d02eb83cdb0061c0d\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0252ae97f09afb696abb59adc71dd5\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\ec0252ae97f09afb696abb59adc71dd5\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\3842f033481052e155e69568644fc83e\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\3842f033481052e155e69568644fc83e\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-api:2.2.1] C:\Users\mail2\.gradle\caches\8.9\transforms\83f48a0d17088a81617fdf73c2b1f96c\transformed\jetified-transport-api-2.2.1\AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.android.datatransport:transport-api:2.2.1] C:\Users\mail2\.gradle\caches\8.9\transforms\83f48a0d17088a81617fdf73c2b1f96c\transformed\jetified-transport-api-2.2.1\AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.firebase:firebase-components:16.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\6f1845e456d9a3f3a105ca9010f30915\transformed\jetified-firebase-components-16.1.0\AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-components:16.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\6f1845e456d9a3f3a105ca9010f30915\transformed\jetified-firebase-components-16.1.0\AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-encoders-json:17.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\dd2ec7ac9cad6c1fbc04e3c6ef9e23bd\transformed\jetified-firebase-encoders-json-17.1.0\AndroidManifest.xml:19:5-21:41
+MERGED from [com.google.firebase:firebase-encoders-json:17.1.0] C:\Users\mail2\.gradle\caches\8.9\transforms\dd2ec7ac9cad6c1fbc04e3c6ef9e23bd\transformed\jetified-firebase-encoders-json-17.1.0\AndroidManifest.xml:19:5-21:41
+MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\28355049e50e5afe4b38771d1f34fee7\transformed\jetified-core-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\28355049e50e5afe4b38771d1f34fee7\transformed\jetified-core-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\26aa44a01e4b8294ac387943c6881174\transformed\jetified-core-viewtree-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\mail2\.gradle\caches\8.9\transforms\26aa44a01e4b8294ac387943c6881174\transformed\jetified-core-viewtree-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.getkeepsafe.relinker:relinker:1.4.5] C:\Users\mail2\.gradle\caches\8.9\transforms\6ef6b9d3cf725ae279b39dcd8372050c\transformed\jetified-relinker-1.4.5\AndroidManifest.xml:5:5-43
+MERGED from [com.getkeepsafe.relinker:relinker:1.4.5] C:\Users\mail2\.gradle\caches\8.9\transforms\6ef6b9d3cf725ae279b39dcd8372050c\transformed\jetified-relinker-1.4.5\AndroidManifest.xml:5:5-43
+MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\mail2\.gradle\caches\8.9\transforms\a7de5efaa2ebc14152fd544865a567d0\transformed\jetified-image-1.0.0-beta1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\mail2\.gradle\caches\8.9\transforms\a7de5efaa2ebc14152fd544865a567d0\transformed\jetified-image-1.0.0-beta1\AndroidManifest.xml:5:5-44
+	android:targetSdkVersion
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\mail2\clue_master\android\app\src\debug\AndroidManifest.xml
+intent#action:name:android.intent.action.GET_CONTENT+data:mimeType:*/*
+ADDED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:8:9-12:18
+action#android.intent.action.GET_CONTENT
+ADDED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:9:13-72
+	android:name
+		ADDED from [:file_picker] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\file_picker-10.2.0\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:9:21-69
+uses-feature#android.hardware.camera
+ADDED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:9:5-11:36
+	android:required
+		ADDED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:11:9-33
+	android:name
+		ADDED from [:mobile_scanner] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\mobile_scanner-5.2.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:10:9-47
+uses-permission#android.permission.RECORD_AUDIO
+ADDED from [:record_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\record_android-1.3.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-71
+	android:name
+		ADDED from [:record_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\record_android-1.3.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:22-68
+provider#dev.fluttercommunity.plus.share.ShareFileProvider
+ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:13:9-21:20
+	android:grantUriPermissions
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:17:13-47
+	android:authorities
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:15:13-74
+	android:exported
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:16:13-37
+	android:name
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:14:13-77
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:18:13-20:68
+	android:resource
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:20:17-65
+	android:name
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:19:17-67
+receiver#dev.fluttercommunity.plus.share.SharePlusPendingIntent
+ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:26:9-32:20
+	android:exported
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:27:13-82
+intent-filter#action:name:EXTRA_CHOSEN_COMPONENT
+ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:29:13-31:29
+action#EXTRA_CHOSEN_COMPONENT
+ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:30:17-65
+	android:name
+		ADDED from [:share_plus] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\share_plus-7.2.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:30:25-62
+service#com.baseflow.geolocator.GeolocatorLocationService
+ADDED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:8:9-12:56
+	android:enabled
+		ADDED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:10:13-35
+	android:exported
+		ADDED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:11:13-37
+	android:foregroundServiceType
+		ADDED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:12:13-53
+	android:name
+		ADDED from [:geolocator_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-4.6.2\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:9:13-77
+provider#io.flutter.plugins.imagepicker.ImagePickerFileProvider
+ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:9:9-17:20
+	android:grantUriPermissions
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:13:13-47
+	android:authorities
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:11:13-74
+	android:exported
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:12:13-37
+	android:name
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:10:13-82
+service#com.google.android.gms.metadata.ModuleDependencies
+ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:19:9-31:19
+	android:enabled
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:21:13-36
+	android:exported
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:22:13-37
+	tools:ignore
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:23:13-40
+	android:name
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:20:13-78
+intent-filter#action:name:com.google.android.gms.metadata.MODULE_DEPENDENCIES
+ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:24:13-26:29
+action#com.google.android.gms.metadata.MODULE_DEPENDENCIES
+ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:25:17-94
+	android:name
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:25:25-91
+meta-data#photopicker_activity:0:required
+ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:28:13-30:36
+	android:value
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:30:17-33
+	android:name
+		ADDED from [:image_picker_android] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\image_picker_android-0.8.12+24\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:29:17-63
+uses-permission#android.permission.VIBRATE
+ADDED from [:vibration] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\vibration-3.1.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:5-66
+	android:name
+		ADDED from [:vibration] C:\Users\mail2\AppData\Local\Pub\Cache\hosted\pub.dev\vibration-3.1.3\android\build\intermediates\merged_manifest\debug\processDebugManifest\AndroidManifest.xml:7:22-63
+activity#com.google.android.gms.auth.api.signin.internal.SignInHubActivity
+ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:23:9-27:75
+	android:excludeFromRecents
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:25:13-46
+	android:exported
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:26:13-37
+	android:theme
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:27:13-72
+	android:name
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:24:13-93
+service#com.google.android.gms.auth.api.signin.RevocationBoundService
+ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:33:9-37:51
+	android:exported
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:35:13-36
+	android:visibleToInstantApps
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:37:13-48
+	android:permission
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:36:13-107
+	android:name
+		ADDED from [com.google.android.gms:play-services-auth:20.7.0] C:\Users\mail2\.gradle\caches\8.9\transforms\1bb7a0489b95185fbe76b98c073d4a79\transformed\jetified-play-services-auth-20.7.0\AndroidManifest.xml:34:13-89
+service#com.google.mlkit.common.internal.MlKitComponentDiscoveryService
+ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:15:9-23:19
+MERGED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:15:9-23:19
+	android:exported
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:11:13-37
+	tools:targetApi
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:19:13-32
+	android:directBootAware
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:17:13-43
+	android:name
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:10:13-91
+meta-data#com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar
+ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:12:13-14:85
+	android:value
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:14:17-82
+	android:name
+		ADDED from [com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d0dd2b663b6759c2f2bd250c53144cc0\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:13:17-120
+meta-data#com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar
+ADDED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:12:13-14:85
+	android:value
+		ADDED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:14:17-82
+	android:name
+		ADDED from [com.google.mlkit:vision-common:17.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\11785092f1cd54f8ef4f7d3629e4713e\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:13:17-124
+provider#com.google.mlkit.common.internal.MlKitInitProvider
+ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:9:9-13:38
+	android:authorities
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:11:13-69
+	android:exported
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:12:13-37
+	android:initOrder
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:13:13-35
+	android:name
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:10:13-78
+meta-data#com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar
+ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:20:13-22:85
+	android:value
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:22:17-82
+	android:name
+		ADDED from [com.google.mlkit:common:18.9.0] C:\Users\mail2\.gradle\caches\8.9\transforms\91cc5f8cae2a607f30cb210918b90955\transformed\jetified-common-18.9.0\AndroidManifest.xml:21:17-120
+activity#com.google.android.gms.common.api.GoogleApiActivity
+ADDED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:20:9-22:45
+	android:exported
+		ADDED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:22:19-43
+	android:theme
+		ADDED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:21:19-78
+	android:name
+		ADDED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\b2d12c50e54cf6d55b24e1967cbee024\transformed\jetified-play-services-base-18.3.0\AndroidManifest.xml:20:19-85
+meta-data#com.google.android.gms.version
+ADDED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:21:9-23:69
+	android:value
+		ADDED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:23:13-66
+	android:name
+		ADDED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\mail2\.gradle\caches\8.9\transforms\d4e46ceb78525459d7f0080c14e975a7\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:22:13-58
+service#androidx.camera.core.impl.MetadataHolderService
+ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:24:9-33:19
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:29:9-33:78
+MERGED from [androidx.camera:camera-core:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\9e786b07645fc9ff5dad78c279c00191\transformed\jetified-camera-core-1.3.3\AndroidManifest.xml:29:9-33:78
+	tools:node
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:29:13-31
+	android:enabled
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:26:13-36
+	android:exported
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:27:13-37
+	tools:ignore
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:28:13-75
+	android:name
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:25:13-75
+meta-data#androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER
+ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:30:13-32:89
+	android:value
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:32:17-86
+	android:name
+		ADDED from [androidx.camera:camera-camera2:1.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\89faa9a612d6d2b1b48d0da332042f97\transformed\jetified-camera-camera2-1.3.3\AndroidManifest.xml:31:17-103
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\mail2\.gradle\caches\8.9\transforms\921e87ed2f2feeee6b4dc0e024da0f68\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:25:13-67
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\mail2\.gradle\caches\8.9\transforms\3606a499d1688ff43623df5cd31ce540\transformed\jetified-lifecycle-process-2.8.7\AndroidManifest.xml:30:17-78
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [androidx.media3:media3-common:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bc813cefb9f12db37ebbed9df93ca3f3\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-exoplayer:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4d71dc11e216433477213af0551285e3\transformed\jetified-media3-exoplayer-1.4.1\AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-exoplayer:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\4d71dc11e216433477213af0551285e3\transformed\jetified-media3-exoplayer-1.4.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:25:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:25:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:22:5-79
+	android:name
+		ADDED from [androidx.media3:media3-common:1.4.1] C:\Users\mail2\.gradle\caches\8.9\transforms\bc813cefb9f12db37ebbed9df93ca3f3\transformed\jetified-media3-common-1.4.1\AndroidManifest.xml:22:22-76
+uses-library#androidx.window.extensions
+ADDED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:23:9-25:40
+	android:required
+		ADDED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:25:13-37
+	android:name
+		ADDED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:24:13-54
+uses-library#androidx.window.sidecar
+ADDED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:26:9-28:40
+	android:required
+		ADDED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from [androidx.window:window:1.2.0] C:\Users\mail2\.gradle\caches\8.9\transforms\0e96cba001e5b7ee59a4cea5fc90dede\transformed\jetified-window-1.2.0\AndroidManifest.xml:27:13-51
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:23:9-81
+permission#com.example.clue_master.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:26:22-94
+uses-permission#com.example.clue_master.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.15.0] C:\Users\mail2\.gradle\caches\8.9\transforms\9f872c5231dfa4f022f14c560404018f\transformed\core-1.15.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mail2\.gradle\caches\8.9\transforms\29391de632156a684358be73f1af3f88\transformed\jetified-profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
+service#com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
+ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:29:9-35:19
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:36:9-38:40
+MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:36:9-38:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:31:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:30:13-103
+meta-data#backend:com.google.android.datatransport.cct.CctBackendFactory
+ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:32:13-34:39
+	android:value
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:34:17-36
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\mail2\.gradle\caches\8.9\transforms\ff5662ba247da4d5ca7e697bbb81ee42\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:33:17-94
+service#com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:26:9-30:19
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:28:13-37
+	android:permission
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:29:13-69
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:27:13-117
+receiver#com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
+ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:32:9-34:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:34:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\mail2\.gradle\caches\8.9\transforms\46fd261e29030c182f6644c8d3e20cac\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:33:13-132

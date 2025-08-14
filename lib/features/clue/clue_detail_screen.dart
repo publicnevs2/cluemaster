@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:image/image.dart' as img;
-import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:clue_master/features/clue/gps_navigation_screen.dart';
+import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import 'package:vibration/vibration.dart';
@@ -42,11 +42,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     super.initState();
     _isSolved = widget.clue.solved;
 
+    // Markiere Hinweis als "gesehen", wenn er zum ersten Mal geöffnet wird.
     if (!widget.clue.hasBeenViewed) {
       widget.clue.hasBeenViewed = true;
       _saveHuntProgress();
     }
 
+    // Leichte Verzögerung für einen Einblend-Effekt
     Timer(const Duration(milliseconds: 100), () {
       if (mounted) setState(() => _contentVisible = true);
     });
@@ -60,6 +62,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     super.dispose();
   }
 
+  // Speichert den aktuellen Fortschritt der Jagd (gelöste Hinweise etc.)
   Future<void> _saveHuntProgress() async {
     final allHunts = await _clueService.loadHunts();
     final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
@@ -72,6 +75,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
+  // Prüft die vom Benutzer eingegebene Antwort
   void _checkAnswer({String? userAnswer}) async {
     final correctAnswer = widget.clue.answer?.trim().toLowerCase();
     final providedAnswer =
@@ -87,6 +91,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
       });
 
+      // Fehlermeldung nach 3 Sekunden ausblenden
       Timer(const Duration(seconds: 3), () {
         if (mounted) {
           _answerController.clear();
@@ -95,44 +100,54 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       });
     }
   }
-  
+
+  // ===================================================================
+  // KORRIGIERTER TEIL: Startet die GPS-Navigation
+  // ===================================================================
   void _startGpsNavigation() async {
+    // Ruft den GpsNavigationScreen auf.
+    // Der `bool?` result fängt das Ergebnis auf (true, wenn gelöst).
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => GpsNavigationScreen(hunt: widget.hunt, clue: widget.clue),
+        // KORREKTUR: Es wird nur noch das `clue`-Objekt übergeben,
+        // da der Screen alle nötigen Infos daraus bezieht.
+        builder: (_) => GpsNavigationScreen(clue: widget.clue),
       ),
     );
 
+    // Wenn der Screen `true` zurückgibt, wurde das Rätsel gelöst.
     if (result == true) {
       await _solveRiddle();
     }
   }
-  
+
+  // Logik, die ausgeführt wird, wenn ein Rätsel korrekt gelöst wurde.
   Future<void> _solveRiddle() async {
     if (!mounted || _isSolved) return;
 
     Vibration.vibrate(duration: 100);
     _soundService.playSound(SoundEffect.success);
-    
-    // Zuerst den Zustand im Objekt ändern. Das ist wichtig, damit der HomeScreen
-    // beim Zurückkehren den korrekten Status hat.
+
+    // Zustand im Objekt ändern und speichern
     widget.clue.solved = true;
-    
-    // Den neuen Zustand speichern.
     await _saveHuntProgress();
 
     // UI aktualisieren, um den "Gelöst"-Zustand anzuzeigen.
-    if(mounted) {
+    if (mounted) {
       setState(() {
         _isSolved = true;
       });
     }
 
+    // Wenn es der letzte Hinweis war, navigiere zum Erfolgs-Screen.
     if (widget.clue.isFinalClue && mounted) {
       Future.delayed(const Duration(milliseconds: 800), () {
-        if(mounted) {
-           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
+        if (mounted) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
         }
       });
     }
@@ -141,8 +156,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // Dynamischer Button-Text
-    final bool hasNextCode = _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
-    final String buttonText = hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
+    final bool hasNextCode =
+        _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
+    final String buttonText =
+        hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Eingehende Nachricht')),
@@ -161,7 +178,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                       _buildMediaWidget(clue: widget.clue),
                       const SizedBox(height: 16),
                       if (widget.clue.isRiddle) ...[
-                        const Divider(height: 24, thickness: 1, color: Colors.white24),
+                        const Divider(
+                            height: 24, thickness: 1, color: Colors.white24),
                         if (_isSolved)
                           _buildRewardWidget()
                         else
@@ -172,6 +190,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                 ),
               ),
             ),
+            // Zeigt den "Weiter"-Button an, wenn kein Rätsel vorhanden oder das Rätsel gelöst ist.
             if (!widget.clue.isRiddle || _isSolved)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -182,7 +201,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   onPressed: () {
                     Vibration.vibrate(duration: 50);
                     _soundService.playSound(SoundEffect.buttonClick);
-                    
+                    // Gibt den Code des nächsten Hinweises an den HomeScreen zurück.
                     Navigator.of(context).pop(widget.clue.nextClueCode);
                   },
                   child: Text(buttonText),
@@ -194,7 +213,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  // KORRIGIERT: Der Text "RÄTSEL GELÖST!" wurde entfernt und durch ein Icon ersetzt.
+  // --- Deine originalen Helper-Widgets (unverändert) ---
+
   Widget _buildRewardWidget() {
     return Card(
       color: Colors.green.withOpacity(0.2),
@@ -203,8 +223,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             Icon(Icons.check_circle_outline, color: Colors.greenAccent.withOpacity(0.8), size: 40),
-             const SizedBox(height: 12),
+            Icon(Icons.check_circle_outline,
+                color: Colors.greenAccent.withOpacity(0.8), size: 40),
+            const SizedBox(height: 12),
             Text(
               widget.clue.rewardText ?? 'Gut gemacht!',
               style: const TextStyle(fontSize: 18),
@@ -216,28 +237,28 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 
-  // Der Rest der Datei (_buildRiddleWidget, _buildMediaWidget, etc.) kann
-  // von deinem vorherigen Code übernommen werden, da er unverändert ist.
-  // Ich füge ihn hier zur Vollständigkeit ein.
-  
   Widget _buildRiddleWidget() {
+    // ===================================================================
+    // KORRIGIERTER TEIL: Das 'default' wurde entfernt und die Logik
+    // ist jetzt klarer, was den Fehler bei Zeile 381 behebt.
+    // ===================================================================
     switch (widget.clue.riddleType) {
       case RiddleType.GPS:
         return _buildGpsRiddlePrompt();
       case RiddleType.MULTIPLE_CHOICE:
         return _buildTextualRiddleWidget(isMultipleChoice: true);
       case RiddleType.TEXT:
-      default:
         return _buildTextualRiddleWidget(isMultipleChoice: false);
     }
   }
-  
+
   Widget _buildGpsRiddlePrompt() {
     return Column(
       children: [
         Text(
           widget.clue.question!,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -248,7 +269,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             textStyle: const TextStyle(fontSize: 16),
           ),
-          onPressed: _startGpsNavigation,
+          onPressed: _startGpsNavigation, // Ruft die korrigierte Methode auf
         ),
       ],
     );
@@ -259,7 +280,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       children: [
         Text(
           widget.clue.question!,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
@@ -270,7 +292,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
             child: Text(_errorMessage!,
-                style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
+                style:
+                    const TextStyle(color: Colors.redAccent, fontSize: 16)),
           ),
         if (_wrongAttempts >= 2 && widget.clue.hint1 != null)
           _buildHintCard(1, widget.clue.hint1!),
@@ -337,8 +360,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     );
   }
 }
-// Media Widgets hier einfügen...
-// Der Rest der Datei (Media Widgets) bleibt unverändert.
+
+// ===========================================================
+// ANHANG: ALLE DEINE MEDIA-WIDGETS (unverändert beibehalten)
+// ===========================================================
 
 Widget _buildMediaWidget({required Clue clue}) {
   Widget mediaWidget;
@@ -366,10 +391,10 @@ Widget _buildMediaWidget({required Clue clue}) {
         case ImageEffect.INVERT_COLORS:
           mediaWidget = ColorFiltered(
             colorFilter: const ColorFilter.matrix([
-              -1, 0, 0, 0, 255,
-              0, -1, 0, 0, 255,
-              0, 0, -1, 0, 255,
-              0, 0, 0, 1, 0,
+              -1, 0,  0,  0, 255,
+              0, -1,  0,  0, 255,
+              0,  0, -1,  0, 255,
+              0,  0,  0,  1, 0,
             ]),
             child: image,
           );
@@ -411,15 +436,20 @@ Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
     case TextEffect.MORSE_CODE:
       return MorseCodeWidget(text: content);
     case TextEffect.REVERSE:
-      return Text(content.split('').reversed.join(''), style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+      return Text(content.split('').reversed.join(''),
+          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
     case TextEffect.NO_VOWELS:
-      return Text(content.replaceAll(RegExp(r'[aeiouAEIOU]'), ''), style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+      return Text(content.replaceAll(RegExp(r'[aeiouAEIOU]'), ''),
+          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
     case TextEffect.MIRROR_WORDS:
-      final mirrored = content.split(' ').map((word) => word.split('').reversed.join('')).join(' ');
-      return Text(mirrored, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+      final mirrored =
+          content.split(' ').map((word) => word.split('').reversed.join('')).join(' ');
+      return Text(mirrored,
+          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
     case TextEffect.NONE:
     default:
-      return Text(content, style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
+      return Text(content,
+          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
   }
 }
 
@@ -428,15 +458,21 @@ class MorseCodeWidget extends StatelessWidget {
   const MorseCodeWidget({super.key, required this.text});
 
   static const Map<String, String> _morseCodeMap = {
-    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
-    'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
-    'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-    'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
-    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
+    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+    'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--',
+    '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..',
+    '9': '----.', '0': '-----', ' ': '/'
   };
 
   String _toMorseCode(String input) {
-    return input.toUpperCase().split('').map((char) => _morseCodeMap[char] ?? '').join(' ');
+    return input
+        .toUpperCase()
+        .split('')
+        .map((char) => _morseCodeMap[char] ?? '')
+        .join(' ');
   }
 
   @override
@@ -453,7 +489,8 @@ class MorseCodeWidget extends StatelessWidget {
           icon: const Icon(Icons.volume_up_outlined, size: 40),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
+              content: Text(
+                  'Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
             ));
           },
         ),
@@ -483,12 +520,13 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
   Future<void> _createPuzzle() async {
     Uint8List imageBytes;
     if (widget.imagePath.startsWith('file://')) {
-      imageBytes = await File(widget.imagePath.replaceFirst('file://', '')).readAsBytes();
+      imageBytes =
+          await File(widget.imagePath.replaceFirst('file://', '')).readAsBytes();
     } else {
       final byteData = await rootBundle.load(widget.imagePath);
       imageBytes = byteData.buffer.asUint8List();
     }
-    
+
     final originalImage = img.decodeImage(imageBytes);
     if (originalImage == null) return;
 
@@ -497,7 +535,8 @@ class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
     final pieces = <Uint8List>[];
     for (int y = 0; y < 3; y++) {
       for (int x = 0; x < 3; x++) {
-        final piece = img.copyCrop(originalImage, x: x * pieceWidth, y: y * pieceHeight, width: pieceWidth, height: pieceHeight);
+        final piece = img.copyCrop(originalImage,
+            x: x * pieceWidth, y: y * pieceHeight, width: pieceWidth, height: pieceHeight);
         pieces.add(Uint8List.fromList(img.encodePng(piece)));
       }
     }
@@ -590,7 +629,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         await _player.setAsset(widget.path);
       }
     } catch (e) {
-      print("Fehler beim Laden der Audio-Datei: $e");
+      debugPrint("Fehler beim Laden der Audio-Datei: $e");
     }
   }
 

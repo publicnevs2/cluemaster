@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Meine erste Schnitzeljagd",
+    "clues": {
+      "START": {
+        "solved": false,
+        "type": "text",
+        "content": "Willkommen zur Schnitzeljagd! Der erste Code ist 'RAETSEL1'.",
+        "description": "Lies den Text genau.",
+        "question": null,
+        "answer": null,
+        "options": null,
+        "hint1": null,
+        "hint2": null,
+        "rewardText": null
+      },
+      "RAETSEL1": {
+        "solved": false,
+        "type": "image",
+        "content": "assets/images/image1.jpg",
+        "description": "Schau dir diesen Mann genau an.",
+        "question": "Welche Farbe hat die Kappe dieser Person?",
+        "answer": "Schwarz",
+        "options": [
+          "Blau",
+          "Schwarz",
+          "Grün"
+        ],
+        "hint1": "Es ist eine dunkle Farbe.",
+        "hint2": "Die Farbe beginnt mit S.",
+        "rewardText": "Sehr gut! Der nächste Code lautet 'BRUNNEN'."
+      }
+    }
+  }
+]

@@ -26,6 +26,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     _loadHunts();
   }
 
+  // Diese Methode ist der Schlüssel zur Aktualisierung.
   Future<void> _loadHunts() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -39,6 +40,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
   }
 
   void _navigateToGame(Hunt hunt) async {
+    // Navigiert zum Spiel (Briefing oder HomeScreen)
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -52,6 +54,8 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       ),
     );
     
+    // Nach der Rückkehr vom Spiel wird die Liste neu geladen,
+    // um den Fortschritt korrekt anzuzeigen.
     _loadHunts();
   }
 
@@ -98,27 +102,30 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Import abgebrochen.')),
       );
-    // --- ÄNDERUNG: "EXISTS"-Fall entfernt ---
     } else if (result == "ERROR") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Fehler: Die Datei konnte nicht importiert werden.'), backgroundColor: Colors.red),
       );
     } else {
-      // Diese Erfolgsmeldung funktioniert jetzt für Original und Kopie
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Die Jagd "$result" wurde erfolgreich importiert.'), backgroundColor: Colors.green),
       );
       _loadHunts();
     }
   }
- 
+
+  // =======================================================
+  // KORRIGIERTER TEIL: Automatischer Refresh
+  // =======================================================
   void _navigateToAdmin() async {
-    await Navigator.push(
+    // Navigiere zum Admin-Login-Screen und WARTE auf eine Rückmeldung.
+    final refreshIsNeeded = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
     );
 
-    if (mounted) {
+    // Wenn der Admin-Bereich mit `true` verlassen wird, lade die Jagden neu.
+    if (refreshIsNeeded == true && mounted) {
       _loadHunts();
     }
   }
@@ -132,6 +139,20 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
           maxLines: 1,
         ),
         actions: [
+          // NEU: Manueller Refresh-Button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Liste neu laden',
+            onPressed: () {
+              _loadHunts();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Liste wurde aktualisiert.'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.admin_panel_settings),
             tooltip: 'Admin-Bereich',

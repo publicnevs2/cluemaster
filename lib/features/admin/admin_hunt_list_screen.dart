@@ -4,7 +4,7 @@ import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_change_password_screen.dart';
-import 'admin_hunt_settings_screen.dart'; // <-- NEUER IMPORT
+import 'admin_hunt_settings_screen.dart';
 
 class AdminHuntListScreen extends StatefulWidget {
   const AdminHuntListScreen({super.key});
@@ -30,14 +30,12 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
     }
   }
 
-  // --- GEÄNDERT: Navigiert zum neuen Einstellungs-Bildschirm ---
   Future<void> _navigateToHuntSettings(Hunt? hunt) async {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => AdminHuntSettingsScreen(
           hunt: hunt,
-          // Wir übergeben die Liste der existierenden Namen, um Duplikate zu vermeiden
           existingHuntNames: _hunts
               .where((h) => h.name != hunt?.name)
               .map((h) => h.name)
@@ -46,13 +44,11 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
       ),
     );
 
-    // Wenn der Einstellungs-Bildschirm mit "true" zurückkehrt, laden wir die Liste neu.
     if (result == true) {
       _loadHunts();
     }
   }
 
-  // Navigiert zum Dashboard, um die Stationen (Clues) zu bearbeiten
   void _navigateToDashboard(Hunt hunt) {
     Navigator.push(
       context,
@@ -140,78 +136,87 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const AutoSizeText(
-          'Meine Schnitzeljagden',
-          maxLines: 1,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download),
-            tooltip: 'Jagd importieren',
-            onPressed: _importHunt,
+    // =======================================================
+    // KORRIGIERTER TEIL: `WillPopScope` wurde hinzugefügt
+    // =======================================================
+    return WillPopScope(
+      onWillPop: () async {
+        // Sende das `true`-Signal an den HuntSelectionScreen zurück.
+        Navigator.of(context).pop(true);
+        // Verhindere das Standard-Zurück-Verhalten, da wir es manuell auslösen.
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const AutoSizeText(
+            'Meine Schnitzeljagden',
+            maxLines: 1,
           ),
-          IconButton(
-            icon: const Icon(Icons.lock_outline),
-            tooltip: 'Passwort ändern',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const AdminChangePasswordScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _hunts.isEmpty
-          ? const Center(
-              child: Text(
-                  'Keine Schnitzeljagden gefunden. Erstelle oder importiere eine neue!'),
-            )
-          : ListView.builder(
-              itemCount: _hunts.length,
-              itemBuilder: (context, index) {
-                final hunt = _hunts[index];
-                return ListTile(
-                  title: Text(hunt.name),
-                  subtitle: Text('${hunt.clues.length} Stationen'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.share, color: Colors.blue),
-                        tooltip: 'Jagd teilen/exportieren',
-                        onPressed: () => _exportHuntWithFeedback(hunt),
-                      ),
-                      // --- NEUER BUTTON für die Jagd-Einstellungen ---
-                      IconButton(
-                        icon: const Icon(Icons.settings),
-                        tooltip: 'Jagd-Einstellungen (Name, Briefing)',
-                        onPressed: () => _navigateToHuntSettings(hunt),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        tooltip: 'Stationen bearbeiten',
-                        onPressed: () => _navigateToDashboard(hunt),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        tooltip: 'Jagd löschen',
-                        onPressed: () => _deleteHunt(hunt),
-                      ),
-                    ],
-                  ),
-                  onTap: () => _navigateToDashboard(hunt),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.file_download),
+              tooltip: 'Jagd importieren',
+              onPressed: _importHunt,
+            ),
+            IconButton(
+              icon: const Icon(Icons.lock_outline),
+              tooltip: 'Passwort ändern',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AdminChangePasswordScreen()),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        // --- GEÄNDERT: Ruft die neue Navigationsfunktion auf ---
-        onPressed: () => _navigateToHuntSettings(null),
-        label: const Text('Neue Jagd'),
-        icon: const Icon(Icons.add),
+          ],
+        ),
+        body: _hunts.isEmpty
+            ? const Center(
+                child: Text(
+                    'Keine Schnitzeljagden gefunden. Erstelle oder importiere eine neue!'),
+              )
+            : ListView.builder(
+                itemCount: _hunts.length,
+                itemBuilder: (context, index) {
+                  final hunt = _hunts[index];
+                  return ListTile(
+                    title: Text(hunt.name),
+                    subtitle: Text('${hunt.clues.length} Stationen'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.share, color: Colors.blue),
+                          tooltip: 'Jagd teilen/exportieren',
+                          onPressed: () => _exportHuntWithFeedback(hunt),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.settings),
+                          tooltip: 'Jagd-Einstellungen (Name, Briefing)',
+                          onPressed: () => _navigateToHuntSettings(hunt),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          tooltip: 'Stationen bearbeiten',
+                          onPressed: () => _navigateToDashboard(hunt),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          tooltip: 'Jagd löschen',
+                          onPressed: () => _deleteHunt(hunt),
+                        ),
+                      ],
+                    ),
+                    onTap: () => _navigateToDashboard(hunt),
+                  );
+                },
+              ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _navigateToHuntSettings(null),
+          label: const Text('Neue Jagd'),
+          icon: const Icon(Icons.add),
+        ),
       ),
     );
   }
