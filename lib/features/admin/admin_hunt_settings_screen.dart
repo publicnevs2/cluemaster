@@ -1,10 +1,13 @@
+// lib/features/admin/admin_hunt_settings_screen.dart
+
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Wichtig für den Zahlen-Filter
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
+import '../../data/models/item.dart'; // NEU: Item-Modell importieren
 
 class AdminHuntSettingsScreen extends StatefulWidget {
   final Hunt? hunt;
@@ -17,7 +20,8 @@ class AdminHuntSettingsScreen extends StatefulWidget {
   });
 
   @override
-  State<AdminHuntSettingsScreen> createState() => _AdminHuntSettingsScreenState();
+  State<AdminHuntSettingsScreen> createState() =>
+      _AdminHuntSettingsScreenState();
 }
 
 class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
@@ -27,27 +31,33 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
 
   late TextEditingController _nameController;
   late TextEditingController _briefingTextController;
-  // NEUER CONTROLLER für die Zielzeit
   late TextEditingController _targetTimeController;
   String? _briefingImagePath;
+
+  // ============================================================
+  // NEU: State für die ausgewählten Start-Items
+  // ============================================================
+  late Set<String> _selectedStartItemIds;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.hunt?.name ?? '');
-    _briefingTextController = TextEditingController(text: widget.hunt?.briefingText ?? '');
-    // NEU: Initialisiert den Controller mit dem bestehenden Wert (falls vorhanden)
+    _briefingTextController =
+        TextEditingController(text: widget.hunt?.briefingText ?? '');
     _targetTimeController = TextEditingController(
       text: widget.hunt?.targetTimeInMinutes?.toString() ?? '',
     );
     _briefingImagePath = widget.hunt?.briefingImageUrl;
+
+    // NEU: Initialisiert das Set mit den bereits vorhandenen Start-Items
+    _selectedStartItemIds = Set<String>.from(widget.hunt?.startingItemIds ?? []);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _briefingTextController.dispose();
-    // NEU: Den neuen Controller ebenfalls entsorgen
     _targetTimeController.dispose();
     super.dispose();
   }
@@ -57,7 +67,8 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
     if (pickedFile != null) {
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = pickedFile.path.split('/').last;
-      final savedImage = await File(pickedFile.path).copy('${appDir.path}/$fileName');
+      final savedImage =
+          await File(pickedFile.path).copy('${appDir.path}/$fileName');
       setState(() {
         _briefingImagePath = 'file://${savedImage.path}';
       });
@@ -67,18 +78,24 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
   Future<void> _saveHunt() async {
     if (_formKey.currentState!.validate()) {
       final allHunts = await _clueService.loadHunts();
-      
-      // NEU: Lese den Wert aus dem Controller und konvertiere ihn in eine Zahl
+
       final targetTimeText = _targetTimeController.text.trim();
-      final int? targetTime = targetTimeText.isNotEmpty ? int.tryParse(targetTimeText) : null;
+      final int? targetTime =
+          targetTimeText.isNotEmpty ? int.tryParse(targetTimeText) : null;
 
       final updatedHunt = Hunt(
         name: _nameController.text.trim(),
-        briefingText: _briefingTextController.text.trim().isEmpty ? null : _briefingTextController.text.trim(),
+        briefingText: _briefingTextController.text.trim().isEmpty
+            ? null
+            : _briefingTextController.text.trim(),
         briefingImageUrl: _briefingImagePath,
-        // NEU: Speichere die Zielzeit im Hunt-Objekt
         targetTimeInMinutes: targetTime,
         clues: widget.hunt?.clues ?? {},
+        // ============================================================
+        // NEU: Speichert die Item-Daten mit ab
+        // ============================================================
+        items: widget.hunt?.items ?? {}, // Behält die Item-Bibliothek bei
+        startingItemIds: _selectedStartItemIds.toList(), // Speichert die Auswahl
       );
 
       if (widget.hunt == null) {
@@ -99,9 +116,15 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Hole alle verfügbaren Items für die Checkliste
+    final allAvailableItems = widget.hunt?.items.values.toList() ?? [];
+    allAvailableItems.sort((a,b) => a.name.compareTo(b.name));
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.hunt == null ? 'Neue Jagd erstellen' : 'Jagd-Einstellungen'),
+        title: Text(widget.hunt == null
+            ? 'Neue Jagd erstellen'
+            : 'Jagd-Einstellungen'),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -125,17 +148,14 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
                 if (name.isEmpty) {
                   return 'Der Name darf nicht leer sein.';
                 }
-                // Prüft auf Duplikate, ignoriert dabei den aktuellen Namen der Jagd
-                if (widget.existingHuntNames.any((element) => element.toLowerCase() == name.toLowerCase())) {
+                if (widget.existingHuntNames.any((element) =>
+                    element.toLowerCase() == name.toLowerCase() &&
+                    name.toLowerCase() != widget.hunt?.name.toLowerCase())) {
                   return 'Eine Jagd mit diesem Namen existiert bereits.';
                 }
                 return null;
               },
             ),
-            
-            // ===============================================
-            // NEUES FELD für die Zielzeit
-            // ===============================================
             const SizedBox(height: 16),
             TextFormField(
               controller: _targetTimeController,
@@ -145,11 +165,46 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
                 prefixIcon: Icon(Icons.timer_outlined),
               ),
               keyboardType: TextInputType.number,
-              // Erlaubt nur die Eingabe von Zahlen
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
-            // ===============================================
-
+            
+            // ============================================================
+            // NEU: Sektion für die Start-Ausrüstung
+            // ============================================================
+            const SizedBox(height: 24),
+            Text('Start-Ausrüstung', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            if (allAvailableItems.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Text('Du musst zuerst Items in der Item-Bibliothek anlegen, um sie hier auswählen zu können.', textAlign: TextAlign.center),
+              )
+            else
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: allAvailableItems.map((item) {
+                      return CheckboxListTile(
+                        title: Text(item.name),
+                        subtitle: Text(item.id, style: const TextStyle(color: Colors.grey)),
+                        value: _selectedStartItemIds.contains(item.id),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              _selectedStartItemIds.add(item.id);
+                            } else {
+                              _selectedStartItemIds.remove(item.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            // ============================================================
+            
             const SizedBox(height: 24),
             Text('Optionales Missions-Briefing', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
@@ -157,7 +212,7 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
               controller: _briefingTextController,
               decoration: const InputDecoration(
                 labelText: 'Story-Einleitung',
-                hintText: 'Agent 00Sven, Ihre Mission, sollten Sie sie annehmen...',
+                hintText: 'Agent 00Sven, Ihre Mission...',
                 alignLabelWithHint: true,
                 border: OutlineInputBorder(),
               ),

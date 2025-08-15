@@ -1,17 +1,12 @@
 // lib/data/models/clue.dart
 
-// ============================================================
 // SECTION: Enums für Rätsel-Typen und Effekte
-// ============================================================
-
-/// Definiert, welche Art von Rätsel ein Hinweis enthalten kann.
 enum RiddleType {
   TEXT,
   MULTIPLE_CHOICE,
   GPS,
 }
 
-/// Definiert, welcher visuelle Effekt auf einen Bild-Hinweis angewendet wird.
 enum ImageEffect {
   NONE,
   PUZZLE,
@@ -19,30 +14,22 @@ enum ImageEffect {
   BLACK_AND_WHITE,
 }
 
-/// Definiert, welcher Effekt auf einen Text-Hinweis angewendet wird.
 enum TextEffect {
-  NONE,          // Normaler Text
-  MORSE_CODE,    // Text als Morsecode
-  REVERSE,       // Kompletter Text rückwärts
-  NO_VOWELS,     // Alle Vokale entfernt
-  MIRROR_WORDS,  // Buchstaben jedes Wortes spiegeln
+  NONE,
+  MORSE_CODE,
+  REVERSE,
+  NO_VOWELS,
+  MIRROR_WORDS,
 }
 
-
-// ============================================================
 // SECTION: Clue Klasse
-// ============================================================
 class Clue {
-  // ============================================================
-  // SECTION: Kerneigenschaften
-  // ============================================================
+  // --- Kerneigenschaften ---
   final String code;
   bool solved;
   bool hasBeenViewed;
 
-  // ============================================================
-  // SECTION: HINWEIS (Was der Spieler immer sieht)
-  // ============================================================
+  // --- HINWEIS (Was der Spieler immer sieht) ---
   final String type;
   final String content;
   final String? description;
@@ -50,33 +37,49 @@ class Clue {
   final ImageEffect imageEffect;
   final TextEffect textEffect;
 
-  // ============================================================
-  // SECTION: OPTIONALES RÄTSEL
-  // ============================================================
+  // --- OPTIONALES RÄTSEL ---
   final String? question;
   final RiddleType riddleType;
-  
   final String? answer;
   final List<String>? options;
   final String? hint1;
   final String? hint2;
-
   final double? latitude;
   final double? longitude;
   final double? radius;
 
-  // ============================================================
-  // SECTION: BELOHNUNG & NÄCHSTER SCHRITT
-  // ============================================================
-  final String? rewardText;      // Text, der nach dem Lösen angezeigt wird.
-  final String? nextClueCode;    // Separater Code für den nächsten Hinweis.
+  // --- BELOHNUNG & NÄCHSTER SCHRITT ---
+  final String? rewardText;
+  final String? nextClueCode;
   final bool isFinalClue;
-  // NEUES FELD für die Admin-Checkbox
   final bool autoTriggerNextClue;
 
   // ============================================================
-  // SECTION: Konstruktor
+  // NEU: FELDER FÜR DAS INVENTAR-SYSTEM
   // ============================================================
+  /// Die ID des Items, das der Spieler als Belohnung erhält.
+  final String? rewardItemId;
+
+  /// Die ID des Items, das der Spieler besitzen muss, um diesen Hinweis zu sehen.
+  final String? requiredItemId;
+
+  // ============================================================
+  // NEU: FELDER FÜR ZEITGESTEUERTE TRIGGER
+  // ============================================================
+  /// Nach wie vielen Sekunden soll der Timer auslösen?
+  final int? timedTriggerAfterSeconds;
+
+  /// Welche Nachricht soll im Timer-Popup angezeigt werden?
+  final String? timedTriggerMessage;
+
+  /// Welches Item soll der Timer als Belohnung geben?
+  final String? timedTriggerRewardItemId;
+
+  /// Welchen Code soll der Timer als Belohnung geben?
+  final String? timedTriggerNextClueCode;
+
+
+  // SECTION: Konstruktor
   Clue({
     required this.code,
     this.solved = false,
@@ -99,21 +102,23 @@ class Clue {
     this.rewardText,
     this.nextClueCode,
     this.isFinalClue = false,
-    // NEU: Standardmäßig auf `true` gesetzt, um altes Verhalten beizubehalten
     this.autoTriggerNextClue = true,
+    // NEUE Felder im Konstruktor
+    this.rewardItemId,
+    this.requiredItemId,
+    this.timedTriggerAfterSeconds,
+    this.timedTriggerMessage,
+    this.timedTriggerRewardItemId,
+    this.timedTriggerNextClueCode,
   });
 
-  // ============================================================
   // SECTION: Hilfs-Methoden (Getters)
-  // ============================================================
   bool get isRiddle => question != null && question!.isNotEmpty;
   bool get isGpsRiddle => isRiddle && riddleType == RiddleType.GPS;
-  bool get isMultipleChoice => isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
+  bool get isMultipleChoice =>
+      isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
 
-  // ============================================================
   // SECTION: JSON-Konvertierung
-  // ============================================================
-
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
     return Clue(
       code: code,
@@ -124,23 +129,19 @@ class Clue {
       description: json['description'],
       backgroundImagePath: json['backgroundImagePath'],
       imageEffect: ImageEffect.values.firstWhere(
-            (e) => e.toString() == json['imageEffect'],
-            orElse: () => ImageEffect.NONE
-      ),
+          (e) => e.toString() == json['imageEffect'],
+          orElse: () => ImageEffect.NONE),
       textEffect: TextEffect.values.firstWhere(
-            (e) => e.toString() == json['textEffect'],
-            orElse: () => TextEffect.NONE
-      ),
+          (e) => e.toString() == json['textEffect'],
+          orElse: () => TextEffect.NONE),
       question: json['question'],
       riddleType: RiddleType.values.firstWhere(
-            (e) => e.toString() == json['riddleType'],
-            orElse: () {
-              if (json['options'] != null && (json['options'] as List).isNotEmpty) {
-                return RiddleType.MULTIPLE_CHOICE;
-              }
-              return RiddleType.TEXT;
-            }
-      ),
+          (e) => e.toString() == json['riddleType'], orElse: () {
+        if (json['options'] != null && (json['options'] as List).isNotEmpty) {
+          return RiddleType.MULTIPLE_CHOICE;
+        }
+        return RiddleType.TEXT;
+      }),
       answer: json['answer'],
       options: json['options'] != null ? List<String>.from(json['options']) : null,
       hint1: json['hint1'],
@@ -151,8 +152,14 @@ class Clue {
       rewardText: json['rewardText'],
       nextClueCode: json['nextClueCode'],
       isFinalClue: json['isFinalClue'] ?? false,
-      // NEU: Liest den Wert aus der JSON-Datei, Standard ist `true`
       autoTriggerNextClue: json['autoTriggerNextClue'] ?? true,
+      // NEUE Felder aus JSON lesen
+      rewardItemId: json['rewardItemId'],
+      requiredItemId: json['requiredItemId'],
+      timedTriggerAfterSeconds: json['timedTriggerAfterSeconds'],
+      timedTriggerMessage: json['timedTriggerMessage'],
+      timedTriggerRewardItemId: json['timedTriggerRewardItemId'],
+      timedTriggerNextClueCode: json['timedTriggerNextClueCode'],
     );
   }
 
@@ -178,8 +185,14 @@ class Clue {
       if (rewardText != null) 'rewardText': rewardText,
       if (nextClueCode != null) 'nextClueCode': nextClueCode,
       'isFinalClue': isFinalClue,
-      // NEU: Schreibt den Wert in die JSON-Datei
       'autoTriggerNextClue': autoTriggerNextClue,
+      // NEUE Felder in JSON schreiben
+      if (rewardItemId != null) 'rewardItemId': rewardItemId,
+      if (requiredItemId != null) 'requiredItemId': requiredItemId,
+      if (timedTriggerAfterSeconds != null) 'timedTriggerAfterSeconds': timedTriggerAfterSeconds,
+      if (timedTriggerMessage != null) 'timedTriggerMessage': timedTriggerMessage,
+      if (timedTriggerRewardItemId != null) 'timedTriggerRewardItemId': timedTriggerRewardItemId,
+      if (timedTriggerNextClueCode != null) 'timedTriggerNextClueCode': timedTriggerNextClueCode,
     };
   }
 }

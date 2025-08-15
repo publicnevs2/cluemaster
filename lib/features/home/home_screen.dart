@@ -1,3 +1,5 @@
+// lib/features/home/home_screen.dart
+
 import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
@@ -5,12 +7,12 @@ import 'package:clue_master/features/shared/game_header.dart';
 import 'package:clue_master/features/shared/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart'; // NEU: Import für GPS
+import 'package:geolocator/geolocator.dart';
 import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../core/services/clue_service.dart';
-// import '../../data/models/clue.dart';
+import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
 import '../clue/clue_detail_screen.dart';
@@ -31,11 +33,13 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 
 class HomeScreen extends StatefulWidget {
   final Hunt hunt;
+  final HuntProgress huntProgress;
   final String? codeToAnimate;
 
   const HomeScreen({
     super.key,
     required this.hunt,
+    required this.huntProgress,
     this.codeToAnimate,
   });
 
@@ -58,20 +62,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Timer? _stopwatchTimer;
   Duration _elapsedDuration = Duration.zero;
 
-  // =======================================================
-  // NEU: Variablen für die Distanzmessung
-  // =======================================================
   StreamSubscription<Position>? _positionStreamSubscription;
   Position? _lastPosition;
-  // =======================================================
 
   @override
   void initState() {
     super.initState();
     _currentHunt = widget.hunt;
+    _huntProgress = widget.huntProgress;
+
     _initializeClues();
 
-    _huntProgress = HuntProgress(huntName: widget.hunt.name);
+    if (_huntProgress.startTime != null) {
+      _startStopwatch();
+      _startDistanceTracking();
+    }
 
     if (widget.codeToAnimate != null && widget.codeToAnimate!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -106,7 +111,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _codeFocusNode.dispose();
     _soundService.dispose();
     _stopwatchTimer?.cancel();
-    // NEU: GPS-Stream sicher beenden
     _positionStreamSubscription?.cancel();
     super.dispose();
   }
@@ -144,18 +148,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _stopwatchTimer?.cancel();
   }
 
-  // =======================================================
-  // NEU: Methode zur Distanzmessung
-  // =======================================================
   Future<void> _startDistanceTracking() async {
-    // 1. Prüfe, ob die Standortdienste überhaupt aktiviert sind.
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       debugPrint('Standortdienste sind deaktiviert.');
       return;
     }
 
-    // 2. Frage nach der Berechtigung, wenn sie noch nicht erteilt wurde.
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -169,39 +168,32 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       debugPrint('Standortberechtigung wurde permanent verweigert.');
       return;
     }
-    
-    // 3. Beginne, auf Standort-Updates zu lauschen.
+
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // Update alle 10 Meter
+      distanceFilter: 10,
     );
 
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-      (Position position) {
-        if (!mounted) return;
+        (Position position) {
+      if (!mounted) return;
 
-        setState(() {
-          if (_lastPosition != null) {
-            // Berechne die Distanz zwischen dem letzten und dem neuen Punkt
-            final distance = Geolocator.distanceBetween(
-              _lastPosition!.latitude,
-              _lastPosition!.longitude,
-              position.latitude,
-              position.longitude,
-            );
-            // Addiere die neue Distanz zur Gesamtdistanz im Logbuch
-            _huntProgress.distanceWalkedInMeters += distance;
-          }
-          // Speichere die aktuelle Position für die nächste Berechnung
-          _lastPosition = position;
-        });
-      },
-      onError: (error) {
-        debugPrint('Fehler bei der Standortabfrage: $error');
-      }
-    );
+      setState(() {
+        if (_lastPosition != null) {
+          final distance = Geolocator.distanceBetween(
+            _lastPosition!.latitude,
+            _lastPosition!.longitude,
+            position.latitude,
+            position.longitude,
+          );
+          _huntProgress.distanceWalkedInMeters += distance;
+        }
+        _lastPosition = position;
+      });
+    }, onError: (error) {
+      debugPrint('Fehler bei der Standortabfrage: $error');
+    });
   }
-  // =======================================================
 
   void _startCodeAnimation(String code) {
     setState(() {
@@ -263,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         setState(() {
           _huntProgress.startTime = DateTime.now();
           _startStopwatch();
-          _startDistanceTracking(); // NEU: Starte die Distanzmessung
+          _startDistanceTracking();
         });
       }
 
@@ -344,10 +336,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final totalClues = _currentHunt.clues.length;
-    final viewedClues =
-        _currentHunt.clues.values.where((c) => c.hasBeenViewed).length;
-
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
@@ -376,15 +364,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         hunt: _currentHunt,
         huntProgress: _huntProgress,
         elapsedTime: _elapsedDuration,
-    ),
-      
-    
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Spacer(),
               const AutoSizeText(
                 'Missions-Code eingeben:',
                 style: TextStyle(fontSize: 24),
@@ -431,64 +418,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 label: const Text('QR-Code scannen'),
               ),
               const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20.0),
-                child: PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'list') {
-                      _soundService.playSound(SoundEffect.buttonClick);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ClueListScreen(
-                            hunt: _currentHunt,
-                            huntProgress: _huntProgress,
-                          ),
-                        ),
-                      );
-                    } else if (value == 'admin') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const AdminLoginScreen()),
-                      );
-                    }
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'list',
-                      child: ListTile(
-                        leading: Icon(Icons.list_alt_outlined),
-                        title: Text('Logbuch / Hinweise'),
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem<String>(
-                      value: 'admin',
-                      child: ListTile(
-                        leading: Icon(Icons.admin_panel_settings_outlined),
-                        title: Text('Admin-Bereich'),
-                      ),
-                    ),
-                  ],
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[700]!)
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                         Icon(Icons.menu),
-                         SizedBox(width: 8),
-                         Text('Menü'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),

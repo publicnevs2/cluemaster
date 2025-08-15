@@ -1,5 +1,3 @@
-// lib/features/shared/game_header.dart
-
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/admin/admin_login_screen.dart';
 import 'package:clue_master/features/clue/clue_list_screen.dart';
@@ -7,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
+import '../inventory/inventory_screen.dart'; // NEU: Import für den Inventar-Screen
 
 class GameHeader extends StatelessWidget implements PreferredSizeWidget {
   final Hunt hunt;
@@ -25,6 +24,8 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
     final soundService = SoundService();
     final totalClues = hunt.clues.length;
     final viewedClues = hunt.clues.values.where((c) => c.hasBeenViewed).length;
+    
+    final int itemCount = huntProgress.collectedItemIds.length;
 
     String formattedTime =
         '${elapsedTime.inHours.toString().padLeft(2, '0')}:${(elapsedTime.inMinutes % 60).toString().padLeft(2, '0')}:${(elapsedTime.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -38,7 +39,6 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Linke Seite: Titel und Zeit
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -72,7 +72,6 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            // Rechte Seite: Fortschritt und Menü
             Row(
               children: [
                 Column(
@@ -88,7 +87,6 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Kleiner Fortschrittsbalken
                     SizedBox(
                       width: 80,
                       child: LinearProgressIndicator(
@@ -100,13 +98,34 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
-                // Das neue, globale Menü
+                Badge(
+                  label: Text(itemCount.toString()),
+                  isLabelVisible: itemCount > 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.backpack_outlined),
+                    onPressed: () {
+                      // =======================================================
+                      // GEÄNDERT: Öffnet jetzt den neuen Inventar-Screen
+                      // =======================================================
+                      soundService.playSound(SoundEffect.buttonClick);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => InventoryScreen(
+                            hunt: hunt,
+                            huntProgress: huntProgress,
+                          ),
+                        ),
+                      );
+                      // =======================================================
+                    },
+                  ),
+                ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.menu),
                   onSelected: (value) {
                     soundService.playSound(SoundEffect.buttonClick);
                     if (value == 'code_entry') {
-                      // Gehe zurück bis zum ersten Screen (HomeScreen)
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     } else if (value == 'list') {
                       Navigator.push(
@@ -159,7 +178,6 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // Hier die Höhe anpassen
   @override
   Size get preferredSize => const Size.fromHeight(75.0);
 }

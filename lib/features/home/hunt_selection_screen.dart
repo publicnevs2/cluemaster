@@ -1,13 +1,13 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:clue_master/data/models/hunt_progress.dart'; // NEU: Import
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
 import 'briefing_screen.dart';
-// NEUER IMPORT für den Statistik-Bildschirm
 import 'package:clue_master/features/clue/statistics_screen.dart';
 
 class HuntSelectionScreen extends StatefulWidget {
@@ -28,7 +28,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     _loadHunts();
   }
 
-  // Diese Methode ist der Schlüssel zur Aktualisierung.
   Future<void> _loadHunts() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -50,14 +49,24 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
           if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
             return BriefingScreen(hunt: hunt);
           } else {
-            return HomeScreen(hunt: hunt);
+            // =======================================================
+            // HIER IST DIE KORREKTUR
+            // =======================================================
+            // Erstelle auch hier den Spielstand und befülle den Rucksack.
+            final huntProgress = HuntProgress(
+              huntName: hunt.name,
+              collectedItemIds: Set<String>.from(hunt.startingItemIds),
+            );
+            return HomeScreen(
+              hunt: hunt,
+              huntProgress: huntProgress, // Übergebe den Spielstand
+            );
+            // =======================================================
           }
         },
       ),
     );
-    
-    // Nach der Rückkehr vom Spiel wird die Liste neu geladen,
-    // um den Fortschritt korrekt anzuzeigen.
+
     _loadHunts();
   }
 
@@ -69,7 +78,8 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Mission fortsetzen?'),
-          content: const Text('Du hast bei dieser Jagd bereits Fortschritt erzielt. Möchtest du weiterspielen oder von vorne beginnen?'),
+          content: const Text(
+              'Du hast bei dieser Jagd bereits Fortschritt erzielt. Möchtest du weiterspielen oder von vorne beginnen?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, 'continue'),
@@ -106,24 +116,26 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       );
     } else if (result == "ERROR") {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fehler: Die Datei konnte nicht importiert werden.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Fehler: Die Datei konnte nicht importiert werden.'),
+            backgroundColor: Colors.red),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Die Jagd "$result" wurde erfolgreich importiert.'), backgroundColor: Colors.green),
+        SnackBar(
+            content: Text('Die Jagd "$result" wurde erfolgreich importiert.'),
+            backgroundColor: Colors.green),
       );
       _loadHunts();
     }
   }
 
   void _navigateToAdmin() async {
-    // Navigiere zum Admin-Login-Screen und WARTE auf eine Rückmeldung.
     final refreshIsNeeded = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
     );
 
-    // Wenn der Admin-Bereich mit `true` verlassen wird, lade die Jagden neu.
     if (refreshIsNeeded == true && mounted) {
       _loadHunts();
     }
@@ -138,7 +150,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
           maxLines: 1,
         ),
         actions: [
-          // Manueller Refresh-Button
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Liste neu laden',
@@ -152,12 +163,8 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
               );
             },
           ),
-          
-          // ===============================================
-          // NEU: Der Button zur Ruhmeshalle
-          // ===============================================
           IconButton(
-            icon: const Icon(Icons.emoji_events_outlined), // Ein Pokal-Icon
+            icon: const Icon(Icons.emoji_events_outlined),
             tooltip: 'Meine Erfolge',
             onPressed: () {
               Navigator.push(
@@ -166,9 +173,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
               );
             },
           ),
-          // ===============================================
-
-          // Admin-Bereich Button
           IconButton(
             icon: const Icon(Icons.admin_panel_settings),
             tooltip: 'Admin-Bereich',

@@ -1,4 +1,7 @@
+// lib/features/briefing/briefing_screen.dart
+
 import 'dart:io';
+import 'package:clue_master/data/models/hunt_progress.dart';
 import 'package:flutter/material.dart';
 import 'package:vibration/vibration.dart';
 import '../../core/services/sound_service.dart';
@@ -17,28 +20,23 @@ class BriefingScreen extends StatefulWidget {
 class _BriefingScreenState extends State<BriefingScreen> {
   final SoundService _soundService = SoundService();
 
-  // FINALE UND KORRIGIERTE LOGIK
   void _acceptMission() {
     Vibration.vibrate(duration: 50);
     _soundService.playSound(SoundEffect.buttonClick);
 
-    String? firstClueCode; // Der Start-Code, kann null sein.
+    final huntProgress = HuntProgress(
+      huntName: widget.hunt.name,
+      collectedItemIds: Set<String>.from(widget.hunt.startingItemIds),
+    );
 
+    String? firstClueCode;
     if (widget.hunt.clues.isNotEmpty) {
-      // Wir erstellen eine Liste der Codes in Großbuchstaben für den Vergleich.
       final upperCaseCodes = widget.hunt.clues.keys.map((k) => k.toUpperCase()).toList();
       final originalCodes = widget.hunt.clues.keys.toList();
-
-      // Priorität 1: Suche nach "STARTX"
       int index = upperCaseCodes.indexOf('STARTX');
-      
-      // Priorität 2: Wenn "STARTX" nicht gefunden wurde, suche nach "START"
       if (index == -1) {
         index = upperCaseCodes.indexOf('START');
       }
-
-      // Wenn einer der beiden Start-Codes gefunden wurde, nimm den originalen Code.
-      // Ansonsten nimm als Fallback den allerersten Code in der Liste.
       if (index != -1) {
         firstClueCode = originalCodes[index];
       } else {
@@ -46,12 +44,12 @@ class _BriefingScreenState extends State<BriefingScreen> {
       }
     }
 
-    // Wir übergeben den gefundenen Code sicher an den HomeScreen.
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
           builder: (_) => HomeScreen(
                 hunt: widget.hunt,
+                huntProgress: huntProgress, // Der korrekte Aufruf
                 codeToAnimate: firstClueCode,
               )),
     );
@@ -69,12 +67,10 @@ class _BriefingScreenState extends State<BriefingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Hintergrundbild, falls vorhanden
           if (widget.hunt.briefingImageUrl != null)
             Image.file(
               File(widget.hunt.briefingImageUrl!.replaceFirst('file://', '')),
               fit: BoxFit.cover,
-              // Fehler-Widget, falls das Bild nicht geladen werden kann
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: Colors.black,
@@ -84,13 +80,9 @@ class _BriefingScreenState extends State<BriefingScreen> {
                 );
               },
             ),
-
-          // Schwarzer Overlay für bessere Lesbarkeit des Textes
           Container(
             color: Colors.black.withOpacity(0.7),
           ),
-
-          // Inhalt (Text und Button)
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(24.0),

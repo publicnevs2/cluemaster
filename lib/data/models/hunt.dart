@@ -1,60 +1,92 @@
 // lib/data/models/hunt.dart
 
-// ============================================================
-// SECTION: Imports
-// ============================================================
 import 'clue.dart';
+import 'item.dart';
 
-// ============================================================
-// SECTION: Hunt Klasse
-// ============================================================
-/// Repräsentiert eine komplette Schnitzeljagd mit einem Namen und einer
-/// Sammlung von dazugehörigen Hinweisen (Clues).
-class Hunt {
-  // ============================================================
-  // SECTION: Eigenschaften
-  // ============================================================
+// Die GeofenceTrigger-Klasse bleibt hier unverändert
+class GeofenceTrigger {
+  final String id;
+  final double latitude;
+  final double longitude;
+  final double radius;
+  final String message;
+  final String? rewardItemId;
+  final String? rewardClueCode;
+  bool hasBeenTriggered;
 
-  /// Der Name der Schnitzeljagd, z.B. "Kindergeburtstag Maja".
-  /// Dient als einzigartiger Identifikator.
-  final String name;
-
-  /// Eine Map, die alle Hinweise (Clues) dieser Jagd enthält.
-  /// Der Key ist der Code des Hinweises (z.B. "START"), der Value das Clue-Objekt.
-  Map<String, Clue> clues;
-
-  // NEUE FELDER FÜR DAS BRIEFING
-  /// Optionaler Einleitungstext für die Mission.
-  final String? briefingText;
-
-  /// Optionaler Pfad zu einem Bild für das Missions-Briefing.
-  final String? briefingImageUrl;
-
-  // NEU: Optionale Zielzeit in Minuten für die Statistik
-  final int? targetTimeInMinutes;
-
-
-  // ============================================================
-  // SECTION: Konstruktor
-  // ============================================================
-  Hunt({
-    required this.name,
-    this.clues = const {}, // Standardmäßig eine leere Map
-    this.briefingText,
-    this.briefingImageUrl,
-    this.targetTimeInMinutes, // NEU
+  GeofenceTrigger({
+    required this.id,
+    required this.latitude,
+    required this.longitude,
+    required this.radius,
+    required this.message,
+    this.rewardItemId,
+    this.rewardClueCode,
+    this.hasBeenTriggered = false,
   });
 
-  // ============================================================
-  // SECTION: JSON-Konvertierung
-  // ============================================================
+  factory GeofenceTrigger.fromJson(Map<String, dynamic> json) {
+    return GeofenceTrigger(
+      id: json['id'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
+      radius: json['radius'],
+      message: json['message'],
+      rewardItemId: json['rewardItemId'],
+      rewardClueCode: json['rewardClueCode'],
+      hasBeenTriggered: json['hasBeenTriggered'] ?? false,
+    );
+  }
 
-  /// Erstellt ein Hunt-Objekt aus JSON-Daten.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'latitude': latitude,
+      'longitude': longitude,
+      'radius': radius,
+      'message': message,
+      if (rewardItemId != null) 'rewardItemId': rewardItemId,
+      if (rewardClueCode != null) 'rewardClueCode': rewardClueCode,
+      'hasBeenTriggered': hasBeenTriggered,
+    };
+  }
+}
+
+class Hunt {
+  final String name;
+  Map<String, Clue> clues;
+  final String? briefingText;
+  final String? briefingImageUrl;
+  final int? targetTimeInMinutes;
+
+  // ============================================================
+  // KORREKTUR: 'final' wurde hier entfernt, um die Map änderbar zu machen
+  // ============================================================
+  Map<String, Item> items;
+
+  final List<String> startingItemIds;
+  final List<GeofenceTrigger> geofenceTriggers;
+
+  Hunt({
+    required this.name,
+    this.clues = const {},
+    this.briefingText,
+    this.briefingImageUrl,
+    this.targetTimeInMinutes,
+    this.items = const {},
+    this.startingItemIds = const [],
+    this.geofenceTriggers = const [],
+  });
+
   factory Hunt.fromJson(Map<String, dynamic> json) {
-    // Wandelt die Clue-Daten aus der JSON-Struktur in eine Map von Clue-Objekten um.
     final cluesData = json['clues'] as Map<String, dynamic>;
     final cluesMap = cluesData.map(
       (code, clueJson) => MapEntry(code, Clue.fromJson(code, clueJson)),
+    );
+
+    final itemsData = json['items'] as Map<String, dynamic>? ?? {};
+    final itemsMap = itemsData.map(
+      (id, itemJson) => MapEntry(id, Item.fromJson(itemJson..['id'] = id)),
     );
 
     return Hunt(
@@ -62,24 +94,38 @@ class Hunt {
       clues: cluesMap,
       briefingText: json['briefingText'] as String?,
       briefingImageUrl: json['briefingImageUrl'] as String?,
-      // NEU: Liest die Zielzeit aus der JSON-Datei
       targetTimeInMinutes: json['targetTimeInMinutes'] as int?,
+      items: itemsMap,
+      startingItemIds: json['startingItemIds'] != null
+          ? List<String>.from(json['startingItemIds'])
+          : [],
+      geofenceTriggers: json['geofenceTriggers'] != null
+          ? (json['geofenceTriggers'] as List)
+              .map((triggerJson) => GeofenceTrigger.fromJson(triggerJson))
+              .toList()
+          : [],
     );
   }
 
-  /// Wandelt das Hunt-Objekt in ein JSON-Format um.
   Map<String, dynamic> toJson() {
-    // Wandelt die Map von Clue-Objekten zurück in ein JSON-Format.
     final cluesJson = clues.map(
       (code, clue) => MapEntry(code, clue.toJson()),
+    );
+    final geofenceTriggersJson =
+        geofenceTriggers.map((trigger) => trigger.toJson()).toList();
+
+    final itemsJson = items.map(
+      (id, item) => MapEntry(id, item.toJson()),
     );
 
     return {
       'name': name,
       'briefingText': briefingText,
       'briefingImageUrl': briefingImageUrl,
-      // NEU: Schreibt die Zielzeit nur in die Datei, wenn sie auch existiert
       if (targetTimeInMinutes != null) 'targetTimeInMinutes': targetTimeInMinutes,
+      'items': itemsJson,
+      'startingItemIds': startingItemIds,
+      'geofenceTriggers': geofenceTriggersJson,
       'clues': cluesJson,
     };
   }

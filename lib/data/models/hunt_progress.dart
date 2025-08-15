@@ -6,9 +6,14 @@ class HuntProgress {
   DateTime? endTime;
   int failedAttempts;
   int hintsUsed;
-
-  // HIER IST DIE FEHLENDE ZEILE:
   double distanceWalkedInMeters;
+
+  // ============================================================
+  // NEU: Das Inventar des Spielers ("Rucksack")
+  // ============================================================
+  /// Eine Menge (Set) der IDs aller gesammelten Items.
+  /// Ein Set wird verwendet, um Duplikate automatisch zu verhindern.
+  Set<String> collectedItemIds;
 
   final String progressId;
 
@@ -18,8 +23,9 @@ class HuntProgress {
     this.endTime,
     this.failedAttempts = 0,
     this.hintsUsed = 0,
-    // UND HIER:
     this.distanceWalkedInMeters = 0.0,
+    // NEU: Initialisiert das Inventar als leeres Set.
+    this.collectedItemIds = const {},
     String? progressId,
   }) : progressId = progressId ?? DateTime.now().toIso8601String();
 
@@ -40,8 +46,11 @@ class HuntProgress {
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
       failedAttempts: json['failedAttempts'] ?? 0,
       hintsUsed: json['hintsUsed'] ?? 0,
-      // UND HIER:
       distanceWalkedInMeters: (json['distanceWalkedInMeters'] as num?)?.toDouble() ?? 0.0,
+      // NEU: Liest die Item-IDs aus der JSON-Datei.
+      collectedItemIds: json['collectedItemIds'] != null
+          ? Set<String>.from(json['collectedItemIds'])
+          : {},
       progressId: json['progressId'],
     );
   }
@@ -53,8 +62,9 @@ class HuntProgress {
       'endTime': endTime?.toIso8601String(),
       'failedAttempts': failedAttempts,
       'hintsUsed': hintsUsed,
-      // UND HIER:
       'distanceWalkedInMeters': distanceWalkedInMeters,
+      // NEU: Schreibt die Item-IDs in die JSON-Datei.
+      'collectedItemIds': collectedItemIds.toList(),
       'progressId': progressId,
     };
   }
