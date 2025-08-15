@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Wichtig für den Zahlen-Filter
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/services/clue_service.dart';
@@ -26,6 +27,8 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
 
   late TextEditingController _nameController;
   late TextEditingController _briefingTextController;
+  // NEUER CONTROLLER für die Zielzeit
+  late TextEditingController _targetTimeController;
   String? _briefingImagePath;
 
   @override
@@ -33,6 +36,10 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.hunt?.name ?? '');
     _briefingTextController = TextEditingController(text: widget.hunt?.briefingText ?? '');
+    // NEU: Initialisiert den Controller mit dem bestehenden Wert (falls vorhanden)
+    _targetTimeController = TextEditingController(
+      text: widget.hunt?.targetTimeInMinutes?.toString() ?? '',
+    );
     _briefingImagePath = widget.hunt?.briefingImageUrl;
   }
 
@@ -40,13 +47,14 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
   void dispose() {
     _nameController.dispose();
     _briefingTextController.dispose();
+    // NEU: Den neuen Controller ebenfalls entsorgen
+    _targetTimeController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
     final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      // Kopiere die Datei in das App-Verzeichnis, um den Zugriff zu behalten
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = pickedFile.path.split('/').last;
       final savedImage = await File(pickedFile.path).copy('${appDir.path}/$fileName');
@@ -60,19 +68,22 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
     if (_formKey.currentState!.validate()) {
       final allHunts = await _clueService.loadHunts();
       
+      // NEU: Lese den Wert aus dem Controller und konvertiere ihn in eine Zahl
+      final targetTimeText = _targetTimeController.text.trim();
+      final int? targetTime = targetTimeText.isNotEmpty ? int.tryParse(targetTimeText) : null;
+
       final updatedHunt = Hunt(
         name: _nameController.text.trim(),
         briefingText: _briefingTextController.text.trim().isEmpty ? null : _briefingTextController.text.trim(),
         briefingImageUrl: _briefingImagePath,
-        // Behalte die existierenden Clues bei, wenn die Jagd bearbeitet wird
+        // NEU: Speichere die Zielzeit im Hunt-Objekt
+        targetTimeInMinutes: targetTime,
         clues: widget.hunt?.clues ?? {},
       );
 
       if (widget.hunt == null) {
-        // Neue Jagd hinzufügen
         allHunts.add(updatedHunt);
       } else {
-        // Bestehende Jagd aktualisieren
         final index = allHunts.indexWhere((h) => h.name == widget.hunt!.name);
         if (index != -1) {
           allHunts[index] = updatedHunt;
@@ -81,7 +92,7 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
 
       await _clueService.saveHunts(allHunts);
       if (mounted) {
-        Navigator.pop(context, true); // "true" signalisiert, dass die Liste neu geladen werden soll
+        Navigator.pop(context, true);
       }
     }
   }
@@ -114,12 +125,31 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
                 if (name.isEmpty) {
                   return 'Der Name darf nicht leer sein.';
                 }
+                // Prüft auf Duplikate, ignoriert dabei den aktuellen Namen der Jagd
                 if (widget.existingHuntNames.any((element) => element.toLowerCase() == name.toLowerCase())) {
                   return 'Eine Jagd mit diesem Namen existiert bereits.';
                 }
                 return null;
               },
             ),
+            
+            // ===============================================
+            // NEUES FELD für die Zielzeit
+            // ===============================================
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _targetTimeController,
+              decoration: const InputDecoration(
+                labelText: 'Optionale Zielzeit (in Minuten)',
+                hintText: 'z.B. 60 für eine Stunde',
+                prefixIcon: Icon(Icons.timer_outlined),
+              ),
+              keyboardType: TextInputType.number,
+              // Erlaubt nur die Eingabe von Zahlen
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            // ===============================================
+
             const SizedBox(height: 24),
             Text('Optionales Missions-Briefing', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:clue_master/features/clue/gps_navigation_screen.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +9,8 @@ import 'package:image/image.dart' as img;
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import 'package:vibration/vibration.dart';
+import 'package:clue_master/features/clue/mission_evaluation_screen.dart';
+
 
 import '../../core/services/clue_service.dart';
 import '../../core/services/sound_service.dart';
@@ -42,11 +43,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   bool _isSolved = false;
   String? _errorMessage;
   bool _contentVisible = false;
+  int _localFailedAttempts = 0;
 
   // =======================================================
-  // KORREKTUR: Ein lokaler Zähler nur für diese eine Station
+  // NEU: Flags, um zu merken, ob ein Hinweis schon gezählt wurde
   // =======================================================
-  int _localFailedAttempts = 0;
+  bool _hint1Triggered = false;
+  bool _hint2Triggered = false;
+
 
   @override
   void initState() {
@@ -94,9 +98,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       _soundService.playSound(SoundEffect.failure);
       setState(() {
-        // KORREKTUR: Wir erhöhen BEIDE Zähler.
-        _localFailedAttempts++; // Den für die Anzeige der Hinweise.
-        widget.huntProgress.failedAttempts++; // Den für die End-Statistik.
+        _localFailedAttempts++;
+        widget.huntProgress.failedAttempts++;
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
       });
 
@@ -128,6 +131,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     Vibration.vibrate(duration: 100);
     _soundService.playSound(SoundEffect.success);
     
+    // Setze den Hinweis auf "gelöst" und speichere diesen Status in der hunts.json
     widget.clue.solved = true;
     await _saveHuntProgressInHuntFile();
 
@@ -137,17 +141,29 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       });
     }
 
+    // Wenn es der FINALE Hinweis ist, wird die Auswertung vorbereitet und angezeigt.
     if (widget.clue.isFinalClue) {
+      // 1. Die Zeitmessung wird final gestoppt.
       widget.huntProgress.endTime = DateTime.now();
-      await _clueService.saveHuntProgress(widget.huntProgress);
+      
+      // HINWEIS: Wir speichern das Logbuch hier NICHT mehr.
+      // Das passiert jetzt implizit, indem wir zum nächsten Screen navigieren
+      // und dort entscheiden, ob wir es speichern wollen (z.B. in einer zukünftigen Ruhmeshalle).
 
+      // 2. Navigiere zum neuen Auswertungs-Bildschirm.
       if (mounted) {
+        // Kurze Verzögerung für den "Wow"-Effekt
         Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
             Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => MissionSuccessScreen(finalClue: widget.clue)));
+              context,
+              MaterialPageRoute(
+                builder: (_) => MissionEvaluationScreen(
+                  hunt: widget.hunt,
+                  progress: widget.huntProgress,
+                ),
+              ),
+            );
           }
         });
       }
@@ -265,6 +281,20 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildTextualRiddleWidget({required bool isMultipleChoice}) {
+    // =======================================================
+    // NEU: Logik zum Zählen der genutzten Hinweise
+    // =======================================================
+    // Prüfe, ob Hinweis 1 angezeigt wird UND noch nicht gezählt wurde.
+    if (_localFailedAttempts >= 2 && widget.clue.hint1 != null && !_hint1Triggered) {
+      widget.huntProgress.hintsUsed++;
+      _hint1Triggered = true; // Setze das Flag, damit nicht nochmal gezählt wird.
+    }
+    // Prüfe, ob Hinweis 2 angezeigt wird UND noch nicht gezählt wurde.
+    if (_localFailedAttempts >= 4 && widget.clue.hint2 != null && !_hint2Triggered) {
+      widget.huntProgress.hintsUsed++;
+      _hint2Triggered = true; // Setze das Flag.
+    }
+
     return Column(
       children: [
         Text(
@@ -282,7 +312,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
             child: Text(_errorMessage!,
                 style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
           ),
-        // KORREKTUR: Wir nutzen jetzt den lokalen Zähler für die Anzeige der Hinweise
         if (_localFailedAttempts >= 2 && widget.clue.hint1 != null)
           _buildHintCard(1, widget.clue.hint1!),
         if (_localFailedAttempts >= 4 && widget.clue.hint2 != null)
