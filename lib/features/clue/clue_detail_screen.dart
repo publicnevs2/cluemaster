@@ -15,13 +15,11 @@ import '../../core/services/clue_service.dart';
 import '../../core/services/sound_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
-// WICHTIGER IMPORT für unser Statistik-Datenmodell
 import '../../data/models/hunt_progress.dart';
 
 class ClueDetailScreen extends StatefulWidget {
   final Hunt hunt;
   final Clue clue;
-  // NIMMT DAS LOGBUCH VOM HOMESCREEN ENTGEGEN
   final HuntProgress huntProgress;
 
   const ClueDetailScreen({
@@ -45,6 +43,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   String? _errorMessage;
   bool _contentVisible = false;
 
+  // =======================================================
+  // KORREKTUR: Ein lokaler Zähler nur für diese eine Station
+  // =======================================================
+  int _localFailedAttempts = 0;
+
   @override
   void initState() {
     super.initState();
@@ -52,7 +55,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
     if (!widget.clue.hasBeenViewed) {
       widget.clue.hasBeenViewed = true;
-      _saveHuntProgressInHuntFile(); // Speichert den "viewed" Status
+      _saveHuntProgressInHuntFile();
     }
 
     Timer(const Duration(milliseconds: 100), () {
@@ -68,7 +71,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     super.dispose();
   }
 
-  /// Speichert den Basis-Fortschritt in der `hunts.json` (z.B. `hasBeenViewed`, `solved`).
   Future<void> _saveHuntProgressInHuntFile() async {
     final allHunts = await _clueService.loadHunts();
     final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
@@ -81,7 +83,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
-  /// Prüft die Antwort des Spielers.
   void _checkAnswer({String? userAnswer}) async {
     final correctAnswer = widget.clue.answer?.trim().toLowerCase();
     final providedAnswer =
@@ -93,8 +94,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       _soundService.playSound(SoundEffect.failure);
       setState(() {
-        // Der Zähler im Logbuch wird erhöht.
-        widget.huntProgress.failedAttempts++;
+        // KORREKTUR: Wir erhöhen BEIDE Zähler.
+        _localFailedAttempts++; // Den für die Anzeige der Hinweise.
+        widget.huntProgress.failedAttempts++; // Den für die End-Statistik.
         _errorMessage = 'Leider falsch. Versuch es nochmal!';
       });
 
@@ -107,7 +109,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
-  /// Startet die GPS-Navigation.
   void _startGpsNavigation() async {
     final result = await Navigator.push<bool>(
       context,
@@ -121,7 +122,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
-  /// Löst das Rätsel, stoppt die Zeit und speichert den Erfolg.
   Future<void> _solveRiddle() async {
     if (!mounted || _isSolved) return;
 
@@ -137,15 +137,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       });
     }
 
-    // WENN ES DER FINALE HINWEIS IST:
     if (widget.clue.isFinalClue) {
-      // 1. Zeitmessung beenden
       widget.huntProgress.endTime = DateTime.now();
-      
-      // 2. Den gesamten Erfolg in der Ruhmeshalle (`progress_history.json`) speichern
       await _clueService.saveHuntProgress(widget.huntProgress);
 
-      // 3. Zum finalen Erfolgs-Screen navigieren
       if (mounted) {
         Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
@@ -270,9 +265,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildTextualRiddleWidget({required bool isMultipleChoice}) {
-    // Der Zähler für Fehlversuche kommt jetzt direkt aus dem Logbuch
-    final wrongAttempts = widget.huntProgress.failedAttempts;
-
     return Column(
       children: [
         Text(
@@ -290,9 +282,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
             child: Text(_errorMessage!,
                 style: const TextStyle(color: Colors.redAccent, fontSize: 16)),
           ),
-        if (wrongAttempts >= 2 && widget.clue.hint1 != null)
+        // KORREKTUR: Wir nutzen jetzt den lokalen Zähler für die Anzeige der Hinweise
+        if (_localFailedAttempts >= 2 && widget.clue.hint1 != null)
           _buildHintCard(1, widget.clue.hint1!),
-        if (wrongAttempts >= 4 && widget.clue.hint2 != null)
+        if (_localFailedAttempts >= 4 && widget.clue.hint2 != null)
           _buildHintCard(2, widget.clue.hint2!),
       ],
     );

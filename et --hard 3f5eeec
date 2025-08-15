@@ -1,0 +1,46 @@
+[33mecfda44[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m zwischen
+[33m3f5eeec[m[33m ([m[1;31morigin/main[m[33m)[m Stable Statistik
+[33mc133022[m Statistik
+[33m1e6d7df[m Kompass gefixed und Aktualisierung
+[33m369d7df[m[33m ([m[1;33mtag: [m[1;33mstable[m[33m)[m Automatisierung Code eingeben mit fixes done, stable
+[33m9c0d8b8[m Automatisierung Code eingeben bauen wir aus
+[33md9c3a0d[m Automatisierung Code eingabe
+[33m5dc790b[m Es geht weiter
+[33mbe77051[m Weiterentwicklung v2.21 stable testmanipulation
+[33m4e2cc6d[m Weiterentwicklung v2.2 stable bildmanipulation
+[33m03c3703[m Weiterentwicklung v2.211
+[33m8c672af[m Weiterentwicklung v2.1: Kleine Fixes
+[33mb4bc8c2[m[33m ([m[1;31morigin/main-v2[m[33m)[m v2: GPS stable running
+[33m6f38b61[m Hinweis: GPS funktioniert, aber Multiple-Rätsel gehen verloren. Version unstable.
+[33m019b847[m Weiterentwicklung GPS-Funktionalität
+[33m852d34c[m Verprobung GPS-Funktionalität (Beta)
+[33mf30e86a[m Backup-Commit vor Änderungen
+[33mda8eef8[m Popup bei Erfolg entfernt, Stable-Version
+[33m9152b8d[m Icon und App-Name geändert
+[33m479f87f[m Backup-Commit vor weiteren Änderungen v1.42
+[33mb99cdfa[m feat: Improve game flow and progress tracking (v1.5)
+[33m515eb3a[m Finalscreen ergänzt v.1.42
+[33mf814388[m Missiontext ergänzt. v1.41
+[33m1b06ee8[m Alphanumerische Eingabe für Lösungscode möglich, Tastatur zeigt jetzt Buchstaben und Zahlen an, Version auf 1.4 gesetzt
+[33m2b57e90[m[33m ([m[1;31morigin/master-neu[m[33m, [m[1;32mv1.3-sicherung[m[33m)[m v1.2 Redesign
+[33m6da9d3a[m v1.2 Redesign
+[33m2c8f8bb[m v1.1 Redesign
+[33m4b345ac[m v1.1 Redesign
+[33m884729c[m v1 Augustenhofready mit Im- und Export
+[33m2296ea5[m v11
+[33ma9bfd74[m Release1.1 Fixing and UX and sounds
+[33m3d5528a[m Import und Export hinzugefügt
+[33ma21efdd[m Multimodus hinweise fix halb
+[33m8e6179c[m Multimodus fertig
+[33mdd58587[m Multimodus fast fertig
+[33m3bf7f6b[m Quizfunktion final2
+[33m7505df2[m Quizfunktion final
+[33m71230f1[m fixquiz2 geht so
+[33me4299c5[m QuizzFix1
+[33m7efeabe[m Admin Passwort ändernfunktion
+[33m526e26f[m Feature: Interaktive Rätsel zu Hinweisen hinzugefügt
+[33mad62e94[m Feature: Video-Hinweise hinzugefügt und Player verbessert
+[33m41d3be8[m Fix: QR-Scanner schließt Detailansicht nicht mehr vorschnell
+[33m817d0e7[m Fix: Build-Fehler behoben und Audio-Funktion stabilisiert
+[33maf052f6[m Kamera geht
+[33m2ef3eb2[m Initialer Projektstand: alle bisher implementierten Screens & Services
