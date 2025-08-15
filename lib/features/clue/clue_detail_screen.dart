@@ -197,12 +197,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         widget.hunt.clues.values.where((c) => c.hasBeenViewed).length;
 
     return Scaffold(
-      appBar: GameHeader( // Ersetzt
-        huntTitle: widget.hunt.name,
+      appBar: GameHeader(
+        hunt: widget.hunt,
+        huntProgress: widget.huntProgress,
         elapsedTime: _elapsedDuration,
-        currentClueIndex: viewedClues,
-        totalClues: totalClues,
-      ),
+  ),
+      
+      
       body: SafeArea(
         child: Column(
           children: [

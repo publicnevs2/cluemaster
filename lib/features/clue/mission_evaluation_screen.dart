@@ -6,7 +6,7 @@ import 'dart:math';
 
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
-import '../../core/services/clue_service.dart'; // Importieren für das Speichern
+import '../../core/services/clue_service.dart';
 
 class MissionEvaluationScreen extends StatefulWidget {
   final Hunt hunt;
@@ -41,59 +41,69 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
     super.dispose();
   }
 
-  /// Berechnet den Score und speichert den Fortschritt in der Ruhmeshalle.
   void _calculateAndSaveScore() {
     double score = 100.0;
     List<String> deductions = [];
 
-    // 1. Abzug für genutzte Hinweise
     final hintDeduction = widget.progress.hintsUsed * 5.0;
     if (hintDeduction > 0) {
       score -= hintDeduction;
       deductions.add('Hinweise: -${hintDeduction.toInt()}%');
     }
 
-    // 2. Abzug für Zeitüberschreitung
     final targetTime = widget.hunt.targetTimeInMinutes;
     if (targetTime != null && targetTime > 0) {
       final actualDurationInMinutes = widget.progress.duration.inMinutes;
-      
+
       if (actualDurationInMinutes > targetTime) {
         final overtimePercentage = (actualDurationInMinutes / targetTime) - 1.0;
-        
-        if (overtimePercentage >= 0.20) { // 20% oder mehr drüber
+
+        if (overtimePercentage >= 0.20) {
           score -= 20;
           deductions.add('Zeit: -20%');
-        } else if (overtimePercentage >= 0.10) { // 10% oder mehr drüber
+        } else if (overtimePercentage >= 0.10) {
           score -= 10;
           deductions.add('Zeit: -10%');
         }
       }
     }
 
-    _score = max(0, score); // Score kann nicht negativ werden
-    
+    _score = max(0, score);
+
     if (deductions.isEmpty) {
       _scoreExplanation = 'Perfekte Runde!';
     } else {
       _scoreExplanation = 'Basis: 100% | ${deductions.join(' | ')}';
     }
 
-    // Starte das Konfetti, wenn der Score gut ist
     if (_score >= 80) {
       _confettiController.play();
     }
-    
-    // Speichere den abgeschlossenen Lauf in der Historie
+
     _clueService.saveHuntProgress(widget.progress);
   }
-  
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = twoDigits(duration.inHours);
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return "$hours:$minutes:$seconds";
+  }
+  
+  // =======================================================
+  // NEU: Methode zur Formatierung der Distanz
+  // =======================================================
+  String _formatDistance(double meters) {
+    if (meters < 10) {
+      return "Keine Distanz gemessen";
+    }
+    if (meters < 1000) {
+      return '${meters.toInt()} m';
+    } else {
+      final kilometers = meters / 1000;
+      return '${kilometers.toStringAsFixed(1)} km';
+    }
   }
 
   @override
@@ -112,13 +122,14 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                       'MISSION ERFOLGREICH!',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: Colors.amber,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: Colors.amber,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      widget.hunt.clues.values.firstWhere((c) => c.isFinalClue).rewardText ?? 'Du hast es geschafft!',
+                      widget.hunt.clues.values.firstWhere((c) => c.isFinalClue).rewardText ??
+                          'Du hast es geschafft!',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
@@ -142,6 +153,16 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                       ),
                     ],
                     const SizedBox(height: 12),
+                    // =======================================================
+                    // NEU: Anzeige der Distanz
+                    // =======================================================
+                    _buildStatRow(
+                      icon: Icons.directions_walk,
+                      label: 'Zurückgelegte Distanz',
+                      value: _formatDistance(widget.progress.distanceWalkedInMeters),
+                    ),
+                    // =======================================================
+                    const SizedBox(height: 12),
                     _buildStatRow(
                       icon: Icons.error_outline,
                       label: 'Fehlversuche',
@@ -162,9 +183,9 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                     Text(
                       '${_score.toInt()}%',
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: Colors.greenAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: Colors.greenAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -177,7 +198,6 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                       ),
                       onPressed: () {
-                        // Geht zur HuntSelectionScreen zurück
                         Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                       child: const Text('Neue Jagd auswählen', style: TextStyle(fontSize: 16)),
@@ -187,7 +207,6 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
               ),
             ),
           ),
-          // Das Konfetti-Widget
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
