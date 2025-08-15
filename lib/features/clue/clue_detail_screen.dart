@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:clue_master/features/clue/gps_navigation_screen.dart';
+import 'package:clue_master/features/shared/game_header.dart'; // Importiert
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
@@ -10,7 +11,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import 'package:vibration/vibration.dart';
 import 'package:clue_master/features/clue/mission_evaluation_screen.dart';
-
 
 import '../../core/services/clue_service.dart';
 import '../../core/services/sound_service.dart';
@@ -45,11 +45,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   bool _contentVisible = false;
   int _localFailedAttempts = 0;
 
-  // =======================================================
-  // NEU: Flags, um zu merken, ob ein Hinweis schon gezählt wurde
-  // =======================================================
   bool _hint1Triggered = false;
   bool _hint2Triggered = false;
+  
+  // NEU: Timer für dieElapsedTime Anzeige im Header
+  Timer? _stopwatchTimer;
+  Duration _elapsedDuration = Duration.zero;
 
 
   @override
@@ -61,6 +62,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       widget.clue.hasBeenViewed = true;
       _saveHuntProgressInHuntFile();
     }
+    
+    // Starte den Timer für die Anzeige
+    _startStopwatch();
 
     Timer(const Duration(milliseconds: 100), () {
       if (mounted) setState(() => _contentVisible = true);
@@ -72,7 +76,25 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     _answerController.dispose();
     _scrollController.dispose();
     _soundService.dispose();
+    _stopwatchTimer?.cancel(); // Timer stoppen
     super.dispose();
+  }
+  
+  // NEU: Stopwatch Logik (kopiert aus HomeScreen)
+  void _startStopwatch() {
+    if (widget.huntProgress.startTime == null || _stopwatchTimer?.isActive == true) return;
+
+    // Set initial duration
+    _elapsedDuration = widget.huntProgress.duration;
+
+    _stopwatchTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final duration = widget.huntProgress.duration;
+      if (mounted) {
+        setState(() {
+          _elapsedDuration = duration;
+        });
+      }
+    });
   }
 
   Future<void> _saveHuntProgressInHuntFile() async {
@@ -130,8 +152,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
     Vibration.vibrate(duration: 100);
     _soundService.playSound(SoundEffect.success);
-    
-    // Setze den Hinweis auf "gelöst" und speichere diesen Status in der hunts.json
+
     widget.clue.solved = true;
     await _saveHuntProgressInHuntFile();
 
@@ -141,18 +162,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       });
     }
 
-    // Wenn es der FINALE Hinweis ist, wird die Auswertung vorbereitet und angezeigt.
     if (widget.clue.isFinalClue) {
-      // 1. Die Zeitmessung wird final gestoppt.
       widget.huntProgress.endTime = DateTime.now();
-      
-      // HINWEIS: Wir speichern das Logbuch hier NICHT mehr.
-      // Das passiert jetzt implizit, indem wir zum nächsten Screen navigieren
-      // und dort entscheiden, ob wir es speichern wollen (z.B. in einer zukünftigen Ruhmeshalle).
+      _stopwatchTimer?.cancel(); // Stoppe den Timer hier final
 
-      // 2. Navigiere zum neuen Auswertungs-Bildschirm.
       if (mounted) {
-        // Kurze Verzögerung für den "Wow"-Effekt
         Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
             Navigator.pushReplacement(
@@ -172,11 +186,23 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasNextCode = _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
-    final String buttonText = hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
+    final bool hasNextCode =
+        _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
+    final String buttonText =
+        hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
+        
+    // Berechnung für den Header
+    final totalClues = widget.hunt.clues.length;
+    final viewedClues =
+        widget.hunt.clues.values.where((c) => c.hasBeenViewed).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Eingehende Nachricht')),
+      appBar: GameHeader( // Ersetzt
+        huntTitle: widget.hunt.name,
+        elapsedTime: _elapsedDuration,
+        currentClueIndex: viewedClues,
+        totalClues: totalClues,
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -192,7 +218,8 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                       _buildMediaWidget(clue: widget.clue),
                       const SizedBox(height: 16),
                       if (widget.clue.isRiddle) ...[
-                        const Divider(height: 24, thickness: 1, color: Colors.white24),
+                        const Divider(
+                            height: 24, thickness: 1, color: Colors.white24),
                         if (_isSolved)
                           _buildRewardWidget()
                         else
@@ -213,7 +240,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
                   onPressed: () {
                     Vibration.vibrate(duration: 50);
                     _soundService.playSound(SoundEffect.buttonClick);
-                    
+
                     Navigator.of(context).pop(widget.clue.nextClueCode);
                   },
                   child: Text(buttonText),
@@ -233,8 +260,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-              Icon(Icons.check_circle_outline, color: Colors.greenAccent.withOpacity(0.8), size: 40),
-              const SizedBox(height: 12),
+            Icon(Icons.check_circle_outline,
+                color: Colors.greenAccent.withOpacity(0.8), size: 40),
+            const SizedBox(height: 12),
             Text(
               widget.clue.rewardText ?? 'Gut gemacht!',
               style: const TextStyle(fontSize: 18),
@@ -245,7 +273,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       ),
     );
   }
-  
+
   Widget _buildRiddleWidget() {
     switch (widget.clue.riddleType) {
       case RiddleType.GPS:
@@ -257,13 +285,14 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         return _buildTextualRiddleWidget(isMultipleChoice: false);
     }
   }
-  
+
   Widget _buildGpsRiddlePrompt() {
     return Column(
       children: [
         Text(
           widget.clue.question!,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -281,25 +310,25 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildTextualRiddleWidget({required bool isMultipleChoice}) {
-    // =======================================================
-    // NEU: Logik zum Zählen der genutzten Hinweise
-    // =======================================================
-    // Prüfe, ob Hinweis 1 angezeigt wird UND noch nicht gezählt wurde.
-    if (_localFailedAttempts >= 2 && widget.clue.hint1 != null && !_hint1Triggered) {
+    if (_localFailedAttempts >= 2 &&
+        widget.clue.hint1 != null &&
+        !_hint1Triggered) {
       widget.huntProgress.hintsUsed++;
-      _hint1Triggered = true; // Setze das Flag, damit nicht nochmal gezählt wird.
+      _hint1Triggered = true;
     }
-    // Prüfe, ob Hinweis 2 angezeigt wird UND noch nicht gezählt wurde.
-    if (_localFailedAttempts >= 4 && widget.clue.hint2 != null && !_hint2Triggered) {
+    if (_localFailedAttempts >= 4 &&
+        widget.clue.hint2 != null &&
+        !_hint2Triggered) {
       widget.huntProgress.hintsUsed++;
-      _hint2Triggered = true; // Setze das Flag.
+      _hint2Triggered = true;
     }
 
     return Column(
       children: [
         Text(
           widget.clue.question!,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
@@ -409,9 +438,9 @@ Widget _buildMediaWidget({required Clue clue}) {
           mediaWidget = ColorFiltered(
             colorFilter: const ColorFilter.matrix([
               -1, 0,  0,  0, 255,
-              0, -1,  0,  0, 255,
-              0,  0, -1,  0, 255,
-              0,  0,  0,  1, 0,
+               0,-1,  0,  0, 255,
+               0, 0, -1,  0, 255,
+               0, 0,  0,  1, 0,
             ]),
             child: image,
           );
