@@ -6,14 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
-
-// NEUE IMPORTS
 import 'package:intl/intl.dart';
-import '../../data/models/hunt_progress.dart';
 
 import '../../core/services/clue_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
+import '../../data/models/hunt_progress.dart';
 import '../clue/clue_detail_screen.dart';
 import '../clue/clue_list_screen.dart';
 import '../admin/admin_login_screen.dart';
@@ -55,9 +53,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   bool _showError = false;
   bool _isBusy = false;
 
-  // =======================================================
-  // NEUE STATE-VARIABLEN FÜR DIE STATISTIK
-  // =======================================================
   late HuntProgress _huntProgress;
   Timer? _stopwatchTimer;
   String _elapsedTime = "00:00:00";
@@ -67,8 +62,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     super.initState();
     _currentHunt = widget.hunt;
     _initializeClues();
-
-    // KORREKTUR: Initialisiert das Logbuch korrekt ohne Startzeit.
+    
     _huntProgress = HuntProgress(huntName: widget.hunt.name);
 
     if (widget.codeToAnimate != null && widget.codeToAnimate!.isNotEmpty) {
@@ -94,7 +88,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (!_isBusy) {
       _refreshHuntData();
     }
-    // Starte die Stoppuhr wieder, wenn sie schon lief.
     _startStopwatch();
   }
 
@@ -104,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _codeController.dispose();
     _codeFocusNode.dispose();
     _soundService.dispose();
-    // Stoppuhr sicher anhalten, um Speicherlecks zu vermeiden.
     _stopwatchTimer?.cancel();
     super.dispose();
   }
@@ -125,16 +117,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _initializeClues();
     });
   }
-
-  // =======================================================
-  // NEUE METHODEN FÜR DIE STOPPUHR
-  // =======================================================
   
   void _startStopwatch() {
     if (_huntProgress.startTime == null || _stopwatchTimer?.isActive == true) return;
 
     _stopwatchTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      // Nutze die duration-Hilfsmethode aus dem HuntProgress-Modell
       final duration = _huntProgress.duration;
       String twoDigits(int n) => n.toString().padLeft(2, '0');
       final hours = twoDigits(duration.inHours);
@@ -204,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final norm = input.toLowerCase();
 
     if (_normalizedMap.containsKey(norm)) {
-      // STARTPUNKT DER STATISTIK
       if (_huntProgress.startTime == null) {
         setState(() {
           _huntProgress.startTime = DateTime.now();
@@ -222,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
       _stopStopwatch();
 
-      final nextCodeToAnimate = await Navigator.push<String>(
+      final nextCodeFromClue = await Navigator.push<String>(
         context,
         MaterialPageRoute(builder: (_) => ClueDetailScreen(
           hunt: _currentHunt, 
@@ -231,23 +217,40 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         )),
       );
       
+      // Lade die Jagd neu, um den `solved`-Status zu aktualisieren
+      await _refreshHuntData();
+      
       setState(() {
-        clue.hasBeenViewed = true;
-        if (clue.solved) {
-            _currentHunt.clues[originalCode]!.solved = true;
-        }
         _showError = false;
         _codeController.clear();
       });
 
-      if (nextCodeToAnimate != null && nextCodeToAnimate.isNotEmpty) {
-        _startCodeAnimation(nextCodeToAnimate);
+      // ===============================================
+      // NEUE LOGIK: Prüfe die Checkbox
+      // ===============================================
+      final nextCodeToProcess = nextCodeFromClue ?? clue.nextClueCode;
+      if (nextCodeToProcess != null && nextCodeToProcess.isNotEmpty) {
+        // Finde den vorherigen Hinweis, um die Checkbox zu prüfen
+        final previousClue = _currentHunt.clues[originalCode]!;
+        if (previousClue.autoTriggerNextClue) {
+          // Starte die Animation, _isBusy bleibt true
+          _startCodeAnimation(nextCodeToProcess);
+        } else {
+          // Gib die Kontrolle zurück und zeige eine Nachricht
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Nächster Code freigeschaltet: $nextCodeToProcess')),
+          );
+          _codeFocusNode.requestFocus();
+          setState(() { _isBusy = false; });
+        }
       } else {
+        // Kein nächster Code, gib die Kontrolle zurück
         _codeFocusNode.requestFocus();
         setState(() { _isBusy = false; });
       }
+      // ===============================================
+
     } else {
-      // ZÄHLEN DER FEHLVERSUCHE
       setState(() {
         _huntProgress.failedAttempts++;
       });
@@ -273,7 +276,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _processCode(code);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final totalClues = _currentHunt.clues.length;

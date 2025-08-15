@@ -1,9 +1,12 @@
+// lib/features/clue/mission_evaluation_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
+import '../../core/services/clue_service.dart'; // Importieren für das Speichern
 
 class MissionEvaluationScreen extends StatefulWidget {
   final Hunt hunt;
@@ -21,6 +24,7 @@ class MissionEvaluationScreen extends StatefulWidget {
 
 class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
   late ConfettiController _confettiController;
+  final ClueService _clueService = ClueService();
   late double _score;
   late String _scoreExplanation;
 
@@ -28,11 +32,7 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 10));
-    _calculateScore();
-    // Starte das Konfetti, wenn der Score gut ist
-    if (_score >= 80) {
-      _confettiController.play();
-    }
+    _calculateAndSaveScore();
   }
 
   @override
@@ -41,7 +41,8 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
     super.dispose();
   }
 
-  void _calculateScore() {
+  /// Berechnet den Score und speichert den Fortschritt in der Ruhmeshalle.
+  void _calculateAndSaveScore() {
     double score = 100.0;
     List<String> deductions = [];
 
@@ -52,26 +53,39 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
       deductions.add('Hinweise: -${hintDeduction.toInt()}%');
     }
 
-    // 2. Abzug für Zeitüberschreitung (nur wenn eine Zielzeit gesetzt ist)
+    // 2. Abzug für Zeitüberschreitung
     final targetTime = widget.hunt.targetTimeInMinutes;
     if (targetTime != null && targetTime > 0) {
       final actualDurationInMinutes = widget.progress.duration.inMinutes;
-      final targetDuration = Duration(minutes: targetTime);
-
-      if (actualDurationInMinutes > targetDuration.inMinutes) {
-        final overtimePercentage = (actualDurationInMinutes / targetDuration.inMinutes) - 1;
-        if (overtimePercentage >= 0.2) {
+      
+      if (actualDurationInMinutes > targetTime) {
+        final overtimePercentage = (actualDurationInMinutes / targetTime) - 1.0;
+        
+        if (overtimePercentage >= 0.20) { // 20% oder mehr drüber
           score -= 20;
           deductions.add('Zeit: -20%');
-        } else if (overtimePercentage >= 0.1) {
+        } else if (overtimePercentage >= 0.10) { // 10% oder mehr drüber
           score -= 10;
           deductions.add('Zeit: -10%');
         }
       }
     }
 
-    _score = max(0, score); // Der Score kann nicht unter 0 fallen
-    _scoreExplanation = 'Basis: 100% | ${deductions.join(' | ')}';
+    _score = max(0, score); // Score kann nicht negativ werden
+    
+    if (deductions.isEmpty) {
+      _scoreExplanation = 'Perfekte Runde!';
+    } else {
+      _scoreExplanation = 'Basis: 100% | ${deductions.join(' | ')}';
+    }
+
+    // Starte das Konfetti, wenn der Score gut ist
+    if (_score >= 80) {
+      _confettiController.play();
+    }
+    
+    // Speichere den abgeschlossenen Lauf in der Historie
+    _clueService.saveHuntProgress(widget.progress);
   }
   
   String _formatDuration(Duration duration) {
@@ -163,11 +177,10 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                       ),
                       onPressed: () {
-                        // Gehe 2x zurück: Einmal vom EvaluationScreen und einmal vom HomeScreen
-                        int count = 0;
-                        Navigator.of(context).popUntil((_) => count++ >= 2);
+                        // Geht zur HuntSelectionScreen zurück
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                       },
-                      child: const Text('Zurück zum Hauptmenü', style: TextStyle(fontSize: 16)),
+                      child: const Text('Neue Jagd auswählen', style: TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),

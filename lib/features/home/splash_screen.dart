@@ -17,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _soundService.playSound(SoundEffect.appStart);
+    //_soundService.playSound(SoundEffect.appStart);
   }
 
   @override

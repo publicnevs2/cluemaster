@@ -1,3 +1,4 @@
+// lib/data/models/clue.dart
 
 // ============================================================
 // SECTION: Enums für Rätsel-Typen und Effekte
@@ -45,7 +46,7 @@ class Clue {
   final String type;
   final String content;
   final String? description;
-  final String? backgroundImagePath; // NEU: Pfad zum Hintergrundbild
+  final String? backgroundImagePath;
   final ImageEffect imageEffect;
   final TextEffect textEffect;
 
@@ -70,6 +71,8 @@ class Clue {
   final String? rewardText;      // Text, der nach dem Lösen angezeigt wird.
   final String? nextClueCode;    // Separater Code für den nächsten Hinweis.
   final bool isFinalClue;
+  // NEUES FELD für die Admin-Checkbox
+  final bool autoTriggerNextClue;
 
   // ============================================================
   // SECTION: Konstruktor
@@ -81,7 +84,7 @@ class Clue {
     required this.type,
     required this.content,
     this.description,
-    this.backgroundImagePath, // NEU
+    this.backgroundImagePath,
     this.imageEffect = ImageEffect.NONE,
     this.textEffect = TextEffect.NONE,
     this.question,
@@ -96,6 +99,8 @@ class Clue {
     this.rewardText,
     this.nextClueCode,
     this.isFinalClue = false,
+    // NEU: Standardmäßig auf `true` gesetzt, um altes Verhalten beizubehalten
+    this.autoTriggerNextClue = true,
   });
 
   // ============================================================
@@ -117,7 +122,7 @@ class Clue {
       type: json['type'],
       content: json['content'],
       description: json['description'],
-      backgroundImagePath: json['backgroundImagePath'], // NEU: Aus JSON lesen
+      backgroundImagePath: json['backgroundImagePath'],
       imageEffect: ImageEffect.values.firstWhere(
             (e) => e.toString() == json['imageEffect'],
             orElse: () => ImageEffect.NONE
@@ -146,6 +151,8 @@ class Clue {
       rewardText: json['rewardText'],
       nextClueCode: json['nextClueCode'],
       isFinalClue: json['isFinalClue'] ?? false,
+      // NEU: Liest den Wert aus der JSON-Datei, Standard ist `true`
+      autoTriggerNextClue: json['autoTriggerNextClue'] ?? true,
     );
   }
 
@@ -156,7 +163,7 @@ class Clue {
       'type': type,
       'content': content,
       if (description != null) 'description': description,
-      if (backgroundImagePath != null) 'backgroundImagePath': backgroundImagePath, // NEU: In JSON schreiben
+      if (backgroundImagePath != null) 'backgroundImagePath': backgroundImagePath,
       'imageEffect': imageEffect.toString(),
       'textEffect': textEffect.toString(),
       if (question != null) 'question': question,
@@ -171,6 +178,8 @@ class Clue {
       if (rewardText != null) 'rewardText': rewardText,
       if (nextClueCode != null) 'nextClueCode': nextClueCode,
       'isFinalClue': isFinalClue,
+      // NEU: Schreibt den Wert in die JSON-Datei
+      'autoTriggerNextClue': autoTriggerNextClue,
     };
   }
 }
