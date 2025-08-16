@@ -1,3 +1,5 @@
+// lib/features/admin/admin_hunt_list_screen.dart
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
@@ -5,6 +7,7 @@ import '../../data/models/hunt.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_change_password_screen.dart';
 import 'admin_hunt_settings_screen.dart';
+import 'admin_global_item_list_screen.dart'; // NEUER IMPORT
 
 class AdminHuntListScreen extends StatefulWidget {
   const AdminHuntListScreen({super.key});
@@ -136,27 +139,27 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // =======================================================
-    // KORRIGIERTER TEIL: `WillPopScope` wurde hinzugefügt
-    // =======================================================
     return WillPopScope(
       onWillPop: () async {
-        // Sende das `true`-Signal an den HuntSelectionScreen zurück.
         Navigator.of(context).pop(true);
-        // Verhindere das Standard-Zurück-Verhalten, da wir es manuell auslösen.
         return false;
       },
       child: Scaffold(
         appBar: AppBar(
           title: const AutoSizeText(
-            'Meine Schnitzeljagden',
+            'Admin-Zentrale',
             maxLines: 1,
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.file_download),
-              tooltip: 'Jagd importieren',
-              onPressed: _importHunt,
+              icon: const Icon(Icons.construction_outlined),
+              tooltip: 'Globale Werkzeugkiste',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminGlobalItemListScreen()),
+                );
+              },
             ),
             IconButton(
               icon: const Icon(Icons.lock_outline),
@@ -171,47 +174,80 @@ class _AdminHuntListScreenState extends State<AdminHuntListScreen> {
             ),
           ],
         ),
-        body: _hunts.isEmpty
-            ? const Center(
-                child: Text(
-                    'Keine Schnitzeljagden gefunden. Erstelle oder importiere eine neue!'),
-              )
-            : ListView.builder(
-                itemCount: _hunts.length,
-                itemBuilder: (context, index) {
-                  final hunt = _hunts[index];
-                  return ListTile(
-                    title: Text(hunt.name),
-                    subtitle: Text('${hunt.clues.length} Stationen'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.share, color: Colors.blue),
-                          tooltip: 'Jagd teilen/exportieren',
-                          onPressed: () => _exportHuntWithFeedback(hunt),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.settings),
-                          tooltip: 'Jagd-Einstellungen (Name, Briefing)',
-                          onPressed: () => _navigateToHuntSettings(hunt),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          tooltip: 'Stationen bearbeiten',
-                          onPressed: () => _navigateToDashboard(hunt),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          tooltip: 'Jagd löschen',
-                          onPressed: () => _deleteHunt(hunt),
-                        ),
-                      ],
-                    ),
-                    onTap: () => _navigateToDashboard(hunt),
-                  );
-                },
+        body: Column(
+          children: [
+            // ============================================================
+            // NEU: Karte für Import/Export
+            // ============================================================
+            Card(
+              margin: const EdgeInsets.all(8.0),
+              child: ListTile(
+                leading: const Icon(Icons.import_export, color: Colors.cyan),
+                title: const Text('Schnitzeljagd importieren'),
+                subtitle: const Text('Eine .cluemaster-Datei laden'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: _importHunt,
               ),
+            ),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+             Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.explore_outlined),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Meine Schnitzeljagden',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _hunts.isEmpty
+                  ? const Center(
+                      child: Text(
+                          'Keine Schnitzeljagden gefunden. Erstelle eine neue!'),
+                    )
+                  : ListView.builder(
+                      itemCount: _hunts.length,
+                      itemBuilder: (context, index) {
+                        final hunt = _hunts[index];
+                        return ListTile(
+                          title: Text(hunt.name),
+                          subtitle: Text('${hunt.clues.length} Stationen'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.share, color: Colors.blue),
+                                tooltip: 'Jagd teilen/exportieren',
+                                onPressed: () => _exportHuntWithFeedback(hunt),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.settings),
+                                tooltip: 'Jagd-Einstellungen (Name, Briefing)',
+                                onPressed: () => _navigateToHuntSettings(hunt),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                tooltip: 'Stationen bearbeiten',
+                                onPressed: () => _navigateToDashboard(hunt),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                tooltip: 'Jagd löschen',
+                                onPressed: () => _deleteHunt(hunt),
+                              ),
+                            ],
+                          ),
+                          onTap: () => _navigateToDashboard(hunt),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _navigateToHuntSettings(null),
           label: const Text('Neue Jagd'),

@@ -12,17 +12,21 @@ import 'package:file_picker/file_picker.dart';
 import '../../data/models/hunt_progress.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/clue.dart';
+import '../../data/models/item.dart'; // WICHTIG: Item-Modell importieren
 
 class ClueService {
   static const String _huntsFileName = 'hunts.json';
   static const String _settingsFileName = 'admin_settings.json';
   static const String _progressHistoryFileName = 'progress_history.json';
-  
-  // ============================================================
-  // NEU: Dateiname für laufende Spielstände
-  // ============================================================
   static const String _ongoingProgressFileName = 'ongoing_progress.json';
 
+  // ============================================================
+  // NEU: Dateiname für die globale Item-Bibliothek
+  // ============================================================
+  static const String _globalItemsFileName = 'global_items.json';
+
+
+  // --- Methoden für Schnitzeljagden ---
 
   Future<List<Hunt>> loadHunts() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -58,8 +62,8 @@ class ClueService {
       allHunts[huntIndex].clues.forEach((code, clue) {
         clue.solved = false;
         clue.hasBeenViewed = false;
+        clue.viewedTimestamp = null;
       });
-      // Setze auch die Geofence-Trigger zurück
       for (var trigger in allHunts[huntIndex].geofenceTriggers) {
         trigger.hasBeenTriggered = false;
       }
@@ -68,11 +72,8 @@ class ClueService {
     }
   }
   
-  // ============================================================
-  // NEUE METHODEN: Speichern & Laden von laufenden Spielständen
-  // ============================================================
+  // --- Methoden für Spielstände ---
 
-  /// Lädt eine Map aller laufenden Spielstände. Der Key ist der Hunt-Name.
   Future<Map<String, HuntProgress>> loadOngoingProgress() async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_ongoingProgressFileName');
@@ -91,7 +92,6 @@ class ClueService {
     }
   }
 
-  /// Speichert eine Map aller laufenden Spielstände.
   Future<void> saveOngoingProgress(Map<String, HuntProgress> allProgress) async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_ongoingProgressFileName');
@@ -102,8 +102,7 @@ class ClueService {
     debugPrint("💾 Laufende Spielstände gespeichert.");
   }
 
-
-  // --- Methoden für die Statistik-Historie (abgeschlossene Spiele) ---
+  // --- Methoden für Statistik-Historie ---
 
   Future<void> saveHuntProgressToHistory(HuntProgress progress) async {
     final allProgress = await loadHuntProgressHistory();
@@ -120,13 +119,9 @@ class ClueService {
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_progressHistoryFileName');
     try {
-      if (!await file.exists()) {
-        return [];
-      }
+      if (!await file.exists()) return [];
       final jsonStr = await file.readAsString();
-      if (jsonStr.isEmpty) {
-        return [];
-      }
+      if (jsonStr.isEmpty) return [];
       final List<dynamic> decodedList = jsonDecode(jsonStr);
       return decodedList.map((json) => HuntProgress.fromJson(json)).toList();
     } catch (e) {
@@ -134,6 +129,40 @@ class ClueService {
       return [];
     }
   }
+
+  // ============================================================
+  // NEUE METHODEN: Speichern & Laden der globalen Werkzeugkiste
+  // ============================================================
+
+  /// Lädt die Liste der globalen Items (Werkzeuge & Info-Items).
+  Future<List<Item>> loadGlobalItems() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$_globalItemsFileName');
+    try {
+      if (!await file.exists()) {
+        // Optional: Hier könnten wir eine leere Datei oder Standard-Items erstellen
+        await file.writeAsString('[]');
+        return [];
+      }
+      final jsonStr = await file.readAsString();
+      final List<dynamic> decodedList = jsonDecode(jsonStr);
+      return decodedList.map((json) => Item.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint("❌ Fehler beim Laden der globalen Items: $e");
+      return [];
+    }
+  }
+
+  /// Speichert die Liste der globalen Items.
+  Future<void> saveGlobalItems(List<Item> items) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$_globalItemsFileName');
+    final List<Map<String, dynamic>> jsonList =
+        items.map((item) => item.toJson()).toList();
+    await file.writeAsString(jsonEncode(jsonList));
+    debugPrint("💾 Globale Werkzeugkiste gespeichert.");
+  }
+
 
   // --- Methoden für Import & Export ---
   
