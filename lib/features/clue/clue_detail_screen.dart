@@ -521,6 +521,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           ],
         ),
       ),
-    );
+    ); 
   }
 }
