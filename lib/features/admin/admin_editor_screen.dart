@@ -226,7 +226,8 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Standort-Berechtigung wurde verweigert.'),
             backgroundColor: Colors.red,
-          ));
+          ));//..
+          
         }
       }
     } catch (e) {
