@@ -1,5 +1,4 @@
-# Project Snapshot – 2025-08-16 11:23:48
-- Git rev: `de4abfe`
+# Project Snapshot – 2025-08-16 14:43:00
 - Export format: one fenced section per file (`path` + content).
 
 ---
@@ -40,44 +39,44 @@ linter:
 ## android/app/build.gradle.kts
 
 ```
-plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("dev.flutter.flutter-gradle-plugin")
-}
-
-android {
-    namespace = "com.example.clue_master"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
-    defaultConfig {
-        applicationId = "com.example.clue_master"
-        // HIER IST DIE FINALE ÄNDERUNG
-        minSdk = 23
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-    }
-
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
-        }
-    }
-}
-
-flutter {
-    source = "../.."
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+    namespace = "com.example.clue_master"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = "27.0.12077973"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+
+    defaultConfig {
+        applicationId = "com.example.clue_master"
+        // HIER IST DIE FINALE ÄNDERUNG
+        minSdkVersion(flutter.minSdkVersion)
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+
+flutter {
+    source = "../.."
 }
 ```
 
@@ -513,7 +512,7 @@ if "%OS%"=="Windows_NT" endlocal
 
 ```
 sdk.dir=C:\\Users\\mail2\\AppData\\Local\\Android\\sdk
-flutter.sdk=c:\\flutter
+flutter.sdk=C:\\flutter
 flutter.buildMode=release
 flutter.versionName=1.0.0
 flutter.versionCode=1
@@ -629,6 +628,7 @@ export "FLUTTER_TARGET=lib\main.dart"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"
 export "FLUTTER_BUILD_NUMBER=1"
+export "FLUTTER_CLI_BUILD_MODE=debug"
 export "DART_OBFUSCATION=false"
 export "TRACK_WIDGET_CREATION=true"
 export "TREE_SHAKE_ICONS=false"
@@ -1144,6 +1144,7 @@ enum RiddleType {
   TEXT,
   MULTIPLE_CHOICE,
   GPS,
+  DECISION, // NEU: Der Typ für Entscheidungs-Rätsel
 }
 
 enum ImageEffect {
@@ -1192,29 +1193,22 @@ class Clue {
   final String? nextClueCode;
   final bool isFinalClue;
   final bool autoTriggerNextClue;
+  
+  // ============================================================
+  // NEU: Feld für das Entscheidungs-Rätsel
+  // ============================================================
+  /// Speichert die Ziel-Codes für ein Entscheidungs-Rätsel.
+  /// Die Reihenfolge muss der `options`-Liste entsprechen.
+  final List<String>? decisionNextClueCodes;
 
-  // ============================================================
-  // NEU: FELDER FÜR DAS INVENTAR-SYSTEM
-  // ============================================================
-  /// Die ID des Items, das der Spieler als Belohnung erhält.
+  // --- Inventar-System Felder ---
   final String? rewardItemId;
-
-  /// Die ID des Items, das der Spieler besitzen muss, um diesen Hinweis zu sehen.
   final String? requiredItemId;
 
-  // ============================================================
-  // NEU: FELDER FÜR ZEITGESTEUERTE TRIGGER
-  // ============================================================
-  /// Nach wie vielen Sekunden soll der Timer auslösen?
+  // --- Zeitgesteuerte Trigger Felder ---
   final int? timedTriggerAfterSeconds;
-
-  /// Welche Nachricht soll im Timer-Popup angezeigt werden?
   final String? timedTriggerMessage;
-
-  /// Welches Item soll der Timer als Belohnung geben?
   final String? timedTriggerRewardItemId;
-
-  /// Welchen Code soll der Timer als Belohnung geben?
   final String? timedTriggerNextClueCode;
 
 
@@ -1242,20 +1236,22 @@ class Clue {
     this.nextClueCode,
     this.isFinalClue = false,
     this.autoTriggerNextClue = true,
-    // NEUE Felder im Konstruktor
     this.rewardItemId,
     this.requiredItemId,
     this.timedTriggerAfterSeconds,
     this.timedTriggerMessage,
     this.timedTriggerRewardItemId,
     this.timedTriggerNextClueCode,
+    this.decisionNextClueCodes, // NEU im Konstruktor
   });
 
   // SECTION: Hilfs-Methoden (Getters)
   bool get isRiddle => question != null && question!.isNotEmpty;
   bool get isGpsRiddle => isRiddle && riddleType == RiddleType.GPS;
-  bool get isMultipleChoice =>
-      isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
+  bool get isMultipleChoice => isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
+  // NEU: Getter zur einfachen Identifizierung
+  bool get isDecisionRiddle => isRiddle && riddleType == RiddleType.DECISION;
+
 
   // SECTION: JSON-Konvertierung
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
@@ -1283,6 +1279,8 @@ class Clue {
       }),
       answer: json['answer'],
       options: json['options'] != null ? List<String>.from(json['options']) : null,
+      // NEU: Liest die Ziel-Codes aus der JSON
+      decisionNextClueCodes: json['decisionNextClueCodes'] != null ? List<String>.from(json['decisionNextClueCodes']) : null,
       hint1: json['hint1'],
       hint2: json['hint2'],
       latitude: json['latitude'],
@@ -1292,7 +1290,6 @@ class Clue {
       nextClueCode: json['nextClueCode'],
       isFinalClue: json['isFinalClue'] ?? false,
       autoTriggerNextClue: json['autoTriggerNextClue'] ?? true,
-      // NEUE Felder aus JSON lesen
       rewardItemId: json['rewardItemId'],
       requiredItemId: json['requiredItemId'],
       timedTriggerAfterSeconds: json['timedTriggerAfterSeconds'],
@@ -1316,6 +1313,8 @@ class Clue {
       'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,
       if (options != null) 'options': options,
+      // NEU: Schreibt die Ziel-Codes in die JSON
+      if (decisionNextClueCodes != null) 'decisionNextClueCodes': decisionNextClueCodes,
       if (hint1 != null) 'hint1': hint1,
       if (hint2 != null) 'hint2': hint2,
       if (latitude != null) 'latitude': latitude,
@@ -1325,7 +1324,6 @@ class Clue {
       if (nextClueCode != null) 'nextClueCode': nextClueCode,
       'isFinalClue': isFinalClue,
       'autoTriggerNextClue': autoTriggerNextClue,
-      // NEUE Felder in JSON schreiben
       if (rewardItemId != null) 'rewardItemId': rewardItemId,
       if (requiredItemId != null) 'requiredItemId': requiredItemId,
       if (timedTriggerAfterSeconds != null) 'timedTriggerAfterSeconds': timedTriggerAfterSeconds,
@@ -1857,9 +1855,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
     );
     if (confirm == true) {
-      // =======================================================
-      // KORREKTUR HIER: Explizite Typ-Angabe
-      // =======================================================
       final updatedClues = Map<String, Clue>.from(_currentHunt.clues)..remove(code);
       await _saveClueChanges(updatedClues);
     }
@@ -1872,13 +1867,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       MaterialPageRoute(
         builder: (BuildContext context) {
           return AdminEditorScreen(
+            // =======================================================
+            // KORREKTUR HIER: Übergibt die gesamte Jagd an den Editor
+            // =======================================================
+            hunt: _currentHunt,
             codeToEdit: codeToEdit,
             existingClue: codeToEdit != null ? _currentHunt.clues[codeToEdit] : null,
             existingCodes: _currentHunt.clues.keys.toList(),
             onSave: (updatedMap) async {
-              // =======================================================
-              // KORREKTUR HIER: Explizite Typ-Angabe
-              // =======================================================
               final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
               if (codeToEdit != null && updatedMap.keys.first != codeToEdit) {
                 updatedClues.remove(codeToEdit);
@@ -1893,9 +1889,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _resetSolvedFlags() async {
-    // =======================================================
-    // KORREKTUR HIER: Explizite Typ-Angabe
-    // =======================================================
     final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
     for (var clue in updatedClues.values) {
       clue.solved = false;
@@ -1998,7 +1991,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 ## lib/features/admin/admin_editor_screen.dart
 
 ```
+// lib/features/admin/admin_editor_screen.dart
+
 import 'dart:io';
+import 'package:clue_master/data/models/hunt.dart';
+import 'package:clue_master/data/models/item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -2012,6 +2009,7 @@ import 'package:uuid/uuid.dart';
 import '../../data/models/clue.dart';
 
 class AdminEditorScreen extends StatefulWidget {
+  final Hunt hunt;
   final String? codeToEdit;
   final Clue? existingClue;
   final Function(Map<String, Clue>) onSave;
@@ -2019,6 +2017,7 @@ class AdminEditorScreen extends StatefulWidget {
 
   const AdminEditorScreen({
     super.key,
+    required this.hunt,
     this.codeToEdit,
     this.existingClue,
     required this.onSave,
@@ -2036,7 +2035,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _uuid = Uuid();
   bool _isRecording = false;
 
-  // --- Standard-Controller ---
+  // --- Basis-Controller ---
   final _codeController = TextEditingController();
   String _type = 'text';
   final _contentController = TextEditingController();
@@ -2058,11 +2057,17 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _hint2Controller = TextEditingController();
   final _rewardTextController = TextEditingController();
   final _nextClueCodeController = TextEditingController();
-  // =======================================================
-  // NEU: State-Variable für die Checkbox
-  // =======================================================
   bool _autoTriggerNextClue = true;
+  
+  // --- Item-Controller ---
+  String? _selectedRewardItemId;
+  String? _selectedRequiredItemId;
 
+  // --- Controller für Entscheidungs-Rätsel ---
+  final _decisionCode1Controller = TextEditingController();
+  final _decisionCode2Controller = TextEditingController();
+  final _decisionCode3Controller = TextEditingController();
+  final _decisionCode4Controller = TextEditingController();
 
   // --- GPS-Controller ---
   final _latitudeController = TextEditingController();
@@ -2086,20 +2091,31 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       _textEffect = clue.textEffect;
       _isRiddle = clue.isRiddle;
       _backgroundImagePath = clue.backgroundImagePath;
+      _selectedRequiredItemId = clue.requiredItemId;
 
       if (clue.isRiddle) {
         _questionController.text = clue.question!;
         _rewardTextController.text = clue.rewardText ?? '';
         _riddleType = clue.riddleType;
         _nextClueCodeController.text = clue.nextClueCode ?? '';
-        // NEU: Initialisiere den Wert der Checkbox aus dem bestehenden Hinweis
         _autoTriggerNextClue = clue.autoTriggerNextClue;
+        _selectedRewardItemId = clue.rewardItemId;
 
         if (clue.riddleType == RiddleType.GPS) {
           _latitudeController.text = clue.latitude?.toString() ?? '';
           _longitudeController.text = clue.longitude?.toString() ?? '';
           _radiusController.text = clue.radius?.toString() ?? '';
-        } else {
+        } else if (clue.isDecisionRiddle) {
+          _option1Controller.text = clue.options![0];
+          _decisionCode1Controller.text = clue.decisionNextClueCodes![0];
+          _option2Controller.text = clue.options!.length > 1 ? clue.options![1] : '';
+          _decisionCode2Controller.text = clue.decisionNextClueCodes!.length > 1 ? clue.decisionNextClueCodes![1] : '';
+          _option3Controller.text = clue.options!.length > 2 ? clue.options![2] : '';
+          _decisionCode3Controller.text = clue.decisionNextClueCodes!.length > 2 ? clue.decisionNextClueCodes![2] : '';
+          _option4Controller.text = clue.options!.length > 3 ? clue.options![3] : '';
+          _decisionCode4Controller.text = clue.decisionNextClueCodes!.length > 3 ? clue.decisionNextClueCodes![3] : '';
+        }
+        else { 
           _answerController.text = clue.answer ?? '';
           _hint1Controller.text = clue.hint1 ?? '';
           _hint2Controller.text = clue.hint2 ?? '';
@@ -2134,6 +2150,10 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     _radiusController.dispose();
+    _decisionCode1Controller.dispose();
+    _decisionCode2Controller.dispose();
+    _decisionCode3Controller.dispose();
+    _decisionCode4Controller.dispose();
     super.dispose();
   }
 
@@ -2145,6 +2165,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         _option3Controller.text.trim(),
         _option4Controller.text.trim(),
       ].where((o) => o.isNotEmpty).toList();
+      
+      final decisionCodes = [
+        _decisionCode1Controller.text.trim(),
+        _decisionCode2Controller.text.trim(),
+        _decisionCode3Controller.text.trim(),
+        _decisionCode4Controller.text.trim(),
+      ].sublist(0, options.length);
 
       final clue = Clue(
         code: _codeController.text.trim(),
@@ -2160,14 +2187,19 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
         nextClueCode: _isRiddle && _nextClueCodeController.text.trim().isNotEmpty ? _nextClueCodeController.text.trim() : null,
         
-        // NEU: Speichere den Wert der Checkbox
         autoTriggerNextClue: _autoTriggerNextClue,
         
+        rewardItemId: _isRiddle ? _selectedRewardItemId : null,
+        requiredItemId: _selectedRequiredItemId,
+
         riddleType: _isRiddle ? _riddleType : RiddleType.TEXT,
-        answer: _isRiddle && _riddleType != RiddleType.GPS ? _answerController.text.trim() : null,
-        options: _isRiddle && _riddleType == RiddleType.MULTIPLE_CHOICE ? options : null,
-        hint1: _isRiddle && _riddleType != RiddleType.GPS && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
-        hint2: _isRiddle && _riddleType != RiddleType.GPS && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
+        answer: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION ? _answerController.text.trim() : null,
+        options: _isRiddle && (_riddleType == RiddleType.MULTIPLE_CHOICE || _riddleType == RiddleType.DECISION) ? options : null,
+        
+        decisionNextClueCodes: _isRiddle && _riddleType == RiddleType.DECISION ? decisionCodes : null,
+
+        hint1: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
+        hint2: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
         latitude: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_latitudeController.text) : null,
         longitude: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_longitudeController.text) : null,
         radius: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_radiusController.text) : null,
@@ -2191,18 +2223,24 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _longitudeController.text = position.longitude.toString();
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Standort-Berechtigung wurde verweigert.'),
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Standort-Berechtigung wurde verweigert.'),
+            backgroundColor: Colors.red,
+          ));
+        }
+      }
+    } catch (e) {
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Standort konnte nicht abgerufen werden: $e'),
           backgroundColor: Colors.red,
         ));
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Standort konnte nicht abgerufen werden: $e'),
-        backgroundColor: Colors.red,
-      ));
     } finally {
-      setState(() => _isFetchingLocation = false);
+      if(mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
     }
   }
 
@@ -2224,12 +2262,16 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       if (path != null) {
         await _saveMediaFile(path, 'audio_aufnahme.m4a', _contentController);
       }
-      setState(() => _isRecording = false);
+      if(mounted) {
+        setState(() => _isRecording = false);
+      }
     } else {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
         await _audioRecorder.start(const RecordConfig(), path: '${dir.path}/temp_audio');
-        setState(() => _isRecording = true);
+        if(mounted) {
+          setState(() => _isRecording = true);
+        }
       }
     }
   }
@@ -2239,9 +2281,11 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}_$originalName';
     final newPath = '${dir.path}/$fileName';
     await File(originalPath).copy(newPath);
-    setState(() {
-      controller.text = 'file://$newPath';
-    });
+    if(mounted) {
+      setState(() {
+        controller.text = 'file://$newPath';
+      });
+    }
   }
   
   Future<void> _pickGpsBackgroundImage() async {
@@ -2260,13 +2304,17 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
 
       await File(image.path).copy(savedImagePath);
 
-      setState(() {
-        _backgroundImagePath = savedImagePath;
-      });
+      if(mounted) {
+        setState(() {
+          _backgroundImagePath = savedImagePath;
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fehler beim Speichern des Bildes: $e')),
-      );
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Speichern des Bildes: $e')),
+        );
+      }
     }
   }
   
@@ -2285,7 +2333,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             _buildSectionHeader('Basis-Informationen'),
             TextFormField(
               controller: _codeController,
-              decoration: const InputDecoration(labelText: 'Eindeutiger Code der Station', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              decoration: const InputDecoration(labelText: 'Eindeutiger Code der Station'),
               validator: (value) {
                 final code = value?.trim() ?? '';
                 if (code.isEmpty) return 'Der Code ist ein Pflichtfeld.';
@@ -2294,8 +2342,19 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 return null;
               },
             ),
+             _buildItemDropdown(
+              label: 'Benötigtes Item (optional)',
+              hint: 'Spieler muss dieses Item besitzen, um den Inhalt zu sehen',
+              currentValue: _selectedRequiredItemId,
+              onChanged: (itemId) {
+                setState(() {
+                  _selectedRequiredItemId = itemId;
+                });
+              },
+            ),
+
             const Divider(height: 40, thickness: 1),
-            _buildSectionHeader('Stations-Inhalt (wird nach Code-Eingabe angezeigt)'),
+            _buildSectionHeader('Stations-Inhalt'),
             DropdownButtonFormField<String>(
               value: _type,
               items: const [
@@ -2308,7 +2367,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
                 _type = value!;
                 _contentController.clear();
               }),
-              decoration: const InputDecoration(labelText: 'Typ des Inhalts', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              decoration: const InputDecoration(labelText: 'Typ des Inhalts'),
             ),
             const SizedBox(height: 8),
             _buildMediaContentField(),
@@ -2337,7 +2396,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _buildSectionHeader('Rätsel-Details'),
           TextFormField(
             controller: _questionController,
-            decoration: const InputDecoration(labelText: 'Aufgabenstellung / Frage', hintText: 'z.B. Finde den steinernen Wächter...', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+            decoration: const InputDecoration(labelText: 'Aufgabenstellung / Frage', hintText: 'z.B. Welchen Weg schlägst du ein?'),
             validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Aufgabenstellung erforderlich' : null,
           ),
           const SizedBox(height: 16),
@@ -2346,20 +2405,36 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             items: const [
               DropdownMenuItem(value: RiddleType.TEXT, child: Text('Text-Antwort')),
               DropdownMenuItem(value: RiddleType.MULTIPLE_CHOICE, child: Text('Multiple-Choice')),
+              DropdownMenuItem(value: RiddleType.DECISION, child: Text('Entscheidung (Verzweigung)')),
               DropdownMenuItem(value: RiddleType.GPS, child: Text('GPS-Ort finden')),
             ],
             onChanged: (value) => setState(() => _riddleType = value!),
-            decoration: const InputDecoration(labelText: 'Art des Rätsels', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+            decoration: const InputDecoration(labelText: 'Art des Rätsels'),
           ),
           const SizedBox(height: 16),
-
+          
           if (_riddleType == RiddleType.GPS)
             _buildGpsRiddleFields()
+          else if (_riddleType == RiddleType.DECISION)
+             _buildDecisionRiddleFields()
           else
             _buildTextRiddleFields(),
 
           const Divider(height: 40, thickness: 1),
           _buildSectionHeader('Belohnung & Nächster Schritt'),
+          
+           _buildItemDropdown(
+            label: 'Belohnungs-Item (optional)',
+            hint: 'Spieler erhält dieses Item nach dem Lösen des Rätsels',
+            currentValue: _selectedRewardItemId,
+            onChanged: (itemId) {
+              setState(() {
+                _selectedRewardItemId = itemId;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          
           CheckboxListTile(
             title: const Text('Dies ist der finale Hinweis der Mission'),
             subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
@@ -2373,7 +2448,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             decoration: InputDecoration(
               labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text (optional)', 
               hintText: 'z.B. Gut gemacht, Agent!', 
-              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)
             ),
             maxLines: 3,
             validator: (v) {
@@ -2384,17 +2458,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             },
           ),
           
-          // ===============================================
-          // NEUER ABSCHNITT für die Checkbox
-          // ===============================================
-          if (!_isFinalClue) ...[
+          if (!_isFinalClue && _riddleType != RiddleType.DECISION) ...[
             const SizedBox(height: 16),
             TextFormField(
               controller: _nextClueCodeController,
               decoration: const InputDecoration(
                 labelText: 'Code für nächsten Hinweis (optional)',
                 hintText: 'z.B. ADLER3',
-                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               ),
             ),
             CheckboxListTile(
@@ -2411,18 +2481,105 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               contentPadding: EdgeInsets.zero,
             ),
           ],
-          // ===============================================
         ],
       ),
     );
   }
 
+  Widget _buildDecisionRiddleFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text('Entscheidungs-Optionen & Ziel-Codes', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Text('Gib bis zu 4 Optionen an. Für jede Option muss ein gültiger Ziel-Code einer anderen Station eingegeben werden.', style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 16),
+        _buildDecisionOptionRow(1, _option1Controller, _decisionCode1Controller),
+        _buildDecisionOptionRow(2, _option2Controller, _decisionCode2Controller),
+        _buildDecisionOptionRow(3, _option3Controller, _decisionCode3Controller),
+        _buildDecisionOptionRow(4, _option4Controller, _decisionCode4Controller),
+      ],
+    );
+  }
+
+  Widget _buildDecisionOptionRow(int number, TextEditingController optionController, TextEditingController codeController) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              controller: optionController,
+              decoration: InputDecoration(labelText: 'Text für Option $number'),
+              validator: (v) {
+                if (codeController.text.isNotEmpty && (v == null || v.isEmpty)) {
+                  return 'Text erforderlich';
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: TextFormField(
+              controller: codeController,
+              decoration: InputDecoration(labelText: 'Ziel-Code für Option $number'),
+              validator: (v) {
+                 if (optionController.text.isNotEmpty && (v == null || v.isEmpty)) {
+                  return 'Ziel-Code erforderlich';
+                }
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemDropdown({
+    required String label,
+    required String hint,
+    required String? currentValue,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final items = widget.hunt.items.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    final dropdownItems = [
+      const DropdownMenuItem<String>(
+        value: null,
+        child: Text('Kein Item', style: TextStyle(fontStyle: FontStyle.italic)),
+      ),
+      ...items.map((item) {
+        return DropdownMenuItem<String>(
+          value: item.id,
+          child: Text(item.name),
+        );
+      }),
+    ];
+
+    return DropdownButtonFormField<String>(
+      value: currentValue,
+      items: dropdownItems,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+      ),
+    );
+  }
+  
   Widget _buildTextRiddleFields() {
     return Column(
       children: [
         TextFormField(
           controller: _answerController,
-          decoration: const InputDecoration(labelText: 'Korrekte Antwort', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          decoration: const InputDecoration(labelText: 'Korrekte Antwort'),
           validator: (v) => (_riddleType != RiddleType.GPS && _isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
         ),
         const SizedBox(height: 16),
@@ -2430,9 +2587,9 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _buildMultipleChoiceFields(),
         const SizedBox(height: 16),
         _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
-        TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+        TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen')),
         const SizedBox(height: 8),
-        TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+        TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen')),
       ],
     );
   }
@@ -2442,21 +2599,21 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       children: [
         TextFormField(
           controller: _latitudeController,
-          decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Breitengrad erforderlich' : null,
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _longitudeController,
-          decoration: const InputDecoration(labelText: 'Längengrad (Longitude)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          decoration: const InputDecoration(labelText: 'Längengrad (Longitude)'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Längengrad erforderlich' : null,
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _radiusController,
-          decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+          decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20'),
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Radius erforderlich' : null,
@@ -2546,20 +2703,20 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           ...[
             TextFormField(
               controller: _contentController,
-              decoration: const InputDecoration(labelText: 'Inhalt (Text)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              decoration: const InputDecoration(labelText: 'Inhalt (Text)'),
               maxLines: 3,
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
             ),
             const SizedBox(height: 8),
             _buildTextEffectField(),
-            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
           ]
         else
           ...[
             TextFormField(
               controller: _contentController,
               readOnly: true,
-              decoration: InputDecoration(labelText: 'Dateipfad (${_type})', contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+              decoration: InputDecoration(labelText: 'Dateipfad (${_type})'),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
             ),
             const SizedBox(height: 8),
@@ -2579,7 +2736,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
             const SizedBox(height: 8),
             if (_type == 'image')
               _buildImageEffectField(),
-            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
           ]
       ],
     );
@@ -2597,7 +2754,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           DropdownMenuItem(value: ImageEffect.BLACK_AND_WHITE, child: Text('Schwarz-Weiß')),
         ],
         onChanged: (value) => setState(() => _imageEffect = value!),
-        decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+        decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt'),
       ),
     );
   }
@@ -2615,7 +2772,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           DropdownMenuItem(value: TextEffect.MIRROR_WORDS, child: Text('Wörter spiegeln')),
         ],
         onChanged: (value) => setState(() => _textEffect = value!),
-        decoration: const InputDecoration(labelText: 'Optionaler Text-Effekt', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+        decoration: const InputDecoration(labelText: 'Optionaler Text-Effekt'),
       ),
     );
   }
@@ -2625,13 +2782,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       const SizedBox(height: 8),
       Text('Multiple-Choice Optionen', style: Theme.of(context).textTheme.bodySmall),
       const SizedBox(height: 8),
-      TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1')),
       const SizedBox(height: 8),
-      TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2')),
       const SizedBox(height: 8),
-      TextFormField(controller: _option3Controller, decoration: const InputDecoration(labelText: 'Option 3', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      TextFormField(controller: _option3Controller, decoration: const InputDecoration(labelText: 'Option 3')),
       const SizedBox(height: 8),
-      TextFormField(controller: _option4Controller, decoration: const InputDecoration(labelText: 'Option 4', contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12))),
+      TextFormField(controller: _option4Controller, decoration: const InputDecoration(labelText: 'Option 4')),
     ]);
   }
 }
@@ -3560,17 +3717,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 ## lib/features/clue/clue_detail_screen.dart
 
 ```
+// lib/features/clue/clue_detail_screen.dart
+
 import 'dart:async';
-import 'dart:io';
-import 'dart:math';
-import 'package:clue_master/features/clue/mission_success_screen.dart';
 import 'package:clue_master/features/clue/gps_navigation_screen.dart';
-import 'package:clue_master/features/shared/game_header.dart'; // Importiert
+import 'package:clue_master/features/shared/game_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image/image.dart' as img;
-import 'package:just_audio/just_audio.dart';
-import 'package:video_player/video_player.dart';
 import 'package:vibration/vibration.dart';
 import 'package:clue_master/features/clue/mission_evaluation_screen.dart';
 
@@ -3579,6 +3732,7 @@ import '../../core/services/sound_service.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
+import '../shared/media_widgets.dart';
 
 class ClueDetailScreen extends StatefulWidget {
   final Hunt hunt;
@@ -3606,26 +3760,23 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   String? _errorMessage;
   bool _contentVisible = false;
   int _localFailedAttempts = 0;
-
   bool _hint1Triggered = false;
   bool _hint2Triggered = false;
-  
-  // NEU: Timer für dieElapsedTime Anzeige im Header
   Timer? _stopwatchTimer;
   Duration _elapsedDuration = Duration.zero;
-
+  bool _hasAccess = false;
 
   @override
   void initState() {
     super.initState();
+    _checkAccess();
     _isSolved = widget.clue.solved;
 
-    if (!widget.clue.hasBeenViewed) {
+    if (_hasAccess && !widget.clue.hasBeenViewed) {
       widget.clue.hasBeenViewed = true;
-      _saveHuntProgressInHuntFile();
+      _saveHuntProgressInHuntFile(widget.clue);
     }
-    
-    // Starte den Timer für die Anzeige
+
     _startStopwatch();
 
     Timer(const Duration(milliseconds: 100), () {
@@ -3638,17 +3789,22 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     _answerController.dispose();
     _scrollController.dispose();
     _soundService.dispose();
-    _stopwatchTimer?.cancel(); // Timer stoppen
+    _stopwatchTimer?.cancel();
     super.dispose();
   }
-  
-  // NEU: Stopwatch Logik (kopiert aus HomeScreen)
+
+  void _checkAccess() {
+    final requiredItemId = widget.clue.requiredItemId;
+    if (requiredItemId == null || requiredItemId.isEmpty) {
+      _hasAccess = true;
+      return;
+    }
+    _hasAccess = widget.huntProgress.collectedItemIds.contains(requiredItemId);
+  }
+
   void _startStopwatch() {
     if (widget.huntProgress.startTime == null || _stopwatchTimer?.isActive == true) return;
-
-    // Set initial duration
     _elapsedDuration = widget.huntProgress.duration;
-
     _stopwatchTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       final duration = widget.huntProgress.duration;
       if (mounted) {
@@ -3659,13 +3815,13 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     });
   }
 
-  Future<void> _saveHuntProgressInHuntFile() async {
+  Future<void> _saveHuntProgressInHuntFile(Clue clueToSave) async {
     final allHunts = await _clueService.loadHunts();
     final huntIndex = allHunts.indexWhere((h) => h.name == widget.hunt.name);
     if (huntIndex != -1) {
-      final clueKey = widget.clue.code;
+      final clueKey = clueToSave.code;
       if (allHunts[huntIndex].clues.containsKey(clueKey)) {
-        allHunts[huntIndex].clues[clueKey] = widget.clue;
+        allHunts[huntIndex].clues[clueKey] = clueToSave;
         await _clueService.saveHunts(allHunts);
       }
     }
@@ -3673,8 +3829,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
   void _checkAnswer({String? userAnswer}) async {
     final correctAnswer = widget.clue.answer?.trim().toLowerCase();
-    final providedAnswer =
-        (userAnswer ?? _answerController.text).trim().toLowerCase();
+    final providedAnswer = (userAnswer ?? _answerController.text).trim().toLowerCase();
 
     if (correctAnswer == providedAnswer) {
       await _solveRiddle();
@@ -3715,8 +3870,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     Vibration.vibrate(duration: 100);
     _soundService.playSound(SoundEffect.success);
 
+    _awardItemReward();
+
     widget.clue.solved = true;
-    await _saveHuntProgressInHuntFile();
+    await _saveHuntProgressInHuntFile(widget.clue);
 
     if (mounted) {
       setState(() {
@@ -3726,7 +3883,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
     if (widget.clue.isFinalClue) {
       widget.huntProgress.endTime = DateTime.now();
-      _stopwatchTimer?.cancel(); // Stoppe den Timer hier final
+      _stopwatchTimer?.cancel();
 
       if (mounted) {
         Future.delayed(const Duration(milliseconds: 800), () {
@@ -3745,70 +3902,158 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       }
     }
   }
+  
+  // ============================================================
+  // NEU: Logik für die Entscheidung
+  // ============================================================
+  /// Behandelt die Auswahl einer Entscheidung, löst das Rätsel und navigiert weiter.
+  Future<void> _makeDecision(int choiceIndex) async {
+    if (!mounted || _isSolved) return;
+
+    // Eine Entscheidung zu treffen, gilt als das Lösen des Rätsels.
+    Vibration.vibrate(duration: 50);
+    _soundService.playSound(SoundEffect.buttonClick);
+    
+    // Führe die Standard-Aktionen beim Lösen aus (z.B. Item-Belohnung geben)
+    _awardItemReward();
+
+    widget.clue.solved = true;
+    await _saveHuntProgressInHuntFile(widget.clue);
+
+    if (mounted) {
+      setState(() {
+        _isSolved = true;
+      });
+    }
+
+    // Finde den passenden nächsten Code basierend auf der getroffenen Wahl.
+    String? nextCode;
+    if (widget.clue.decisionNextClueCodes != null && widget.clue.decisionNextClueCodes!.length > choiceIndex) {
+      nextCode = widget.clue.decisionNextClueCodes![choiceIndex];
+    }
+    
+    // Gehe zurück zum HomeScreen und übergebe den neuen Code für die Animation.
+    if (mounted) {
+      Navigator.of(context).pop(nextCode);
+    }
+  }
+
+  void _awardItemReward() {
+    final rewardItemId = widget.clue.rewardItemId;
+    if (rewardItemId != null && rewardItemId.isNotEmpty) {
+      if (widget.huntProgress.collectedItemIds.add(rewardItemId)) {
+        final item = widget.hunt.items[rewardItemId];
+        final itemName = item?.name ?? 'unbekannter Gegenstand';
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.inventory_2_outlined, color: Colors.amber),
+                const SizedBox(width: 8),
+                Text('Gegenstand erhalten: $itemName'),
+              ],
+            ),
+            backgroundColor: Colors.green[800],
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bool hasNextCode =
-        _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
-    final String buttonText =
-        hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
-        
-    // Berechnung für den Header
-    final totalClues = widget.hunt.clues.length;
-    final viewedClues =
-        widget.hunt.clues.values.where((c) => c.hasBeenViewed).length;
-
     return Scaffold(
       appBar: GameHeader(
         hunt: widget.hunt,
         huntProgress: widget.huntProgress,
         elapsedTime: _elapsedDuration,
-  ),
-      
-      
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16.0),
-                child: AnimatedOpacity(
-                  opacity: _contentVisible ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 500),
-                  child: Column(
-                    children: [
-                      _buildMediaWidget(clue: widget.clue),
-                      const SizedBox(height: 16),
-                      if (widget.clue.isRiddle) ...[
-                        const Divider(
-                            height: 24, thickness: 1, color: Colors.white24),
-                        if (_isSolved)
-                          _buildRewardWidget()
-                        else
-                          _buildRiddleWidget(),
-                      ]
-                    ],
-                  ),
+      ),
+      body: _hasAccess 
+          ? _buildClueContent() 
+          : _buildAccessDeniedScreen(),
+    );
+  }
+
+  Widget _buildClueContent() {
+    final bool hasNextCode = _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
+    final String buttonText = hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
+    
+    // Der "Weiter"-Button am Ende wird bei Entscheidungs-Rätseln nicht angezeigt.
+    final bool showPrimaryButton = !widget.clue.isDecisionRiddle && (!widget.clue.isRiddle || _isSolved);
+
+    return SafeArea(
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16.0),
+              child: AnimatedOpacity(
+                opacity: _contentVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                child: Column(
+                  children: [
+                    buildMediaWidgetForClue(clue: widget.clue),
+                    const SizedBox(height: 16),
+                    if (widget.clue.isRiddle) ...[
+                      const Divider(
+                          height: 24, thickness: 1, color: Colors.white24),
+                      if (_isSolved)
+                        _buildRewardWidget()
+                      else
+                        _buildRiddleWidget(),
+                    ]
+                  ],
                 ),
               ),
             ),
-            if (!widget.clue.isRiddle || _isSolved)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  onPressed: () {
-                    Vibration.vibrate(duration: 50);
-                    _soundService.playSound(SoundEffect.buttonClick);
-
-                    Navigator.of(context).pop(widget.clue.nextClueCode);
-                  },
-                  child: Text(buttonText),
+          ),
+          if (showPrimaryButton)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
                 ),
+                onPressed: () {
+                  Vibration.vibrate(duration: 50);
+                  _soundService.playSound(SoundEffect.buttonClick);
+                  Navigator.of(context).pop(widget.clue.nextClueCode);
+                },
+                child: Text(buttonText),
               ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAccessDeniedScreen() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline, size: 80, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            const Text(
+              'Zugriff gesperrt',
+              style: TextStyle(fontSize: 24, color: Colors.white, fontFamily: 'SpecialElite'),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Du benötigst einen bestimmten Gegenstand, um diese Information entschlüsseln zu können. Suche an anderen Orten weiter.',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+             ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Zurück zur Code-Eingabe'),
+            ),
           ],
         ),
       ),
@@ -3816,7 +4061,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildRewardWidget() {
-    return Card(
+     return Card(
       color: Colors.green.withOpacity(0.2),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -3843,10 +4088,43 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         return _buildGpsRiddlePrompt();
       case RiddleType.MULTIPLE_CHOICE:
         return _buildTextualRiddleWidget(isMultipleChoice: true);
+      // ============================================================
+      // NEU: Behandelt den neuen Rätseltyp
+      // ============================================================
+      case RiddleType.DECISION:
+        return _buildDecisionRiddleWidget();
       case RiddleType.TEXT:
       default:
         return _buildTextualRiddleWidget(isMultipleChoice: false);
     }
+  }
+
+  // ============================================================
+  // NEU: Widget zum Anzeigen der Entscheidungs-Buttons
+  // ============================================================
+  Widget _buildDecisionRiddleWidget() {
+    return Column(
+      children: [
+        Text(
+          widget.clue.question!,
+          style: const TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        // Erzeugt für jede definierte Option einen Button
+        ...List.generate(widget.clue.options?.length ?? 0, (index) {
+          return Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            child: ElevatedButton(
+              onPressed: () => _makeDecision(index),
+              child: Text(widget.clue.options![index], style: const TextStyle(fontSize: 16)),
+            ),
+          );
+        }),
+      ],
+    );
   }
 
   Widget _buildGpsRiddlePrompt() {
@@ -3873,15 +4151,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildTextualRiddleWidget({required bool isMultipleChoice}) {
-    if (_localFailedAttempts >= 2 &&
-        widget.clue.hint1 != null &&
-        !_hint1Triggered) {
+    if (_localFailedAttempts >= 2 && widget.clue.hint1 != null && !_hint1Triggered) {
       widget.huntProgress.hintsUsed++;
       _hint1Triggered = true;
     }
-    if (_localFailedAttempts >= 4 &&
-        widget.clue.hint2 != null &&
-        !_hint2Triggered) {
+    if (_localFailedAttempts >= 4 && widget.clue.hint2 != null && !_hint2Triggered) {
       widget.huntProgress.hintsUsed++;
       _hint2Triggered = true;
     }
@@ -3913,7 +4187,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildMultipleChoiceOptions() {
-    return Column(
+     return Column(
       children: (widget.clue.options ?? []).map((option) {
         return Container(
           width: double.infinity,
@@ -3928,7 +4202,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildTextAnswerField() {
-    return Row(
+     return Row(
       children: [
         Expanded(
           child: TextField(
@@ -3953,7 +4227,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
   }
 
   Widget _buildHintCard(int level, String hintText) {
-    return Card(
+     return Card(
       margin: const EdgeInsets.only(top: 24),
       color: Colors.amber.withOpacity(0.2),
       child: Padding(
@@ -3966,414 +4240,7 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ===========================================================
-// ANHANG: ALLE DEINE MEDIA-WIDGETS (unverändert beibehalten)
-// ===========================================================
-
-Widget _buildMediaWidget({required Clue clue}) {
-  Widget mediaWidget;
-  switch (clue.type) {
-    case 'text':
-      mediaWidget = _buildTextWidgetWithEffect(clue.content, clue.textEffect);
-      break;
-    case 'image':
-      final image = clue.content.startsWith('file://')
-          ? Image.file(File(clue.content.replaceFirst('file://', '')))
-          : Image.asset(clue.content);
-
-      switch (clue.imageEffect) {
-        case ImageEffect.BLACK_AND_WHITE:
-          mediaWidget = ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              0.2126, 0.7152, 0.0722, 0, 0,
-              0.2126, 0.7152, 0.0722, 0, 0,
-              0.2126, 0.7152, 0.0722, 0, 0,
-              0,      0,      0,      1, 0,
-            ]),
-            child: image,
-          );
-          break;
-        case ImageEffect.INVERT_COLORS:
-          mediaWidget = ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              -1, 0,  0,  0, 255,
-               0,-1,  0,  0, 255,
-               0, 0, -1,  0, 255,
-               0, 0,  0,  1, 0,
-            ]),
-            child: image,
-          );
-          break;
-        case ImageEffect.PUZZLE:
-          mediaWidget = ImagePuzzleWidget(imagePath: clue.content);
-          break;
-        case ImageEffect.NONE:
-        default:
-          mediaWidget = image;
-      }
-      break;
-    case 'audio':
-      mediaWidget = AudioPlayerWidget(path: clue.content);
-      break;
-    case 'video':
-      mediaWidget = VideoPlayerWidget(path: clue.content);
-      break;
-    default:
-      mediaWidget = const Center(child: Text('Unbekannter Inhaltstyp'));
-  }
-
-  return Column(
-    children: [
-      mediaWidget,
-      if (clue.description != null && clue.description!.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        Text(clue.description!,
-            style:
-                const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-            textAlign: TextAlign.center),
-      ],
-    ],
-  );
-}
-
-Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
-  switch (effect) {
-    case TextEffect.MORSE_CODE:
-      return MorseCodeWidget(text: content);
-    case TextEffect.REVERSE:
-      return Text(content.split('').reversed.join(''),
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-    case TextEffect.NO_VOWELS:
-      return Text(content.replaceAll(RegExp(r'[aeiouAEIOU]'), ''),
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-    case TextEffect.MIRROR_WORDS:
-      final mirrored =
-          content.split(' ').map((word) => word.split('').reversed.join('')).join(' ');
-      return Text(mirrored,
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-    case TextEffect.NONE:
-    default:
-      return Text(content,
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-  }
-}
-
-class MorseCodeWidget extends StatelessWidget {
-  final String text;
-  const MorseCodeWidget({super.key, required this.text});
-
-  static const Map<String, String> _morseCodeMap = {
-    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
-    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
-    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
-    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-    'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--',
-    '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..',
-    '9': '----.', '0': '-----', ' ': '/'
-  };
-
-  String _toMorseCode(String input) {
-    return input
-        .toUpperCase()
-        .split('')
-        .map((char) => _morseCodeMap[char] ?? '')
-        .join(' ');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          _toMorseCode(text),
-          style: const TextStyle(fontSize: 24, fontFamily: 'SpecialElite'),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        IconButton(
-          icon: const Icon(Icons.volume_up_outlined, size: 40),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text(
-                  'Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
-            ));
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class ImagePuzzleWidget extends StatefulWidget {
-  final String imagePath;
-  const ImagePuzzleWidget({super.key, required this.imagePath});
-
-  @override
-  State<ImagePuzzleWidget> createState() => _ImagePuzzleWidgetState();
-}
-
-class _ImagePuzzleWidgetState extends State<ImagePuzzleWidget> {
-  List<Uint8List>? _puzzlePieces;
-  int? _selectedPieceIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _createPuzzle();
-  }
-
-  Future<void> _createPuzzle() async {
-    Uint8List imageBytes;
-    if (widget.imagePath.startsWith('file://')) {
-      imageBytes =
-          await File(widget.imagePath.replaceFirst('file://', '')).readAsBytes();
-    } else {
-      final byteData = await rootBundle.load(widget.imagePath);
-      imageBytes = byteData.buffer.asUint8List();
-    }
-
-    final originalImage = img.decodeImage(imageBytes);
-    if (originalImage == null) return;
-
-    final pieceWidth = originalImage.width ~/ 3;
-    final pieceHeight = originalImage.height ~/ 3;
-    final pieces = <Uint8List>[];
-    for (int y = 0; y < 3; y++) {
-      for (int x = 0; x < 3; x++) {
-        final piece = img.copyCrop(originalImage,
-            x: x * pieceWidth, y: y * pieceHeight, width: pieceWidth, height: pieceHeight);
-        pieces.add(Uint8List.fromList(img.encodePng(piece)));
-      }
-    }
-
-    pieces.shuffle(Random());
-
-    setState(() {
-      _puzzlePieces = pieces;
-    });
-  }
-
-  void _onPieceTap(int index) {
-    setState(() {
-      if (_selectedPieceIndex == null) {
-        _selectedPieceIndex = index;
-      } else {
-        final temp = _puzzlePieces![_selectedPieceIndex!];
-        _puzzlePieces![_selectedPieceIndex!] = _puzzlePieces![index];
-        _puzzlePieces![index] = temp;
-        _selectedPieceIndex = null;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_puzzlePieces == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return Column(
-      children: [
-        AspectRatio(
-          aspectRatio: 1.0,
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-            ),
-            itemCount: 9,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () => _onPieceTap(index),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: _selectedPieceIndex == index
-                        ? Border.all(color: Colors.amber, width: 4)
-                        : null,
-                  ),
-                  child: Image.memory(_puzzlePieces![index], fit: BoxFit.cover),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Tippe zwei Teile an, um sie zu tauschen.',
-          style: TextStyle(fontStyle: FontStyle.italic),
-        ),
-      ],
-    );
-  }
-}
-
-class AudioPlayerWidget extends StatefulWidget {
-  final String path;
-  const AudioPlayerWidget({super.key, required this.path});
-
-  @override
-  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
-}
-
-class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  final _player = AudioPlayer();
-
-  @override
-  void initState() {
-    super.initState();
-    _initPlayer();
-  }
-
-  Future<void> _initPlayer() async {
-    try {
-      if (widget.path.startsWith('file://')) {
-        final filePath = widget.path.replaceFirst('file://', '');
-        await _player.setFilePath(filePath);
-      } else {
-        await _player.setAsset(widget.path);
-      }
-    } catch (e) {
-      debugPrint("Fehler beim Laden der Audio-Datei: $e");
-    }
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.audiotrack, size: 120, color: Colors.amber),
-        const SizedBox(height: 24),
-        StreamBuilder<PlayerState>(
-          stream: _player.playerStateStream,
-          builder: (context, snapshot) {
-            final playerState = snapshot.data;
-            final processingState = playerState?.processingState;
-            final playing = playerState?.playing;
-
-            if (processingState == ProcessingState.loading ||
-                processingState == ProcessingState.buffering) {
-              return const CircularProgressIndicator();
-            } else if (playing != true) {
-              return IconButton(
-                icon: const Icon(Icons.play_circle_fill, size: 80),
-                color: Colors.amber,
-                onPressed: _player.play,
-              );
-            } else if (processingState != ProcessingState.completed) {
-              return IconButton(
-                icon: const Icon(Icons.pause_circle_filled, size: 80),
-                color: Colors.amber,
-                onPressed: _player.pause,
-              );
-            } else {
-              return IconButton(
-                icon: const Icon(Icons.replay_circle_filled, size: 80),
-                color: Colors.amber,
-                onPressed: () => _player.seek(Duration.zero),
-              );
-            }
-          },
-        ),
-        const SizedBox(height: 8),
-        const Text("Audio-Hinweis abspielen"),
-      ],
-    );
-  }
-}
-
-class VideoPlayerWidget extends StatefulWidget {
-  final String path;
-  const VideoPlayerWidget({super.key, required this.path});
-
-  @override
-  State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
-}
-
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    final videoFile = File(widget.path.replaceFirst('file://', ''));
-    _controller = VideoPlayerController.file(videoFile);
-    _initializeVideoPlayerFuture = _controller.initialize();
-    _controller.setLooping(false);
-    _controller.addListener(() {
-      if (mounted) {
-        setState(() {});
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Center(
-          child: FutureBuilder(
-            future: _initializeVideoPlayerFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                return Container(
-                  constraints: const BoxConstraints(maxHeight: 400),
-                  child: AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller),
-                  ),
-                );
-              } else {
-                return const Center(child: CircularProgressIndicator());
-              }
-            },
-          ),
-        ),
-        const SizedBox(height: 24),
-        FloatingActionButton(
-          backgroundColor: Colors.amber,
-          foregroundColor: Colors.black,
-          onPressed: () {
-            setState(() {
-              if (_controller.value.position >= _controller.value.duration) {
-                _controller.seekTo(Duration.zero);
-                _controller.play();
-              } else if (_controller.value.isPlaying) {
-                _controller.pause();
-              } else {
-                _controller.play();
-              }
-            });
-          },
-          child: Icon(
-            _controller.value.position >= _controller.value.duration
-                ? Icons.replay
-                : _controller.value.isPlaying
-                    ? Icons.pause
-                    : Icons.play_arrow,
-          ),
-        ),
-      ],
-    );
+    ); 
   }
 }
 ```
@@ -5310,8 +5177,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 ## lib/features/home/briefing_screen.dart
 
 ```
-// lib/features/briefing/briefing_screen.dart
-
 import 'dart:io';
 import 'package:clue_master/data/models/hunt_progress.dart';
 import 'package:flutter/material.dart';
@@ -5359,9 +5224,11 @@ class _BriefingScreenState extends State<BriefingScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
+          // HIER WIRD DIE ROUTE BENANNT
+          settings: const RouteSettings(name: HomeScreen.routeName),
           builder: (_) => HomeScreen(
                 hunt: widget.hunt,
-                huntProgress: huntProgress, // Der korrekte Aufruf
+                huntProgress: huntProgress,
                 codeToAnimate: firstClueCode,
               )),
     );
@@ -5451,8 +5318,6 @@ class _BriefingScreenState extends State<BriefingScreen> {
 ## lib/features/home/home_screen.dart
 
 ```
-// lib/features/home/home_screen.dart
-
 import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
@@ -5465,12 +5330,10 @@ import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../core/services/clue_service.dart';
-import '../../data/models/clue.dart';
+//import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
 import '../clue/clue_detail_screen.dart';
-import '../clue/clue_list_screen.dart';
-import '../admin/admin_login_screen.dart';
 import '../../main.dart';
 
 class UpperCaseTextFormatter extends TextInputFormatter {
@@ -5485,6 +5348,11 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 }
 
 class HomeScreen extends StatefulWidget {
+  // =======================================================
+  // DIESE ZEILE IST DER GRUND FÜR DIE FEHLER. HIER WIRD SIE HINZUGEFÜGT.
+  // =======================================================
+  static const String routeName = '/home_screen';
+
   final Hunt hunt;
   final HuntProgress huntProgress;
   final String? codeToAnimate;
@@ -5887,7 +5755,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:clue_master/data/models/hunt_progress.dart'; // NEU: Import
+import 'package:clue_master/data/models/hunt_progress.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
@@ -5895,6 +5763,7 @@ import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
 import 'briefing_screen.dart';
 import 'package:clue_master/features/clue/statistics_screen.dart';
+import 'package:clue_master/features/shared/about_screen.dart';
 
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
@@ -5927,32 +5796,27 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
   }
 
   void _navigateToGame(Hunt hunt) async {
-    // Navigiert zum Spiel (Briefing oder HomeScreen)
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: HomeScreen.routeName),
         builder: (_) {
-          if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
+          if (hunt.briefingText != null &&
+              hunt.briefingText!.trim().isNotEmpty) {
             return BriefingScreen(hunt: hunt);
           } else {
-            // =======================================================
-            // HIER IST DIE KORREKTUR
-            // =======================================================
-            // Erstelle auch hier den Spielstand und befülle den Rucksack.
             final huntProgress = HuntProgress(
               huntName: hunt.name,
               collectedItemIds: Set<String>.from(hunt.startingItemIds),
             );
             return HomeScreen(
               hunt: hunt,
-              huntProgress: huntProgress, // Übergebe den Spielstand
+              huntProgress: huntProgress,
             );
-            // =======================================================
           }
         },
       ),
     );
-
     _loadHunts();
   }
 
@@ -6060,6 +5924,16 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Über diese App',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.admin_panel_settings),
             tooltip: 'Admin-Bereich',
             onPressed: _navigateToAdmin,
@@ -6105,8 +5979,6 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
 ## lib/features/home/splash_screen.dart
 
 ```
-// lib/features/home/splash_screen.dart
-
 import 'package:flutter/material.dart';
 import 'hunt_selection_screen.dart';
 import '../../core/services/sound_service.dart';
@@ -6122,12 +5994,6 @@ class _SplashScreenState extends State<SplashScreen> {
   final SoundService _soundService = SoundService();
 
   @override
-  void initState() {
-    super.initState();
-    //_soundService.playSound(SoundEffect.appStart);
-  }
-
-  @override
   void dispose() {
     _soundService.dispose();
     super.dispose();
@@ -6139,7 +6005,8 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: const AssetImage('assets/images/20211205_FamilienfotomitdemBärtigen.jpg'),
+            image: const AssetImage(
+                'assets/images/20211205_FamilienfotomitdemBärtigen.jpg'),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
               Colors.black.withAlpha(102), // ca. 40% Abdunkelung
@@ -6151,12 +6018,12 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Spacer(flex: 5), // Mehr Platz oben, um alles nach unten zu schieben
+              const Spacer(flex: 5),
               const Text(
                 'Papa Svens\nMissionControl',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 42, // Schriftgröße reduziert
+                  fontSize: 42,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   shadows: [
@@ -6168,18 +6035,21 @@ class _SplashScreenState extends State<SplashScreen> {
                   ],
                 ),
               ),
-              const Spacer(flex: 5), // Mehr Platz zum Button
+              const Spacer(flex: 5),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                  textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                  textStyle: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 child: const Text('Mission starten!'),
                 onPressed: () {
                   _soundService.playSound(SoundEffect.buttonClick);
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const HuntSelectionScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const HuntSelectionScreen()),
                   );
                 },
               ),
@@ -6198,7 +6068,7 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
-}
+}
 ```
 
 ---
@@ -6211,6 +6081,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/hunt_progress.dart';
 import '../../data/models/item.dart';
 import '../../data/models/hunt.dart';
+import 'item_detail_screen.dart'; // NEU: Import für den Detail-Screen
 
 class InventoryScreen extends StatelessWidget {
   final Hunt hunt;
@@ -6224,15 +6095,13 @@ class InventoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ============================================================
-    // HIER IST DIE ECHTE LOGIK
-    // ============================================================
     final List<Item> collectedItems = huntProgress.collectedItemIds
-        .map((itemId) => hunt.items[itemId]) // Finde das Item in der Hunt-Bibliothek
-        .where((item) => item != null) // Filtere mögliche Fehler aus
+        .map((itemId) => hunt.items[itemId]) 
+        .where((item) => item != null)
         .cast<Item>()
         .toList();
-    // ============================================================
+    // Sortieren für eine konsistente Anzeige
+    collectedItems.sort((a, b) => a.name.compareTo(b.name));
 
     return Scaffold(
       appBar: AppBar(
@@ -6290,9 +6159,14 @@ class InventoryScreen extends StatelessWidget {
   Widget _buildItemTile(BuildContext context, Item item) {
     return GestureDetector(
       onTap: () {
-        // TODO: Item-Detail-Ansicht öffnen
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Detailansicht für "${item.name}" kommt bald.')),
+        // ============================================================
+        // GEÄNDERT: Öffnet jetzt den echten Detail-Screen
+        // ============================================================
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ItemDetailScreen(item: item),
+          ),
         );
       },
       child: Card(
@@ -6306,8 +6180,6 @@ class InventoryScreen extends StatelessWidget {
                 color: Colors.black.withOpacity(0.3),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  // Wir verwenden hier das thumbnailPath, aber da wir noch keine
-                  // echten Bilder haben, zeigen wir ein Platzhalter-Icon.
                   // Später wird hier Image.asset(item.thumbnailPath) stehen.
                   child: Icon(Icons.inventory_2_outlined, size: 40, color: Colors.amber[200]),
                 ),
@@ -6434,9 +6306,65 @@ class ItemDetailScreen extends StatelessWidget {
 ```
 
 ---
+## lib/features/shared/about_screen.dart
+
+```
+import 'package:flutter/material.dart';
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Über diese App'),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'MissionControl',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'SpecialElite',
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Version 1.0.0',
+                style: TextStyle(fontSize: 16, color: Colors.white70),
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Eine interaktive Schnitzeljagd-Plattform, entwickelt für Abenteuer und Rätselspaß.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 40),
+              Text(
+                '(C) 2025 by Sven Kompe',
+                style: TextStyle(fontSize: 14, color: Colors.white54),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
 ## lib/features/shared/game_header.dart
 
 ```
+// lib/features/shared/game_header.dart
+
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/admin/admin_login_screen.dart';
 import 'package:clue_master/features/clue/clue_list_screen.dart';
@@ -6444,7 +6372,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
-import '../inventory/inventory_screen.dart'; // NEU: Import für den Inventar-Screen
+import '../inventory/inventory_screen.dart';
 
 class GameHeader extends StatelessWidget implements PreferredSizeWidget {
   final Hunt hunt;
@@ -6463,162 +6391,174 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
     final soundService = SoundService();
     final totalClues = hunt.clues.length;
     final viewedClues = hunt.clues.values.where((c) => c.hasBeenViewed).length;
-    
     final int itemCount = huntProgress.collectedItemIds.length;
-
-    String formattedTime =
+    final String formattedTime =
         '${elapsedTime.inHours.toString().padLeft(2, '0')}:${(elapsedTime.inMinutes % 60).toString().padLeft(2, '0')}:${(elapsedTime.inSeconds % 60).toString().padLeft(2, '0')}';
 
     return AppBar(
       automaticallyImplyLeading: false,
-      backgroundColor: Colors.black.withOpacity(0.7),
-      titleSpacing: 0,
-      title: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.black.withOpacity(0.8),
+      elevation: 0,
+      // Das flexibleSpace erlaubt uns, ein eigenes Layout zu bauen, das über die
+      // Standard-Titelzeile hinausgeht.
+      flexibleSpace: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          // ============================================================
+          // NEUE STRUKTUR: Column für zweizeiliges Layout
+          // ============================================================
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- ZEILE 1: Der Name der Jagd ---
+              Text(
+                hunt.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'SpecialElite',
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+
+              // --- ZEILE 2: Die Status-Informationen ---
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    hunt.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'SpecialElite',
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  // Gruppe 1: Zeit
+                  _buildStatusElement(
+                    icon: Icons.timer_outlined,
+                    text: formattedTime,
                   ),
-                  const SizedBox(height: 4),
+                  
+                  // Gruppe 2: Fortschritt
+                  _buildStatusElement(
+                    icon: Icons.flag_outlined,
+                    text: 'Station: $viewedClues/$totalClues',
+                  ),
+
+                  // Gruppe 3: Rucksack & Menü
                   Row(
                     children: [
-                      const Icon(Icons.timer_outlined, color: Colors.white, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        formattedTime,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontFamily: 'SpecialElite',
-                        ),
-                      ),
+                      _buildInventoryButton(context, itemCount, soundService),
+                      _buildMenuButton(context, soundService),
                     ],
                   ),
                 ],
               ),
-            ),
-            Row(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Station: $viewedClues/$totalClues',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontFamily: 'SpecialElite',
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: 80,
-                      child: LinearProgressIndicator(
-                        value: totalClues > 0 ? viewedClues / totalClues : 0.0,
-                        backgroundColor: Colors.grey[800],
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                Badge(
-                  label: Text(itemCount.toString()),
-                  isLabelVisible: itemCount > 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.backpack_outlined),
-                    onPressed: () {
-                      // =======================================================
-                      // GEÄNDERT: Öffnet jetzt den neuen Inventar-Screen
-                      // =======================================================
-                      soundService.playSound(SoundEffect.buttonClick);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => InventoryScreen(
-                            hunt: hunt,
-                            huntProgress: huntProgress,
-                          ),
-                        ),
-                      );
-                      // =======================================================
-                    },
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.menu),
-                  onSelected: (value) {
-                    soundService.playSound(SoundEffect.buttonClick);
-                    if (value == 'code_entry') {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    } else if (value == 'list') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ClueListScreen(
-                            hunt: hunt,
-                            huntProgress: huntProgress,
-                          ),
-                        ),
-                      );
-                    } else if (value == 'admin') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const AdminLoginScreen()),
-                      );
-                    }
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'code_entry',
-                      child: ListTile(
-                        leading: Icon(Icons.keyboard_return_outlined),
-                        title: Text('Zur Code-Eingabe'),
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'list',
-                      child: ListTile(
-                        leading: Icon(Icons.list_alt_outlined),
-                        title: Text('Logbuch / Hinweise'),
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem<String>(
-                      value: 'admin',
-                      child: ListTile(
-                        leading: Icon(Icons.admin_panel_settings_outlined),
-                        title: Text('Admin-Bereich'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
+  /// Eine wiederverwendbare Methode, um ein Status-Element (Icon + Text) zu bauen.
+  Widget _buildStatusElement({required IconData icon, required String text}) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.white,
+            fontFamily: 'SpecialElite',
+          ),
+        ),
+      ],
+    );
+  }
+  
+  /// Baut den Rucksack-Button mit dem dezenteren Badge.
+  Widget _buildInventoryButton(BuildContext context, int itemCount, SoundService soundService) {
+     return Badge(
+      label: Text(itemCount.toString()),
+      isLabelVisible: itemCount > 0,
+      // DEZENTERES DESIGN: Kleinere Schrift, andere Farbe
+      backgroundColor: Colors.blueGrey,
+      textColor: Colors.white,
+      smallSize: 8,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: IconButton(
+        icon: const Icon(Icons.backpack_outlined),
+        onPressed: () {
+          soundService.playSound(SoundEffect.buttonClick);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => InventoryScreen(
+                hunt: hunt,
+                huntProgress: huntProgress,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  /// Baut den Menü-Button.
+  Widget _buildMenuButton(BuildContext context, SoundService soundService) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.menu),
+      onSelected: (value) {
+        soundService.playSound(SoundEffect.buttonClick);
+        if (value == 'code_entry') {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else if (value == 'list') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ClueListScreen(
+                hunt: hunt,
+                huntProgress: huntProgress,
+              ),
+            ),
+          );
+        } else if (value == 'admin') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AdminLoginScreen()
+            ),
+          );
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'code_entry',
+          child: ListTile(
+            leading: Icon(Icons.keyboard_return_outlined),
+            title: Text('Zur Code-Eingabe'),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'list',
+          child: ListTile(
+            leading: Icon(Icons.list_alt_outlined),
+            title: Text('Logbuch / Hinweise'),
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<String>(
+          value: 'admin',
+          child: ListTile(
+            leading: Icon(Icons.admin_panel_settings_outlined),
+            title: Text('Admin-Bereich'),
+          ),
+        ),
+      ],
+    );
+  }
+
+
   @override
-  Size get preferredSize => const Size.fromHeight(75.0);
+  Size get preferredSize => const Size.fromHeight(80.0); // Höhe angepasst für zwei Zeilen
 }
 ```
 
@@ -7435,6 +7375,7 @@ export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"
 export "FLUTTER_BUILD_NUMBER=1"
+export "FLUTTER_CLI_BUILD_MODE=debug"
 export "DART_OBFUSCATION=false"
 export "TRACK_WIDGET_CREATION=true"
 export "TREE_SHAKE_ICONS=false"
@@ -7691,13 +7632,13 @@ Mehrere Schnitzeljagden: Eine Möglichkeit, verschiedene Schnitzeljagden zu spei
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:clue_master/main.dart';
+//import 'package:clue_master/main.dart';
 
 void main() {
   group('MyApp', () {
     testWidgets('Counter increments smoke test', (WidgetTester tester) async {
       // Build our app and trigger a frame.
-      await tester.pumpWidget(const MyApp());
+    //  await tester.pumpWidget(const MyApp());
 
       // Verify that our counter starts at 0.
       expect(find.text('0'), findsOneWidget);

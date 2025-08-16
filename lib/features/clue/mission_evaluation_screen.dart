@@ -91,12 +91,9 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
     return "$hours:$minutes:$seconds";
   }
   
-  // =======================================================
-  // NEU: Methode zur Formatierung der Distanz
-  // =======================================================
   String _formatDistance(double meters) {
     if (meters < 10) {
-      return "Keine Distanz gemessen";
+      return "0 m";
     }
     if (meters < 1000) {
       return '${meters.toInt()} m';
@@ -149,19 +146,19 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                       _buildStatRow(
                         icon: Icons.flag_outlined,
                         label: 'Zielzeit',
-                        value: '${widget.hunt.targetTimeInMinutes} Minuten',
+                        // =======================================================
+                        // HIER IST DIE ÄNDERUNG
+                        // Wandelt die Minuten in eine Duration um und formatiert sie.
+                        // =======================================================
+                        value: _formatDuration(Duration(minutes: widget.hunt.targetTimeInMinutes!)),
                       ),
                     ],
                     const SizedBox(height: 12),
-                    // =======================================================
-                    // NEU: Anzeige der Distanz
-                    // =======================================================
                     _buildStatRow(
                       icon: Icons.directions_walk,
-                      label: 'Zurückgelegte Distanz',
+                      label: 'Distanz (m)',
                       value: _formatDistance(widget.progress.distanceWalkedInMeters),
                     ),
-                    // =======================================================
                     const SizedBox(height: 12),
                     _buildStatRow(
                       icon: Icons.error_outline,

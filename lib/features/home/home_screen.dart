@@ -1,5 +1,3 @@
-// lib/features/home/home_screen.dart
-
 import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
@@ -12,12 +10,10 @@ import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../core/services/clue_service.dart';
-import '../../data/models/clue.dart';
+//import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
 import '../clue/clue_detail_screen.dart';
-import '../clue/clue_list_screen.dart';
-import '../admin/admin_login_screen.dart';
 import '../../main.dart';
 
 class UpperCaseTextFormatter extends TextInputFormatter {
@@ -32,6 +28,11 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 }
 
 class HomeScreen extends StatefulWidget {
+  // =======================================================
+  // DIESE ZEILE IST DER GRUND FÜR DIE FEHLER. HIER WIRD SIE HINZUGEFÜGT.
+  // =======================================================
+  static const String routeName = '/home_screen';
+
   final Hunt hunt;
   final HuntProgress huntProgress;
   final String? codeToAnimate;

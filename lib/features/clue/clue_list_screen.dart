@@ -1,3 +1,6 @@
+// lib/features/clue/clue_list_screen.dart
+
+import 'package:clue_master/features/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
@@ -21,102 +24,128 @@ class ClueListScreen extends StatefulWidget {
 class _ClueListScreenState extends State<ClueListScreen> {
   @override
   Widget build(BuildContext context) {
-    final viewedEntries =
-        widget.hunt.clues.entries.where((entry) => entry.value.hasBeenViewed).toList()
-          ..sort((a, b) => a.key.compareTo(b.key));
+    final viewedEntries = widget.hunt.clues.entries
+        .where((entry) => entry.value.hasBeenViewed)
+        .toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Missions-Logbuch')),
       body: viewedEntries.isEmpty
           ? const Center(child: Text('Noch keine Hinweise gefunden.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: viewedEntries.length,
-              separatorBuilder: (_, __) => const Divider(),
-              itemBuilder: (context, index) {
-                final code = viewedEntries[index].key;
-                final clue = viewedEntries[index].value;
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    itemCount: viewedEntries.length,
+                    separatorBuilder: (_, __) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final code = viewedEntries[index].key;
+                      final clue = viewedEntries[index].value;
 
-                IconData leadingIcon;
-                switch (clue.type) {
-                  case 'text':
-                    leadingIcon = Icons.description_outlined;
-                    break;
-                  case 'image':
-                    leadingIcon = Icons.image_outlined;
-                    break;
-                  case 'audio':
-                    leadingIcon = Icons.audiotrack_outlined;
-                    break;
-                  case 'video':
-                    leadingIcon = Icons.movie_outlined;
-                    break;
-                  default:
-                    leadingIcon = Icons.visibility_outlined;
-                }
+                      IconData leadingIcon;
+                      switch (clue.type) {
+                        case 'text':
+                          leadingIcon = Icons.description_outlined;
+                          break;
+                        case 'image':
+                          leadingIcon = Icons.image_outlined;
+                          break;
+                        case 'audio':
+                          leadingIcon = Icons.audiotrack_outlined;
+                          break;
+                        case 'video':
+                          leadingIcon = Icons.movie_outlined;
+                          break;
+                        default:
+                          leadingIcon = Icons.visibility_outlined;
+                      }
 
-                if (clue.isGpsRiddle) {
-                  leadingIcon = Icons.location_on_outlined;
-                } else if (clue.isRiddle) {
-                  // ÄNDERUNG: Wir nehmen hier ein passenderes Icon für Rätsel
-                  leadingIcon = Icons.extension_outlined; 
-                }
+                      if (clue.isGpsRiddle) {
+                        leadingIcon = Icons.location_on_outlined;
+                      } else if (clue.isRiddle) {
+                        leadingIcon = Icons.extension_outlined;
+                      }
 
-                // =======================================================
-                // NEU: Logik für den Untertitel
-                // =======================================================
-                Widget subtitleWidget;
-                final originalSubtitleText = Text(
-                  clue.question ?? clue.description ?? clue.content,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                );
+                      // =======================================================
+                      // NEUE LOGIK FÜR DEN UNTERTITEL
+                      // =======================================================
+                      Widget subtitleWidget;
+                      final originalSubtitleText = Text(
+                        clue.question ?? clue.description ?? clue.content,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      );
 
-                if (clue.autoTriggerNextClue && clue.solved) {
-                  subtitleWidget = Row(
-                    children: [
-                      Icon(Icons.double_arrow_rounded, color: Colors.amber[300], size: 16),
-                      const SizedBox(width: 6),
-                      const Expanded(
-                        child: Text(
-                          'Führt automatisch weiter',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      if (clue.solved &&
+                          clue.nextClueCode != null &&
+                          clue.nextClueCode!.isNotEmpty) {
+                        subtitleWidget = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            originalSubtitleText,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Nächster Code: ${clue.nextClueCode}',
+                              style: TextStyle(
+                                  color: Colors.amber[300],
+                                  fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        );
+                      } else {
+                        subtitleWidget = originalSubtitleText;
+                      }
+                      // =======================================================
+
+                      return ListTile(
+                        leading: Icon(
+                          leadingIcon,
+                          color: clue.solved ? Colors.greenAccent : Colors.white,
                         ),
-                      ),
-                    ],
-                  );
-                } else {
-                  subtitleWidget = originalSubtitleText;
-                }
-                // =======================================================
-
-
-                return ListTile(
-                  leading: Icon(
-                    leadingIcon,
-                    color: clue.solved ? Colors.greenAccent : Colors.white,
+                        title: Text('Code: $code'),
+                        subtitle: subtitleWidget, // Hier das neue Widget einfügen
+                        trailing: clue.solved
+                            ? const Icon(Icons.check_circle,
+                                color: Colors.greenAccent)
+                            : (clue.isRiddle
+                                ? const Icon(Icons.lock_open_outlined)
+                                : null),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClueDetailScreen(
+                                hunt: widget.hunt,
+                                clue: clue,
+                                huntProgress: widget.huntProgress,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
-                  title: Text('Code: $code'),
-                  subtitle: subtitleWidget, // Hier das neue Widget einfügen
-                  trailing: clue.solved
-                      ? const Icon(Icons.check_circle, color: Colors.greenAccent)
-                      : (clue.isRiddle ? const Icon(Icons.lock_open_outlined) : null),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ClueDetailScreen(
-                          hunt: widget.hunt,
-                          clue: clue,
-                          huntProgress: widget.huntProgress,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+                ),
+                // =======================================================
+                // NEU: BUTTON AM ENDE DER LISTE
+                // =======================================================
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).popUntil(
+                          ModalRoute.withName(HomeScreen.routeName));
+                    },
+                    icon: const Icon(Icons.keyboard_outlined),
+                    label: const Text('Neuen Code eingeben'),
+                  ),
+                ),
+              ],
             ),
     );
   }

@@ -1,5 +1,3 @@
-// lib/features/briefing/briefing_screen.dart
-
 import 'dart:io';
 import 'package:clue_master/data/models/hunt_progress.dart';
 import 'package:flutter/material.dart';
@@ -47,9 +45,11 @@ class _BriefingScreenState extends State<BriefingScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
+          // HIER WIRD DIE ROUTE BENANNT
+          settings: const RouteSettings(name: HomeScreen.routeName),
           builder: (_) => HomeScreen(
                 hunt: widget.hunt,
-                huntProgress: huntProgress, // Der korrekte Aufruf
+                huntProgress: huntProgress,
                 codeToAnimate: firstClueCode,
               )),
     );

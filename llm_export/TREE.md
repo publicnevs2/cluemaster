@@ -1,5 +1,4 @@
-# Project Tree – 2025-08-16 11:23:48
-- Git rev: `de4abfe`
+# Project Tree – 2025-08-16 14:42:59
 
 ## .
 - analysis_options.yaml (1448 B)
@@ -15,7 +14,7 @@
 - android/settings.gradle.kts (763 B)
 
 ## android\app
-- android/app/build.gradle.kts (913 B)
+- android/app/build.gradle.kts (901 B)
 
 ## android\app\src\debug
 - android/app/src/debug/AndroidManifest.xml (385 B)
@@ -52,7 +51,7 @@
 - assets/hunts.json (989 B)
 
 ## ios\Flutter
-- ios/Flutter/flutter_export_environment.sh (510 B)
+- ios/Flutter/flutter_export_environment.sh (548 B)
 
 ## ios\Runner\Assets.xcassets\AppIcon.appiconset
 - ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json (2641 B)
@@ -69,15 +68,15 @@
 - lib/core/services/sound_service.dart (1269 B)
 
 ## lib\data\models
-- lib/data/models/clue.dart (6712 B)
+- lib/data/models/clue.dart (6842 B)
 - lib/data/models/hunt.dart (3942 B)
 - lib/data/models/hunt_progress.dart (2394 B)
 - lib/data/models/item.dart (2399 B)
 
 ## lib\features\admin
 - lib/features/admin/admin_change_password_screen.dart (5694 B)
-- lib/features/admin/admin_dashboard_screen.dart (6717 B)
-- lib/features/admin/admin_editor_screen.dart (27934 B)
+- lib/features/admin/admin_dashboard_screen.dart (6412 B)
+- lib/features/admin/admin_editor_screen.dart (32597 B)
 - lib/features/admin/admin_hunt_list_screen.dart (7626 B)
 - lib/features/admin/admin_hunt_settings_screen.dart (9792 B)
 - lib/features/admin/admin_item_editor_screen.dart (6139 B)
@@ -85,7 +84,7 @@
 - lib/features/admin/admin_login_screen.dart (3703 B)
 
 ## lib\features\clue
-- lib/features/clue/clue_detail_screen.dart (25641 B)
+- lib/features/clue/clue_detail_screen.dart (17196 B)
 - lib/features/clue/clue_list_screen.dart (4708 B)
 - lib/features/clue/gps_navigation_screen.dart (7575 B)
 - lib/features/clue/mission_evaluation_screen.dart (8647 B)
@@ -93,17 +92,18 @@
 - lib/features/clue/statistics_screen.dart (6125 B)
 
 ## lib\features\home
-- lib/features/home/briefing_screen.dart (4423 B)
-- lib/features/home/home_screen.dart (12439 B)
-- lib/features/home/hunt_selection_screen.dart (7070 B)
-- lib/features/home/splash_screen.dart (3047 B)
+- lib/features/home/briefing_screen.dart (4463 B)
+- lib/features/home/home_screen.dart (12569 B)
+- lib/features/home/hunt_selection_screen.dart (7108 B)
+- lib/features/home/splash_screen.dart (2868 B)
 
 ## lib\features\inventory
-- lib/features/inventory/inventory_screen.dart (4155 B)
+- lib/features/inventory/inventory_screen.dart (4039 B)
 - lib/features/inventory/item_detail_screen.dart (3223 B)
 
 ## lib\features\shared
-- lib/features/shared/game_header.dart (7285 B)
+- lib/features/shared/about_screen.dart (1453 B)
+- lib/features/shared/game_header.dart (6684 B)
 - lib/features/shared/media_widgets.dart (13263 B)
 - lib/features/shared/qr_scanner_screen.dart (1535 B)
 
@@ -117,13 +117,13 @@
 - linux/runner/CMakeLists.txt (1000 B)
 
 ## macos\Flutter\ephemeral
-- macos/Flutter/ephemeral/flutter_export_environment.sh (472 B)
+- macos/Flutter/ephemeral/flutter_export_environment.sh (510 B)
 
 ## macos\Runner\Assets.xcassets\AppIcon.appiconset
 - macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json (1359 B)
 
 ## test
-- test/widget_test.dart (1148 B)
+- test/widget_test.dart (1152 B)
 
 ## web
 - web/manifest.json (953 B)

@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.example.clue_master"
         // HIER IST DIE FINALE ÄNDERUNG
-        minSdk = 23
+        minSdkVersion(flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

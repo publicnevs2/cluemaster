@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:clue_master/data/models/hunt_progress.dart'; // NEU: Import
+import 'package:clue_master/data/models/hunt_progress.dart';
 import 'package:flutter/material.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
@@ -9,6 +9,7 @@ import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
 import 'briefing_screen.dart';
 import 'package:clue_master/features/clue/statistics_screen.dart';
+import 'package:clue_master/features/shared/about_screen.dart';
 
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
@@ -41,32 +42,27 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
   }
 
   void _navigateToGame(Hunt hunt) async {
-    // Navigiert zum Spiel (Briefing oder HomeScreen)
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: HomeScreen.routeName),
         builder: (_) {
-          if (hunt.briefingText != null && hunt.briefingText!.trim().isNotEmpty) {
+          if (hunt.briefingText != null &&
+              hunt.briefingText!.trim().isNotEmpty) {
             return BriefingScreen(hunt: hunt);
           } else {
-            // =======================================================
-            // HIER IST DIE KORREKTUR
-            // =======================================================
-            // Erstelle auch hier den Spielstand und befülle den Rucksack.
             final huntProgress = HuntProgress(
               huntName: hunt.name,
               collectedItemIds: Set<String>.from(hunt.startingItemIds),
             );
             return HomeScreen(
               hunt: hunt,
-              huntProgress: huntProgress, // Übergebe den Spielstand
+              huntProgress: huntProgress,
             );
-            // =======================================================
           }
         },
       ),
     );
-
     _loadHunts();
   }
 
@@ -170,6 +166,16 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Über diese App',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutScreen()),
               );
             },
           ),
