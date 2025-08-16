@@ -5,6 +5,7 @@ enum RiddleType {
   TEXT,
   MULTIPLE_CHOICE,
   GPS,
+  DECISION, // NEU: Der Typ für Entscheidungs-Rätsel
 }
 
 enum ImageEffect {
@@ -53,29 +54,22 @@ class Clue {
   final String? nextClueCode;
   final bool isFinalClue;
   final bool autoTriggerNextClue;
+  
+  // ============================================================
+  // NEU: Feld für das Entscheidungs-Rätsel
+  // ============================================================
+  /// Speichert die Ziel-Codes für ein Entscheidungs-Rätsel.
+  /// Die Reihenfolge muss der `options`-Liste entsprechen.
+  final List<String>? decisionNextClueCodes;
 
-  // ============================================================
-  // NEU: FELDER FÜR DAS INVENTAR-SYSTEM
-  // ============================================================
-  /// Die ID des Items, das der Spieler als Belohnung erhält.
+  // --- Inventar-System Felder ---
   final String? rewardItemId;
-
-  /// Die ID des Items, das der Spieler besitzen muss, um diesen Hinweis zu sehen.
   final String? requiredItemId;
 
-  // ============================================================
-  // NEU: FELDER FÜR ZEITGESTEUERTE TRIGGER
-  // ============================================================
-  /// Nach wie vielen Sekunden soll der Timer auslösen?
+  // --- Zeitgesteuerte Trigger Felder ---
   final int? timedTriggerAfterSeconds;
-
-  /// Welche Nachricht soll im Timer-Popup angezeigt werden?
   final String? timedTriggerMessage;
-
-  /// Welches Item soll der Timer als Belohnung geben?
   final String? timedTriggerRewardItemId;
-
-  /// Welchen Code soll der Timer als Belohnung geben?
   final String? timedTriggerNextClueCode;
 
 
@@ -103,20 +97,22 @@ class Clue {
     this.nextClueCode,
     this.isFinalClue = false,
     this.autoTriggerNextClue = true,
-    // NEUE Felder im Konstruktor
     this.rewardItemId,
     this.requiredItemId,
     this.timedTriggerAfterSeconds,
     this.timedTriggerMessage,
     this.timedTriggerRewardItemId,
     this.timedTriggerNextClueCode,
+    this.decisionNextClueCodes, // NEU im Konstruktor
   });
 
   // SECTION: Hilfs-Methoden (Getters)
   bool get isRiddle => question != null && question!.isNotEmpty;
   bool get isGpsRiddle => isRiddle && riddleType == RiddleType.GPS;
-  bool get isMultipleChoice =>
-      isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
+  bool get isMultipleChoice => isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
+  // NEU: Getter zur einfachen Identifizierung
+  bool get isDecisionRiddle => isRiddle && riddleType == RiddleType.DECISION;
+
 
   // SECTION: JSON-Konvertierung
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
@@ -144,6 +140,8 @@ class Clue {
       }),
       answer: json['answer'],
       options: json['options'] != null ? List<String>.from(json['options']) : null,
+      // NEU: Liest die Ziel-Codes aus der JSON
+      decisionNextClueCodes: json['decisionNextClueCodes'] != null ? List<String>.from(json['decisionNextClueCodes']) : null,
       hint1: json['hint1'],
       hint2: json['hint2'],
       latitude: json['latitude'],
@@ -153,7 +151,6 @@ class Clue {
       nextClueCode: json['nextClueCode'],
       isFinalClue: json['isFinalClue'] ?? false,
       autoTriggerNextClue: json['autoTriggerNextClue'] ?? true,
-      // NEUE Felder aus JSON lesen
       rewardItemId: json['rewardItemId'],
       requiredItemId: json['requiredItemId'],
       timedTriggerAfterSeconds: json['timedTriggerAfterSeconds'],
@@ -177,6 +174,8 @@ class Clue {
       'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,
       if (options != null) 'options': options,
+      // NEU: Schreibt die Ziel-Codes in die JSON
+      if (decisionNextClueCodes != null) 'decisionNextClueCodes': decisionNextClueCodes,
       if (hint1 != null) 'hint1': hint1,
       if (hint2 != null) 'hint2': hint2,
       if (latitude != null) 'latitude': latitude,
@@ -186,7 +185,6 @@ class Clue {
       if (nextClueCode != null) 'nextClueCode': nextClueCode,
       'isFinalClue': isFinalClue,
       'autoTriggerNextClue': autoTriggerNextClue,
-      // NEUE Felder in JSON schreiben
       if (rewardItemId != null) 'rewardItemId': rewardItemId,
       if (requiredItemId != null) 'requiredItemId': requiredItemId,
       if (timedTriggerAfterSeconds != null) 'timedTriggerAfterSeconds': timedTriggerAfterSeconds,

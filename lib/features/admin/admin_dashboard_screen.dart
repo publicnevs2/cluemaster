@@ -59,9 +59,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
     );
     if (confirm == true) {
-      // =======================================================
-      // KORREKTUR HIER: Explizite Typ-Angabe
-      // =======================================================
       final updatedClues = Map<String, Clue>.from(_currentHunt.clues)..remove(code);
       await _saveClueChanges(updatedClues);
     }
@@ -74,13 +71,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       MaterialPageRoute(
         builder: (BuildContext context) {
           return AdminEditorScreen(
+            // =======================================================
+            // KORREKTUR HIER: Übergibt die gesamte Jagd an den Editor
+            // =======================================================
+            hunt: _currentHunt,
             codeToEdit: codeToEdit,
             existingClue: codeToEdit != null ? _currentHunt.clues[codeToEdit] : null,
             existingCodes: _currentHunt.clues.keys.toList(),
             onSave: (updatedMap) async {
-              // =======================================================
-              // KORREKTUR HIER: Explizite Typ-Angabe
-              // =======================================================
               final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
               if (codeToEdit != null && updatedMap.keys.first != codeToEdit) {
                 updatedClues.remove(codeToEdit);
@@ -95,9 +93,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _resetSolvedFlags() async {
-    // =======================================================
-    // KORREKTUR HIER: Explizite Typ-Angabe
-    // =======================================================
     final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
     for (var clue in updatedClues.values) {
       clue.solved = false;

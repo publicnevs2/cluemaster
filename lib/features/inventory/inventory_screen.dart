@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/hunt_progress.dart';
 import '../../data/models/item.dart';
 import '../../data/models/hunt.dart';
+import 'item_detail_screen.dart'; // NEU: Import für den Detail-Screen
 
 class InventoryScreen extends StatelessWidget {
   final Hunt hunt;
@@ -17,15 +18,13 @@ class InventoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ============================================================
-    // HIER IST DIE ECHTE LOGIK
-    // ============================================================
     final List<Item> collectedItems = huntProgress.collectedItemIds
-        .map((itemId) => hunt.items[itemId]) // Finde das Item in der Hunt-Bibliothek
-        .where((item) => item != null) // Filtere mögliche Fehler aus
+        .map((itemId) => hunt.items[itemId]) 
+        .where((item) => item != null)
         .cast<Item>()
         .toList();
-    // ============================================================
+    // Sortieren für eine konsistente Anzeige
+    collectedItems.sort((a, b) => a.name.compareTo(b.name));
 
     return Scaffold(
       appBar: AppBar(
@@ -83,9 +82,14 @@ class InventoryScreen extends StatelessWidget {
   Widget _buildItemTile(BuildContext context, Item item) {
     return GestureDetector(
       onTap: () {
-        // TODO: Item-Detail-Ansicht öffnen
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Detailansicht für "${item.name}" kommt bald.')),
+        // ============================================================
+        // GEÄNDERT: Öffnet jetzt den echten Detail-Screen
+        // ============================================================
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ItemDetailScreen(item: item),
+          ),
         );
       },
       child: Card(
@@ -99,8 +103,6 @@ class InventoryScreen extends StatelessWidget {
                 color: Colors.black.withOpacity(0.3),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  // Wir verwenden hier das thumbnailPath, aber da wir noch keine
-                  // echten Bilder haben, zeigen wir ein Platzhalter-Icon.
                   // Später wird hier Image.asset(item.thumbnailPath) stehen.
                   child: Icon(Icons.inventory_2_outlined, size: 40, color: Colors.amber[200]),
                 ),
