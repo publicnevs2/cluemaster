@@ -1,5 +1,6 @@
 // lib/features/shared/media_widgets.dart
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -10,14 +11,11 @@ import 'package:image/image.dart' as img;
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 
-// HINWEIS: Diese Datei ist jetzt die zentrale Anlaufstelle für alle
-// Widgets, die Medieninhalte wie Text, Bilder, Audio und Video anzeigen.
-
 Widget buildMediaWidgetForClue({required Clue clue}) {
   Widget mediaWidget;
   switch (clue.type) {
     case 'text':
-      mediaWidget = _buildTextWidgetWithEffect(clue.content, clue.textEffect);
+      mediaWidget = MorseCodeWidget(text: clue.content, effect: clue.textEffect);
       break;
     case 'image':
       final image = clue.content.startsWith('file://')
@@ -79,31 +77,27 @@ Widget buildMediaWidgetForClue({required Clue clue}) {
   );
 }
 
-Widget _buildTextWidgetWithEffect(String content, TextEffect effect) {
-  switch (effect) {
-    case TextEffect.MORSE_CODE:
-      return MorseCodeWidget(text: content);
-    case TextEffect.REVERSE:
-      return Text(content.split('').reversed.join(''),
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-    case TextEffect.NO_VOWELS:
-      return Text(content.replaceAll(RegExp(r'[aeiouAEIOU]'), ''),
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-    case TextEffect.MIRROR_WORDS:
-      final mirrored =
-          content.split(' ').map((word) => word.split('').reversed.join('')).join(' ');
-      return Text(mirrored,
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-    case TextEffect.NONE:
-    default:
-      return Text(content,
-          style: const TextStyle(fontSize: 18), textAlign: TextAlign.center);
-  }
+// ============================================================
+// STARK ÜBERARBEITET: MorseCodeWidget ist jetzt interaktiv
+// ============================================================
+class MorseCodeWidget extends StatefulWidget {
+  final String text;
+  final TextEffect effect;
+
+  const MorseCodeWidget({
+    super.key,
+    required this.text,
+    this.effect = TextEffect.NONE,
+  });
+
+  @override
+  State<MorseCodeWidget> createState() => _MorseCodeWidgetState();
 }
 
-class MorseCodeWidget extends StatelessWidget {
-  final String text;
-  const MorseCodeWidget({super.key, required this.text});
+class _MorseCodeWidgetState extends State<MorseCodeWidget> {
+  final AudioPlayer _dotPlayer = AudioPlayer();
+  final AudioPlayer _dashPlayer = AudioPlayer();
+  bool _isPlaying = false;
 
   static const Map<String, String> _morseCodeMap = {
     'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
@@ -115,6 +109,36 @@ class MorseCodeWidget extends StatelessWidget {
     '9': '----.', '0': '-----', ' ': '/'
   };
 
+  @override
+  void initState() {
+    super.initState();
+    _dotPlayer.setAsset('assets/audio/dot.mp3');
+    _dashPlayer.setAsset('assets/audio/dash.mp3');
+  }
+
+  @override
+  void dispose() {
+    _dotPlayer.dispose();
+    _dashPlayer.dispose();
+    super.dispose();
+  }
+
+  String _applyEffect(String content, TextEffect effect) {
+    switch (effect) {
+      case TextEffect.MORSE_CODE:
+        return _toMorseCode(content);
+      case TextEffect.REVERSE:
+        return content.split('').reversed.join('');
+      case TextEffect.NO_VOWELS:
+        return content.replaceAll(RegExp(r'[aeiouAEIOU]'), '');
+      case TextEffect.MIRROR_WORDS:
+        return content.split(' ').map((word) => word.split('').reversed.join('')).join(' ');
+      case TextEffect.NONE:
+      default:
+        return content;
+    }
+  }
+
   String _toMorseCode(String input) {
     return input
         .toUpperCase()
@@ -123,30 +147,67 @@ class MorseCodeWidget extends StatelessWidget {
         .join(' ');
   }
 
+  Future<void> _playMorseSequence() async {
+    if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+
+    final morseString = _toMorseCode(widget.text);
+
+    for (final char in morseString.split('')) {
+      if (!mounted) break;
+      switch (char) {
+        case '.':
+          await _dotPlayer.seek(Duration.zero);
+          await _dotPlayer.play();
+          await Future.delayed(const Duration(milliseconds: 200));
+          break;
+        case '-':
+          await _dashPlayer.seek(Duration.zero);
+          await _dashPlayer.play();
+          await Future.delayed(const Duration(milliseconds: 400));
+          break;
+        case ' ':
+          await Future.delayed(const Duration(milliseconds: 200));
+          break;
+        case '/':
+          await Future.delayed(const Duration(milliseconds: 400));
+          break;
+      }
+    }
+    if (mounted) {
+      setState(() => _isPlaying = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayText = _applyEffect(widget.text, widget.effect);
+    final isMorse = widget.effect == TextEffect.MORSE_CODE;
+
     return Column(
       children: [
         Text(
-          _toMorseCode(text),
-          style: const TextStyle(fontSize: 24, fontFamily: 'SpecialElite'),
+          displayText,
+          style: TextStyle(
+            fontSize: isMorse ? 24 : 18,
+            fontFamily: isMorse ? 'SpecialElite' : null,
+          ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 16),
-        IconButton(
-          icon: const Icon(Icons.volume_up_outlined, size: 40),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text(
-                  'Akustische Morsecode-Wiedergabe ist noch in Entwicklung.'),
-            ));
-          },
-        ),
+        if (isMorse) ...[
+          const SizedBox(height: 16),
+          IconButton(
+            icon: Icon(_isPlaying ? Icons.stop_circle_outlined : Icons.play_circle_outline, size: 40),
+            color: Colors.amber,
+            onPressed: _isPlaying ? null : _playMorseSequence,
+          ),
+        ]
       ],
     );
   }
 }
 
+// ... (Rest der Datei: ImagePuzzleWidget, AudioPlayerWidget, VideoPlayerWidget bleiben unverändert)
 class ImagePuzzleWidget extends StatefulWidget {
   final String imagePath;
   const ImagePuzzleWidget({super.key, required this.imagePath});
