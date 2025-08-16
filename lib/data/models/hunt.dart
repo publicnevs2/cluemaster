@@ -37,7 +37,7 @@ class GeofenceTrigger {
       hasBeenTriggered: json['hasBeenTriggered'] ?? false,
     );
   }
-
+// .
   Map<String, dynamic> toJson() {
     return {
       'id': id,
