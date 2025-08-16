@@ -3,7 +3,9 @@
 import 'clue.dart';
 import 'item.dart';
 
-// Die GeofenceTrigger-Klasse bleibt hier unverändert
+// ============================================================
+// NEU: Die Klasse für unsere Geofence-Trigger
+// ============================================================
 class GeofenceTrigger {
   final String id;
   final double latitude;
@@ -11,7 +13,7 @@ class GeofenceTrigger {
   final double radius;
   final String message;
   final String? rewardItemId;
-  final String? rewardClueCode;
+  final String? rewardClueCode; // Für zukünftige Features
   bool hasBeenTriggered;
 
   GeofenceTrigger({
@@ -37,7 +39,7 @@ class GeofenceTrigger {
       hasBeenTriggered: json['hasBeenTriggered'] ?? false,
     );
   }
-// .
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -58,13 +60,12 @@ class Hunt {
   final String? briefingText;
   final String? briefingImageUrl;
   final int? targetTimeInMinutes;
-
-  // ============================================================
-  // KORREKTUR: 'final' wurde hier entfernt, um die Map änderbar zu machen
-  // ============================================================
   Map<String, Item> items;
-
   final List<String> startingItemIds;
+
+  // ============================================================
+  // NEU: Eine Liste für alle Geofence-Trigger dieser Jagd
+  // ============================================================
   final List<GeofenceTrigger> geofenceTriggers;
 
   Hunt({
@@ -75,7 +76,7 @@ class Hunt {
     this.targetTimeInMinutes,
     this.items = const {},
     this.startingItemIds = const [],
-    this.geofenceTriggers = const [],
+    this.geofenceTriggers = const [], // NEU im Konstruktor
   });
 
   factory Hunt.fromJson(Map<String, dynamic> json) {
@@ -99,6 +100,9 @@ class Hunt {
       startingItemIds: json['startingItemIds'] != null
           ? List<String>.from(json['startingItemIds'])
           : [],
+      // ============================================================
+      // NEU: Liest die Geofence-Trigger aus der JSON-Datei
+      // ============================================================
       geofenceTriggers: json['geofenceTriggers'] != null
           ? (json['geofenceTriggers'] as List)
               .map((triggerJson) => GeofenceTrigger.fromJson(triggerJson))
@@ -111,12 +115,16 @@ class Hunt {
     final cluesJson = clues.map(
       (code, clue) => MapEntry(code, clue.toJson()),
     );
-    final geofenceTriggersJson =
-        geofenceTriggers.map((trigger) => trigger.toJson()).toList();
-
+    
     final itemsJson = items.map(
       (id, item) => MapEntry(id, item.toJson()),
     );
+
+    // ============================================================
+    // NEU: Schreibt die Geofence-Trigger in die JSON-Datei
+    // ============================================================
+    final geofenceTriggersJson =
+        geofenceTriggers.map((trigger) => trigger.toJson()).toList();
 
     return {
       'name': name,
@@ -125,7 +133,7 @@ class Hunt {
       if (targetTimeInMinutes != null) 'targetTimeInMinutes': targetTimeInMinutes,
       'items': itemsJson,
       'startingItemIds': startingItemIds,
-      'geofenceTriggers': geofenceTriggersJson,
+      'geofenceTriggers': geofenceTriggersJson, // NEU in der JSON
       'clues': cluesJson,
     };
   }

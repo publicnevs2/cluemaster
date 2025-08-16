@@ -6,6 +6,7 @@ import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import 'admin_editor_screen.dart';
 import 'admin_item_list_screen.dart';
+import 'admin_geofence_list_screen.dart'; // NEUER IMPORT
 
 class AdminDashboardScreen extends StatefulWidget {
   final Hunt hunt;
@@ -71,9 +72,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       MaterialPageRoute(
         builder: (BuildContext context) {
           return AdminEditorScreen(
-            // =======================================================
-            // KORREKTUR HIER: Übergibt die gesamte Jagd an den Editor
-            // =======================================================
             hunt: _currentHunt,
             codeToEdit: codeToEdit,
             existingClue: codeToEdit != null ? _currentHunt.clues[codeToEdit] : null,
@@ -92,13 +90,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Future<void> _resetSolvedFlags() async {
+  Future<void> _resetProgress() async {
+    // Hier wird der Fortschritt der Jagd zurückgesetzt (solved flags)
     final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
     for (var clue in updatedClues.values) {
       clue.solved = false;
       clue.hasBeenViewed = false;
     }
-    await _saveClueChanges(updatedClues);
+    
+    // Hier wird der Fortschritt der Geofences zurückgesetzt
+    for (var trigger in _currentHunt.geofenceTriggers) {
+      trigger.hasBeenTriggered = false;
+    }
+
+    await _saveClueChanges(updatedClues); // Diese Methode speichert die gesamte Jagd
+     if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Spielfortschritt wurde zurückgesetzt.'), backgroundColor: Colors.green),
+      );
+    }
   }
 
   Future<void> _navigateToItemLibrary() async {
@@ -106,6 +116,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => AdminItemListScreen(hunt: _currentHunt),
+      ),
+    );
+    await _refreshHunt();
+  }
+  
+  // ============================================================
+  // NEU: Navigation zur Geofence-Verwaltung
+  // ============================================================
+  Future<void> _navigateToGeofenceTriggers() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminGeofenceListScreen(hunt: _currentHunt),
       ),
     );
     await _refreshHunt();
@@ -123,7 +146,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Fortschritt zurücksetzen',
-            onPressed: _resetSolvedFlags,
+            onPressed: _resetProgress,
           ),
         ],
       ),
@@ -142,6 +165,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               subtitle: Text('${_currentHunt.items.length} Items in dieser Jagd'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: _navigateToItemLibrary,
+            ),
+          ),
+          // ============================================================
+          // NEU: Karte zur Geofence-Verwaltung
+          // ============================================================
+           Card(
+            margin: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 8.0),
+            child: ListTile(
+              leading: const Icon(Icons.location_searching_rounded, color: Colors.cyan),
+              title: const Text('Geofence-Trigger verwalten'),
+              subtitle: Text('${_currentHunt.geofenceTriggers.length} Trigger in dieser Jagd'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: _navigateToGeofenceTriggers,
             ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
@@ -164,12 +200,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               itemBuilder: (_, i) {
                 final code = codes[i];
                 final clue = clues[code]!;
-
                 String subtitleText = 'Typ: ${clue.type}';
                 if (clue.isRiddle) {
                   subtitleText += ' (Rätsel)';
                 }
-
                 return ListTile(
                   title: Text(code),
                   subtitle: Text(subtitleText),

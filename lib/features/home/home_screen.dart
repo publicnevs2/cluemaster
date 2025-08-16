@@ -10,7 +10,6 @@ import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../core/services/clue_service.dart';
-//import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
 import '../clue/clue_detail_screen.dart';
@@ -28,9 +27,6 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 }
 
 class HomeScreen extends StatefulWidget {
-  // =======================================================
-  // DIESE ZEILE IST DER GRUND FÜR DIE FEHLER. HIER WIRD SIE HINZUGEFÜGT.
-  // =======================================================
   static const String routeName = '/home_screen';
 
   final Hunt hunt;
@@ -76,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     if (_huntProgress.startTime != null) {
       _startStopwatch();
-      _startDistanceTracking();
+      _startDistanceAndGeofenceTracking();
     }
 
     if (widget.codeToAnimate != null && widget.codeToAnimate!.isNotEmpty) {
@@ -149,51 +145,124 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _stopwatchTimer?.cancel();
   }
 
-  Future<void> _startDistanceTracking() async {
+  // ============================================================
+  // ERWEITERTE METHODE: Prüft jetzt auch Geofences
+  // ============================================================
+  Future<void> _startDistanceAndGeofenceTracking() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      debugPrint('Standortdienste sind deaktiviert.');
-      return;
-    }
+    if (!serviceEnabled) return;
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        debugPrint('Standortberechtigung wurde verweigert.');
-        return;
-      }
+      if (permission == LocationPermission.denied) return;
     }
-
-    if (permission == LocationPermission.deniedForever) {
-      debugPrint('Standortberechtigung wurde permanent verweigert.');
-      return;
-    }
+    if (permission == LocationPermission.deniedForever) return;
 
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
+      distanceFilter: 10, // Aktualisiert alle 10 Meter
     );
 
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
         (Position position) {
       if (!mounted) return;
 
+      // Distanzmessung
       setState(() {
         if (_lastPosition != null) {
           final distance = Geolocator.distanceBetween(
-            _lastPosition!.latitude,
-            _lastPosition!.longitude,
-            position.latitude,
-            position.longitude,
+            _lastPosition!.latitude, _lastPosition!.longitude,
+            position.latitude, position.longitude,
           );
           _huntProgress.distanceWalkedInMeters += distance;
         }
         _lastPosition = position;
       });
-    }, onError: (error) {
-      debugPrint('Fehler bei der Standortabfrage: $error');
+
+      // NEU: Geofence-Prüfung
+      _checkGeofenceTriggers(position);
     });
+  }
+
+  // ============================================================
+  // NEUE METHODE: Überprüft alle Geofence-Trigger
+  // ============================================================
+  Future<void> _checkGeofenceTriggers(Position currentPosition) async {
+    bool huntStateChanged = false;
+
+    for (var trigger in _currentHunt.geofenceTriggers) {
+      if (!trigger.hasBeenTriggered) {
+        final distance = Geolocator.distanceBetween(
+          currentPosition.latitude,
+          currentPosition.longitude,
+          trigger.latitude,
+          trigger.longitude,
+        );
+
+        if (distance <= trigger.radius) {
+          trigger.hasBeenTriggered = true;
+          huntStateChanged = true;
+
+          // Sound & Vibration
+          _soundService.playSound(SoundEffect.clueUnlocked);
+          Vibration.vibrate(duration: 300);
+
+          // Belohnungs-Item vergeben
+          String? rewardMessage;
+          if (trigger.rewardItemId != null) {
+            if (_huntProgress.collectedItemIds.add(trigger.rewardItemId!)) {
+               final item = _currentHunt.items[trigger.rewardItemId!];
+               final itemName = item?.name ?? 'unbekanntes Item';
+               rewardMessage = 'Gegenstand erhalten: $itemName';
+            }
+          }
+
+          // Popup anzeigen
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Nachricht entdeckt!'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(trigger.message),
+                    if (rewardMessage != null) ...[
+                      const SizedBox(height: 16),
+                      Text(rewardMessage, style: TextStyle(color: Colors.amber[200], fontStyle: FontStyle.italic)),
+                    ]
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    if (huntStateChanged) {
+      await _saveFullHuntState();
+    }
+  }
+  
+  // ============================================================
+  // NEUE METHODE: Speichert den gesamten Zustand der Jagd
+  // ============================================================
+  Future<void> _saveFullHuntState() async {
+    final allHunts = await _clueService.loadHunts();
+    final index = allHunts.indexWhere((h) => h.name == _currentHunt.name);
+    if (index != -1) {
+      allHunts[index] = _currentHunt;
+      await _clueService.saveHunts(allHunts);
+    }
   }
 
   void _startCodeAnimation(String code) {
@@ -236,16 +305,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   Future<void> _processCode(String code) async {
     if (!_isBusy) {
-      setState(() {
-        _isBusy = true;
-      });
+      setState(() => _isBusy = true);
     }
 
     final input = code.trim();
     if (input.isEmpty) {
-      setState(() {
-        _isBusy = false;
-      });
+      setState(() => _isBusy = false);
       return;
     }
 
@@ -256,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         setState(() {
           _huntProgress.startTime = DateTime.now();
           _startStopwatch();
-          _startDistanceTracking();
+          _startDistanceAndGeofenceTracking(); // Methode umbenannt
         });
       }
 
@@ -298,21 +363,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 content: Text('Nächster Code freigeschaltet: $nextCodeToProcess')),
           );
           _codeFocusNode.requestFocus();
-          setState(() {
-            _isBusy = false;
-          });
+          setState(() => _isBusy = false);
         }
       } else {
         _codeFocusNode.requestFocus();
-        setState(() {
-          _isBusy = false;
-        });
+        setState(() => _isBusy = false);
       }
     } else {
-      setState(() {
-        _huntProgress.failedAttempts++;
-      });
-
+      setState(() => _huntProgress.failedAttempts++);
       _soundService.playSound(SoundEffect.failure);
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       setState(() {

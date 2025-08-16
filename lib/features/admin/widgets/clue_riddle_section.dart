@@ -385,3 +385,4 @@ class ClueRiddleSection extends StatelessWidget {
     );
   }
 }
+// This widget provides a section for editing the riddle details of a clue in a scavenger hunt.
