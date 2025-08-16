@@ -1,4 +1,5 @@
-# Project Snapshot – 2025-08-16 14:43:00
+# Project Snapshot – 2025-08-16 15:43:20
+- Git rev: `ca34c5f`
 - Export format: one fenced section per file (`path` + content).
 
 ---
@@ -1995,9 +1996,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
 import 'dart:io';
 import 'package:clue_master/data/models/hunt.dart';
-import 'package:clue_master/data/models/item.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -2007,6 +2006,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/models/clue.dart';
+import 'widgets/clue_basic_info_section.dart';
+import 'widgets/clue_content_section.dart';
+import 'widgets/clue_riddle_section.dart'; // NEUER IMPORT
 
 class AdminEditorScreen extends StatefulWidget {
   final Hunt hunt;
@@ -2058,7 +2060,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _rewardTextController = TextEditingController();
   final _nextClueCodeController = TextEditingController();
   bool _autoTriggerNextClue = true;
-  
+
   // --- Item-Controller ---
   String? _selectedRewardItemId;
   String? _selectedRequiredItemId;
@@ -2075,7 +2077,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _radiusController = TextEditingController();
   bool _isFetchingLocation = false;
   String? _backgroundImagePath;
-
 
   @override
   void initState() {
@@ -2114,8 +2115,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _decisionCode3Controller.text = clue.decisionNextClueCodes!.length > 2 ? clue.decisionNextClueCodes![2] : '';
           _option4Controller.text = clue.options!.length > 3 ? clue.options![3] : '';
           _decisionCode4Controller.text = clue.decisionNextClueCodes!.length > 3 ? clue.decisionNextClueCodes![3] : '';
-        }
-        else { 
+        } else {
           _answerController.text = clue.answer ?? '';
           _hint1Controller.text = clue.hint1 ?? '';
           _hint2Controller.text = clue.hint2 ?? '';
@@ -2165,7 +2165,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         _option3Controller.text.trim(),
         _option4Controller.text.trim(),
       ].where((o) => o.isNotEmpty).toList();
-      
+
       final decisionCodes = [
         _decisionCode1Controller.text.trim(),
         _decisionCode2Controller.text.trim(),
@@ -2181,23 +2181,16 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         isFinalClue: _isFinalClue,
         imageEffect: _type == 'image' ? _imageEffect : ImageEffect.NONE,
         textEffect: _type == 'text' ? _textEffect : TextEffect.NONE,
-        
         question: _isRiddle ? _questionController.text.trim() : null,
-        
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
         nextClueCode: _isRiddle && _nextClueCodeController.text.trim().isNotEmpty ? _nextClueCodeController.text.trim() : null,
-        
         autoTriggerNextClue: _autoTriggerNextClue,
-        
         rewardItemId: _isRiddle ? _selectedRewardItemId : null,
         requiredItemId: _selectedRequiredItemId,
-
         riddleType: _isRiddle ? _riddleType : RiddleType.TEXT,
         answer: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION ? _answerController.text.trim() : null,
         options: _isRiddle && (_riddleType == RiddleType.MULTIPLE_CHOICE || _riddleType == RiddleType.DECISION) ? options : null,
-        
         decisionNextClueCodes: _isRiddle && _riddleType == RiddleType.DECISION ? decisionCodes : null,
-
         hint1: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
         hint2: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
         latitude: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_latitudeController.text) : null,
@@ -2211,7 +2204,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       Navigator.pop(context);
     }
   }
-  
+
   Future<void> _getCurrentLocation() async {
     setState(() => _isFetchingLocation = true);
     try {
@@ -2223,7 +2216,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _longitudeController.text = position.longitude.toString();
         });
       } else {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Standort-Berechtigung wurde verweigert.'),
             backgroundColor: Colors.red,
@@ -2231,14 +2224,14 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         }
       }
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Standort konnte nicht abgerufen werden: $e'),
           backgroundColor: Colors.red,
         ));
       }
     } finally {
-      if(mounted) {
+      if (mounted) {
         setState(() => _isFetchingLocation = false);
       }
     }
@@ -2262,14 +2255,14 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       if (path != null) {
         await _saveMediaFile(path, 'audio_aufnahme.m4a', _contentController);
       }
-      if(mounted) {
+      if (mounted) {
         setState(() => _isRecording = false);
       }
     } else {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
         await _audioRecorder.start(const RecordConfig(), path: '${dir.path}/temp_audio');
-        if(mounted) {
+        if (mounted) {
           setState(() => _isRecording = true);
         }
       }
@@ -2281,13 +2274,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}_$originalName';
     final newPath = '${dir.path}/$fileName';
     await File(originalPath).copy(newPath);
-    if(mounted) {
+    if (mounted) {
       setState(() {
         controller.text = 'file://$newPath';
       });
     }
   }
-  
+
   Future<void> _pickGpsBackgroundImage() async {
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -2304,20 +2297,20 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
 
       await File(image.path).copy(savedImagePath);
 
-      if(mounted) {
+      if (mounted) {
         setState(() {
           _backgroundImagePath = savedImagePath;
         });
       }
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Fehler beim Speichern des Bildes: $e')),
         );
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2330,48 +2323,35 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildSectionHeader('Basis-Informationen'),
-            TextFormField(
-              controller: _codeController,
-              decoration: const InputDecoration(labelText: 'Eindeutiger Code der Station'),
-              validator: (value) {
-                final code = value?.trim() ?? '';
-                if (code.isEmpty) return 'Der Code ist ein Pflichtfeld.';
-                if (widget.codeToEdit == null && widget.existingCodes.contains(code)) return 'Dieser Code existiert bereits.';
-                if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) return 'Dieser Code existiert bereits.';
-                return null;
-              },
-            ),
-             _buildItemDropdown(
-              label: 'Benötigtes Item (optional)',
-              hint: 'Spieler muss dieses Item besitzen, um den Inhalt zu sehen',
-              currentValue: _selectedRequiredItemId,
-              onChanged: (itemId) {
+            ClueBasicInfoSection(
+              codeController: _codeController,
+              codeToEdit: widget.codeToEdit,
+              existingCodes: widget.existingCodes,
+              selectedRequiredItemId: _selectedRequiredItemId,
+              hunt: widget.hunt,
+              onRequiredItemChanged: (itemId) {
                 setState(() {
                   _selectedRequiredItemId = itemId;
                 });
               },
             ),
-
             const Divider(height: 40, thickness: 1),
-            _buildSectionHeader('Stations-Inhalt'),
-            DropdownButtonFormField<String>(
-              value: _type,
-              items: const [
-                DropdownMenuItem(value: 'text', child: Text('Text')),
-                DropdownMenuItem(value: 'image', child: Text('Bild')),
-                DropdownMenuItem(value: 'audio', child: Text('Audio')),
-                DropdownMenuItem(value: 'video', child: Text('Video')),
-              ],
-              onChanged: (value) => setState(() {
+            ClueContentSection(
+              type: _type,
+              onTypeChanged: (value) => setState(() {
                 _type = value!;
                 _contentController.clear();
               }),
-              decoration: const InputDecoration(labelText: 'Typ des Inhalts'),
+              contentController: _contentController,
+              descriptionController: _descriptionController,
+              imageEffect: _imageEffect,
+              onImageEffectChanged: (value) => setState(() => _imageEffect = value!),
+              textEffect: _textEffect,
+              onTextEffectChanged: (value) => setState(() => _textEffect = value!),
+              isRecording: _isRecording,
+              onPickMedia: _pickMedia,
+              onToggleRecording: _toggleRecording,
             ),
-            const SizedBox(height: 8),
-            _buildMediaContentField(),
-            
             const Divider(height: 40, thickness: 1),
             CheckboxListTile(
               title: const Text('Optionales Rätsel hinzufügen'),
@@ -2380,418 +2360,46 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               onChanged: (value) => setState(() => _isRiddle = value ?? false),
               controlAffinity: ListTileControlAffinity.leading,
             ),
-            if (_isRiddle) _buildRiddleSection(),
+            if (_isRiddle)
+              ClueRiddleSection(
+                questionController: _questionController,
+                answerController: _answerController,
+                hint1Controller: _hint1Controller,
+                hint2Controller: _hint2Controller,
+                option1Controller: _option1Controller,
+                option2Controller: _option2Controller,
+                option3Controller: _option3Controller,
+                option4Controller: _option4Controller,
+                decisionCode1Controller: _decisionCode1Controller,
+                decisionCode2Controller: _decisionCode2Controller,
+                decisionCode3Controller: _decisionCode3Controller,
+                decisionCode4Controller: _decisionCode4Controller,
+                latitudeController: _latitudeController,
+                longitudeController: _longitudeController,
+                radiusController: _radiusController,
+                rewardTextController: _rewardTextController,
+                nextClueCodeController: _nextClueCodeController,
+                riddleType: _riddleType,
+                isFetchingLocation: _isFetchingLocation,
+                backgroundImagePath: _backgroundImagePath,
+                selectedRewardItemId: _selectedRewardItemId,
+                isFinalClue: _isFinalClue,
+                autoTriggerNextClue: _autoTriggerNextClue,
+                hunt: widget.hunt,
+                onRiddleTypeChanged: (value) => setState(() => _riddleType = value!),
+                onGetCurrentLocation: _getCurrentLocation,
+                onPickGpsBackgroundImage: _pickGpsBackgroundImage,
+                onRemoveGpsBackgroundImage: () => setState(() => _backgroundImagePath = null),
+                onRewardItemChanged: (itemId) => setState(() => _selectedRewardItemId = itemId),
+                onFinalClueChanged: (value) => setState(() => _isFinalClue = value ?? false),
+                onAutoTriggerChanged: (value) => setState(() => _autoTriggerNextClue = value ?? true),
+              ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildRiddleSection() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Rätsel-Details'),
-          TextFormField(
-            controller: _questionController,
-            decoration: const InputDecoration(labelText: 'Aufgabenstellung / Frage', hintText: 'z.B. Welchen Weg schlägst du ein?'),
-            validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Aufgabenstellung erforderlich' : null,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<RiddleType>(
-            value: _riddleType,
-            items: const [
-              DropdownMenuItem(value: RiddleType.TEXT, child: Text('Text-Antwort')),
-              DropdownMenuItem(value: RiddleType.MULTIPLE_CHOICE, child: Text('Multiple-Choice')),
-              DropdownMenuItem(value: RiddleType.DECISION, child: Text('Entscheidung (Verzweigung)')),
-              DropdownMenuItem(value: RiddleType.GPS, child: Text('GPS-Ort finden')),
-            ],
-            onChanged: (value) => setState(() => _riddleType = value!),
-            decoration: const InputDecoration(labelText: 'Art des Rätsels'),
-          ),
-          const SizedBox(height: 16),
-          
-          if (_riddleType == RiddleType.GPS)
-            _buildGpsRiddleFields()
-          else if (_riddleType == RiddleType.DECISION)
-             _buildDecisionRiddleFields()
-          else
-            _buildTextRiddleFields(),
-
-          const Divider(height: 40, thickness: 1),
-          _buildSectionHeader('Belohnung & Nächster Schritt'),
-          
-           _buildItemDropdown(
-            label: 'Belohnungs-Item (optional)',
-            hint: 'Spieler erhält dieses Item nach dem Lösen des Rätsels',
-            currentValue: _selectedRewardItemId,
-            onChanged: (itemId) {
-              setState(() {
-                _selectedRewardItemId = itemId;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          
-          CheckboxListTile(
-            title: const Text('Dies ist der finale Hinweis der Mission'),
-            subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
-            value: _isFinalClue,
-            onChanged: (value) => setState(() => _isFinalClue = value ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _rewardTextController,
-            decoration: InputDecoration(
-              labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text (optional)', 
-              hintText: 'z.B. Gut gemacht, Agent!', 
-            ),
-            maxLines: 3,
-            validator: (v) {
-              if (_isRiddle && _isFinalClue && (v == null || v.isEmpty)) {
-                return 'Finaler Text ist für den letzten Hinweis erforderlich.';
-              }
-              return null;
-            },
-          ),
-          
-          if (!_isFinalClue && _riddleType != RiddleType.DECISION) ...[
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nextClueCodeController,
-              decoration: const InputDecoration(
-                labelText: 'Code für nächsten Hinweis (optional)',
-                hintText: 'z.B. ADLER3',
-              ),
-            ),
-            CheckboxListTile(
-              title: const Text('Nächsten Hinweis automatisch starten'),
-              subtitle: const Text('Animiert die Eingabe des nächsten Codes.'),
-              value: _autoTriggerNextClue,
-              onChanged: (value) {
-                setState(() {
-                  _autoTriggerNextClue = value ?? true;
-                });
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDecisionRiddleFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        Text('Entscheidungs-Optionen & Ziel-Codes', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Text('Gib bis zu 4 Optionen an. Für jede Option muss ein gültiger Ziel-Code einer anderen Station eingegeben werden.', style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 16),
-        _buildDecisionOptionRow(1, _option1Controller, _decisionCode1Controller),
-        _buildDecisionOptionRow(2, _option2Controller, _decisionCode2Controller),
-        _buildDecisionOptionRow(3, _option3Controller, _decisionCode3Controller),
-        _buildDecisionOptionRow(4, _option4Controller, _decisionCode4Controller),
-      ],
-    );
-  }
-
-  Widget _buildDecisionOptionRow(int number, TextEditingController optionController, TextEditingController codeController) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: TextFormField(
-              controller: optionController,
-              decoration: InputDecoration(labelText: 'Text für Option $number'),
-              validator: (v) {
-                if (codeController.text.isNotEmpty && (v == null || v.isEmpty)) {
-                  return 'Text erforderlich';
-                }
-                return null;
-              },
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 3,
-            child: TextFormField(
-              controller: codeController,
-              decoration: InputDecoration(labelText: 'Ziel-Code für Option $number'),
-              validator: (v) {
-                 if (optionController.text.isNotEmpty && (v == null || v.isEmpty)) {
-                  return 'Ziel-Code erforderlich';
-                }
-                return null;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemDropdown({
-    required String label,
-    required String hint,
-    required String? currentValue,
-    required ValueChanged<String?> onChanged,
-  }) {
-    final items = widget.hunt.items.values.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    final dropdownItems = [
-      const DropdownMenuItem<String>(
-        value: null,
-        child: Text('Kein Item', style: TextStyle(fontStyle: FontStyle.italic)),
-      ),
-      ...items.map((item) {
-        return DropdownMenuItem<String>(
-          value: item.id,
-          child: Text(item.name),
-        );
-      }),
-    ];
-
-    return DropdownButtonFormField<String>(
-      value: currentValue,
-      items: dropdownItems,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-      ),
-    );
-  }
-  
-  Widget _buildTextRiddleFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _answerController,
-          decoration: const InputDecoration(labelText: 'Korrekte Antwort'),
-          validator: (v) => (_riddleType != RiddleType.GPS && _isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
-        ),
-        const SizedBox(height: 16),
-        if (_riddleType == RiddleType.MULTIPLE_CHOICE)
-          _buildMultipleChoiceFields(),
-        const SizedBox(height: 16),
-        _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
-        TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen')),
-        const SizedBox(height: 8),
-        TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen')),
-      ],
-    );
-  }
-
-  Widget _buildGpsRiddleFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _latitudeController,
-          decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Breitengrad erforderlich' : null,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _longitudeController,
-          decoration: const InputDecoration(labelText: 'Längengrad (Longitude)'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Längengrad erforderlich' : null,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _radiusController,
-          decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20'),
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Radius erforderlich' : null,
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: _isFetchingLocation 
-            ? const CircularProgressIndicator()
-            : ElevatedButton.icon(
-                icon: const Icon(Icons.my_location),
-                label: const Text('Aktuellen Standort eintragen'),
-                onPressed: _getCurrentLocation,
-              ),
-        ),
-        _buildGpsBackgroundSection(),
-      ],
-    );
-  }
-
-  Widget _buildGpsBackgroundSection() {
-    final hasImage = _backgroundImagePath != null && _backgroundImagePath!.isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
-            child: Text(
-              "GPS-Hintergrund (optional)",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          
-          if (hasImage)
-            Center(
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.file(
-                      File(_backgroundImagePath!),
-                      height: 150,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                    label: const Text('Bild entfernen', style: TextStyle(color: Colors.redAccent)),
-                    onPressed: () {
-                      setState(() {
-                        _backgroundImagePath = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            )
-          else
-            Center(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.add_photo_alternate_outlined),
-                label: const Text('Hintergrundbild wählen'),
-                onPressed: _pickGpsBackgroundImage,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-      child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)),
-    );
-  }
-
-  Widget _buildMediaContentField() {
-    return Column(
-      children: [
-        if (_type == 'text')
-          ...[
-            TextFormField(
-              controller: _contentController,
-              decoration: const InputDecoration(labelText: 'Inhalt (Text)'),
-              maxLines: 3,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
-            ),
-            const SizedBox(height: 8),
-            _buildTextEffectField(),
-            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
-          ]
-        else
-          ...[
-            TextFormField(
-              controller: _contentController,
-              readOnly: true,
-              decoration: InputDecoration(labelText: 'Dateipfad (${_type})'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
-            ),
-            const SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              if (_type == 'image' || _type == 'video') ...[
-                ElevatedButton.icon(icon: const Icon(Icons.photo_library), label: const Text('Galerie'), onPressed: () => _pickMedia(ImageSource.gallery)),
-                ElevatedButton.icon(icon: const Icon(Icons.camera_alt), label: const Text('Kamera'), onPressed: () => _pickMedia(ImageSource.camera)),
-              ],
-              if (_type == 'audio')
-                ElevatedButton.icon(
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  label: Text(_isRecording ? 'Stopp' : 'Aufnehmen'),
-                  onPressed: _toggleRecording,
-                  style: ElevatedButton.styleFrom(backgroundColor: _isRecording ? Colors.red : null),
-                ),
-            ]),
-            const SizedBox(height: 8),
-            if (_type == 'image')
-              _buildImageEffectField(),
-            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
-          ]
-      ],
-    );
-  }
-  
-  Widget _buildImageEffectField() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-      child: DropdownButtonFormField<ImageEffect>(
-        value: _imageEffect,
-        items: const [
-          DropdownMenuItem(value: ImageEffect.NONE, child: Text('Kein Effekt')),
-          DropdownMenuItem(value: ImageEffect.PUZZLE, child: Text('Puzzle (9 Teile)')),
-          DropdownMenuItem(value: ImageEffect.INVERT_COLORS, child: Text('Farben invertieren')),
-          DropdownMenuItem(value: ImageEffect.BLACK_AND_WHITE, child: Text('Schwarz-Weiß')),
-        ],
-        onChanged: (value) => setState(() => _imageEffect = value!),
-        decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt'),
-      ),
-    );
-  }
-
-  Widget _buildTextEffectField() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-      child: DropdownButtonFormField<TextEffect>(
-        value: _textEffect,
-        items: const [
-          DropdownMenuItem(value: TextEffect.NONE, child: Text('Kein Effekt')),
-          DropdownMenuItem(value: TextEffect.MORSE_CODE, child: Text('Morsecode')),
-          DropdownMenuItem(value: TextEffect.REVERSE, child: Text('Text rückwärts')),
-          DropdownMenuItem(value: TextEffect.NO_VOWELS, child: Text('Ohne Vokale')),
-          DropdownMenuItem(value: TextEffect.MIRROR_WORDS, child: Text('Wörter spiegeln')),
-        ],
-        onChanged: (value) => setState(() => _textEffect = value!),
-        decoration: const InputDecoration(labelText: 'Optionaler Text-Effekt'),
-      ),
-    );
-  }
-
-  Widget _buildMultipleChoiceFields() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 8),
-      Text('Multiple-Choice Optionen', style: Theme.of(context).textTheme.bodySmall),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1')),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2')),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option3Controller, decoration: const InputDecoration(labelText: 'Option 3')),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option4Controller, decoration: const InputDecoration(labelText: 'Option 4')),
-    ]);
-  }
-}
+}
 ```
 
 ---
@@ -3291,7 +2899,11 @@ class _AdminHuntSettingsScreenState extends State<AdminHuntSettingsScreen> {
 ```
 // lib/features/admin/admin_item_editor_screen.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import '../../data/models/item.dart';
 
 class AdminItemEditorScreen extends StatefulWidget {
@@ -3313,15 +2925,19 @@ class AdminItemEditorScreen extends StatefulWidget {
 class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // =======================================================
+  // NEU: Controller und State-Variablen für Medien
+  // =======================================================
+  final _imagePicker = ImagePicker();
+  final _audioRecorder = AudioRecorder();
+  bool _isRecording = false;
+
   late TextEditingController _idController;
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _examineTextController;
-  late TextEditingController _thumbnailPathController;
   late TextEditingController _contentController;
-  
-  // TODO: Später durch echte Logik ersetzen
-  ItemContentType _selectedContentType = ItemContentType.text;
+  late ItemContentType _selectedContentType;
 
   bool get _isEditing => widget.existingItem != null;
 
@@ -3333,7 +2949,6 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
     _nameController = TextEditingController(text: item?.name ?? '');
     _descriptionController = TextEditingController(text: item?.description ?? '');
     _examineTextController = TextEditingController(text: item?.examineText ?? '');
-    _thumbnailPathController = TextEditingController(text: item?.thumbnailPath ?? '');
     _contentController = TextEditingController(text: item?.content ?? '');
     _selectedContentType = item?.contentType ?? ItemContentType.text;
   }
@@ -3344,9 +2959,53 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _examineTextController.dispose();
-    _thumbnailPathController.dispose();
     _contentController.dispose();
+    _audioRecorder.dispose();
     super.dispose();
+  }
+
+  // =======================================================
+  // NEU: Methoden zum Auswählen und Speichern von Medien
+  // =======================================================
+  Future<void> _pickMedia(ImageSource source) async {
+    XFile? mediaFile;
+    if (_selectedContentType == ItemContentType.image) {
+      mediaFile = await _imagePicker.pickImage(source: source, imageQuality: 80);
+    } else if (_selectedContentType == ItemContentType.video) {
+      mediaFile = await _imagePicker.pickVideo(source: source);
+    }
+    if (mediaFile != null) {
+      await _saveMediaFile(mediaFile.path, mediaFile.name);
+    }
+  }
+
+  Future<void> _toggleRecording() async {
+    if (await _audioRecorder.isRecording()) {
+      final path = await _audioRecorder.stop();
+      if (path != null) {
+        await _saveMediaFile(path, 'audio_aufnahme.m4a');
+      }
+      if (mounted) setState(() => _isRecording = false);
+    } else {
+      if (await _audioRecorder.hasPermission()) {
+        final dir = await getApplicationDocumentsDirectory();
+        await _audioRecorder.start(const RecordConfig(),
+            path: '${dir.path}/temp_audio');
+        if (mounted) setState(() => _isRecording = true);
+      }
+    }
+  }
+
+  Future<void> _saveMediaFile(String originalPath, String originalName) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_$originalName';
+    final newPath = '${dir.path}/$fileName';
+    await File(originalPath).copy(newPath);
+    if (mounted) {
+      setState(() {
+        _contentController.text = 'file://$newPath';
+      });
+    }
   }
 
   void _submitForm() {
@@ -3354,12 +3013,15 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
       final newItem = Item(
         id: _idController.text.trim(),
         name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
-        examineText: _examineTextController.text.trim(),
-        // PLATZHALTER - werden später durch echte Dateiauswahl ersetzt
-        thumbnailPath: 'assets/items/placeholder.png',
+        thumbnailPath: 'assets/items/placeholder.png', // Platzhalter
         contentType: _selectedContentType,
         content: _contentController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        examineText: _examineTextController.text.trim().isEmpty
+            ? null
+            : _examineTextController.text.trim(),
       );
 
       widget.onSave(newItem);
@@ -3400,7 +3062,6 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
                   if (value.contains(' ')) {
                     return 'Die ID darf keine Leerzeichen enthalten.';
                   }
-                  // Prüft, ob die ID bereits existiert (außer bei Bearbeitung des eigenen Items)
                   if (!_isEditing && widget.existingItemIds.contains(value.trim())) {
                     return 'Diese ID wird bereits verwendet.';
                   }
@@ -3422,10 +3083,32 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              Text('Inhalt & Aussehen', style: Theme.of(context).textTheme.titleLarge),
+              Text('Inhalt & Aussehen',
+                  style: Theme.of(context).textTheme.titleLarge),
               const Divider(),
               const SizedBox(height: 16),
-               TextFormField(
+              DropdownButtonFormField<ItemContentType>(
+                value: _selectedContentType,
+                items: const [
+                  DropdownMenuItem(value: ItemContentType.text, child: Text('Text')),
+                  DropdownMenuItem(value: ItemContentType.image, child: Text('Bild')),
+                  DropdownMenuItem(value: ItemContentType.audio, child: Text('Audio')),
+                  DropdownMenuItem(value: ItemContentType.video, child: Text('Video')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedContentType = value;
+                      _contentController.clear();
+                    });
+                  }
+                },
+                decoration: const InputDecoration(labelText: 'Typ des Inhalts'),
+              ),
+              const SizedBox(height: 16),
+              _buildMediaContentField(),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
                   labelText: 'Beschreibung (Flavor Text)',
@@ -3438,18 +3121,10 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
                 controller: _examineTextController,
                 decoration: const InputDecoration(
                   labelText: '"Untersuchen"-Text (optionaler Hinweis)',
-                  hintText: 'z.B. Bei genauerer Betrachtung siehst du die Gravur "Keller".',
+                  hintText:
+                      'z.B. Bei genauerer Betrachtung siehst du die Gravur "Keller".',
                 ),
                 maxLines: 2,
-              ),
-               const SizedBox(height: 16),
-              // PLATZHALTER für Inhaltstyp und Inhalt
-              TextFormField(
-                controller: _contentController,
-                decoration: const InputDecoration(
-                  labelText: 'Inhalt (momentan nur Text)',
-                ),
-                maxLines: 4,
               ),
             ],
           ),
@@ -3457,7 +3132,66 @@ class _AdminItemEditorScreenState extends State<AdminItemEditorScreen> {
       ),
     );
   }
-}
+
+  Widget _buildMediaContentField() {
+    switch (_selectedContentType) {
+      case ItemContentType.text:
+        return TextFormField(
+          controller: _contentController,
+          decoration: const InputDecoration(labelText: 'Inhalt (Text)'),
+          maxLines: 4,
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
+        );
+      case ItemContentType.image:
+      case ItemContentType.video:
+        return Column(
+          children: [
+            TextFormField(
+              controller: _contentController,
+              readOnly: true,
+              decoration: InputDecoration(labelText: 'Dateipfad (${_selectedContentType.name})'),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
+            ),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              ElevatedButton.icon(
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Galerie'),
+                  onPressed: () => _pickMedia(ImageSource.gallery)),
+              ElevatedButton.icon(
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Kamera'),
+                  onPressed: () => _pickMedia(ImageSource.camera)),
+            ]),
+          ],
+        );
+      case ItemContentType.audio:
+        return Column(
+          children: [
+            TextFormField(
+              controller: _contentController,
+              readOnly: true,
+              decoration: const InputDecoration(labelText: 'Dateipfad (audio)'),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+              label: Text(_isRecording ? 'Stopp' : 'Aufnehmen'),
+              onPressed: _toggleRecording,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: _isRecording ? Colors.red : null),
+            ),
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+}
 ```
 
 ---
@@ -3708,6 +3442,645 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+```
+
+---
+## lib/features/admin/widgets/clue_basic_info_section.dart
+
+```
+// lib/features/admin/widgets/clue_basic_info_section.dart
+
+import 'package:flutter/material.dart';
+import '../../../data/models/hunt.dart';
+
+class ClueBasicInfoSection extends StatelessWidget {
+  final TextEditingController codeController;
+  final String? codeToEdit;
+  final List<String> existingCodes;
+  final String? selectedRequiredItemId;
+  final Hunt hunt;
+  final Function(String?) onRequiredItemChanged;
+
+  const ClueBasicInfoSection({
+    super.key,
+    required this.codeController,
+    this.codeToEdit,
+    required this.existingCodes,
+    this.selectedRequiredItemId,
+    required this.hunt,
+    required this.onRequiredItemChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Basis-Informationen',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: codeController,
+          decoration: const InputDecoration(labelText: 'Eindeutiger Code der Station'),
+          validator: (value) {
+            final code = value?.trim() ?? '';
+            if (code.isEmpty) return 'Der Code ist ein Pflichtfeld.';
+            if (codeToEdit == null && existingCodes.contains(code)) {
+              return 'Dieser Code existiert bereits.';
+            }
+            if (codeToEdit != null && code != codeToEdit && existingCodes.contains(code)) {
+              return 'Dieser Code existiert bereits.';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 8),
+        _buildItemDropdown(
+          label: 'Benötigtes Item (optional)',
+          hint: 'Spieler muss dieses Item besitzen, um den Inhalt zu sehen',
+          currentValue: selectedRequiredItemId,
+          onChanged: onRequiredItemChanged,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItemDropdown({
+    required String label,
+    required String hint,
+    required String? currentValue,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final items = hunt.items.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    final dropdownItems = [
+      const DropdownMenuItem<String>(
+        value: null,
+        child: Text('Kein Item', style: TextStyle(fontStyle: FontStyle.italic)),
+      ),
+      ...items.map((item) {
+        return DropdownMenuItem<String>(
+          value: item.id,
+          child: Text(item.name),
+        );
+      }),
+    ];
+
+    return DropdownButtonFormField<String>(
+      value: currentValue,
+      items: dropdownItems,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+      ),
+    );
+  }
+}
+```
+
+---
+## lib/features/admin/widgets/clue_content_section.dart
+
+```
+// lib/features/admin/widgets/clue_content_section.dart
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../data/models/clue.dart';
+
+class ClueContentSection extends StatelessWidget {
+  final String type;
+  final Function(String?) onTypeChanged;
+  final TextEditingController contentController;
+  final TextEditingController descriptionController;
+  final ImageEffect imageEffect;
+  final Function(ImageEffect?) onImageEffectChanged;
+  final TextEffect textEffect;
+  final Function(TextEffect?) onTextEffectChanged;
+  final bool isRecording;
+  final Function(ImageSource) onPickMedia;
+  final VoidCallback onToggleRecording;
+
+  const ClueContentSection({
+    super.key,
+    required this.type,
+    required this.onTypeChanged,
+    required this.contentController,
+    required this.descriptionController,
+    required this.imageEffect,
+    required this.onImageEffectChanged,
+    required this.textEffect,
+    required this.onTextEffectChanged,
+    required this.isRecording,
+    required this.onPickMedia,
+    required this.onToggleRecording,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Stations-Inhalt',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: type,
+          items: const [
+            DropdownMenuItem(value: 'text', child: Text('Text')),
+            DropdownMenuItem(value: 'image', child: Text('Bild')),
+            DropdownMenuItem(value: 'audio', child: Text('Audio')),
+            DropdownMenuItem(value: 'video', child: Text('Video')),
+          ],
+          onChanged: onTypeChanged,
+          decoration: const InputDecoration(labelText: 'Typ des Inhalts'),
+        ),
+        const SizedBox(height: 8),
+        _buildMediaContentField(),
+      ],
+    );
+  }
+
+  Widget _buildMediaContentField() {
+    return Column(
+      children: [
+        if (type == 'text')
+          ...[
+            TextFormField(
+              controller: contentController,
+              decoration: const InputDecoration(labelText: 'Inhalt (Text)'),
+              maxLines: 3,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
+            ),
+            const SizedBox(height: 8),
+            _buildTextEffectField(),
+            TextFormField(controller: descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
+          ]
+        else
+          ...[
+            TextFormField(
+              controller: contentController,
+              readOnly: true,
+              decoration: InputDecoration(labelText: 'Dateipfad ($type)'),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
+            ),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              if (type == 'image' || type == 'video') ...[
+                ElevatedButton.icon(icon: const Icon(Icons.photo_library), label: const Text('Galerie'), onPressed: () => onPickMedia(ImageSource.gallery)),
+                ElevatedButton.icon(icon: const Icon(Icons.camera_alt), label: const Text('Kamera'), onPressed: () => onPickMedia(ImageSource.camera)),
+              ],
+              if (type == 'audio')
+                ElevatedButton.icon(
+                  icon: Icon(isRecording ? Icons.stop : Icons.mic),
+                  label: Text(isRecording ? 'Stopp' : 'Aufnehmen'),
+                  onPressed: onToggleRecording,
+                  style: ElevatedButton.styleFrom(backgroundColor: isRecording ? Colors.red : null),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            if (type == 'image')
+              _buildImageEffectField(),
+            TextFormField(controller: descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
+          ]
+      ],
+    );
+  }
+
+  Widget _buildImageEffectField() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: DropdownButtonFormField<ImageEffect>(
+        value: imageEffect,
+        items: const [
+          DropdownMenuItem(value: ImageEffect.NONE, child: Text('Kein Effekt')),
+          DropdownMenuItem(value: ImageEffect.PUZZLE, child: Text('Puzzle (9 Teile)')),
+          DropdownMenuItem(value: ImageEffect.INVERT_COLORS, child: Text('Farben invertieren')),
+          DropdownMenuItem(value: ImageEffect.BLACK_AND_WHITE, child: Text('Schwarz-Weiß')),
+        ],
+        onChanged: onImageEffectChanged,
+        decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt'),
+      ),
+    );
+  }
+
+  Widget _buildTextEffectField() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: DropdownButtonFormField<TextEffect>(
+        value: textEffect,
+        items: const [
+          DropdownMenuItem(value: TextEffect.NONE, child: Text('Kein Effekt')),
+          DropdownMenuItem(value: TextEffect.MORSE_CODE, child: Text('Morsecode')),
+          DropdownMenuItem(value: TextEffect.REVERSE, child: Text('Text rückwärts')),
+          DropdownMenuItem(value: TextEffect.NO_VOWELS, child: Text('Ohne Vokale')),
+          DropdownMenuItem(value: TextEffect.MIRROR_WORDS, child: Text('Wörter spiegeln')),
+        ],
+        onChanged: onTextEffectChanged,
+        decoration: const InputDecoration(labelText: 'Optionaler Text-Effekt'),
+      ),
+    );
+  }
+}
+```
+
+---
+## lib/features/admin/widgets/clue_riddle_section.dart
+
+```
+// lib/features/admin/widgets/clue_riddle_section.dart
+
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../data/models/clue.dart';
+import '../../../data/models/hunt.dart';
+
+class ClueRiddleSection extends StatelessWidget {
+  // Controllers
+  final TextEditingController questionController;
+  final TextEditingController answerController;
+  final TextEditingController hint1Controller;
+  final TextEditingController hint2Controller;
+  final TextEditingController option1Controller;
+  final TextEditingController option2Controller;
+  final TextEditingController option3Controller;
+  final TextEditingController option4Controller;
+  final TextEditingController decisionCode1Controller;
+  final TextEditingController decisionCode2Controller;
+  final TextEditingController decisionCode3Controller;
+  final TextEditingController decisionCode4Controller;
+  final TextEditingController latitudeController;
+  final TextEditingController longitudeController;
+  final TextEditingController radiusController;
+  final TextEditingController rewardTextController;
+  final TextEditingController nextClueCodeController;
+
+  // State Variables
+  final RiddleType riddleType;
+  final bool isFetchingLocation;
+  final String? backgroundImagePath;
+  final String? selectedRewardItemId;
+  final bool isFinalClue;
+  final bool autoTriggerNextClue;
+  final Hunt hunt;
+
+  // Callbacks
+  final Function(RiddleType?) onRiddleTypeChanged;
+  final VoidCallback onGetCurrentLocation;
+  final VoidCallback onPickGpsBackgroundImage;
+  final VoidCallback onRemoveGpsBackgroundImage;
+  final Function(String?) onRewardItemChanged;
+  final Function(bool?) onFinalClueChanged;
+  final Function(bool?) onAutoTriggerChanged;
+
+  const ClueRiddleSection({
+    super.key,
+    required this.questionController,
+    required this.answerController,
+    required this.hint1Controller,
+    required this.hint2Controller,
+    required this.option1Controller,
+    required this.option2Controller,
+    required this.option3Controller,
+    required this.option4Controller,
+    required this.decisionCode1Controller,
+    required this.decisionCode2Controller,
+    required this.decisionCode3Controller,
+    required this.decisionCode4Controller,
+    required this.latitudeController,
+    required this.longitudeController,
+    required this.radiusController,
+    required this.rewardTextController,
+    required this.nextClueCodeController,
+    required this.riddleType,
+    required this.isFetchingLocation,
+    this.backgroundImagePath,
+    this.selectedRewardItemId,
+    required this.isFinalClue,
+    required this.autoTriggerNextClue,
+    required this.hunt,
+    required this.onRiddleTypeChanged,
+    required this.onGetCurrentLocation,
+    required this.onPickGpsBackgroundImage,
+    required this.onRemoveGpsBackgroundImage,
+    required this.onRewardItemChanged,
+    required this.onFinalClueChanged,
+    required this.onAutoTriggerChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'Rätsel-Details'),
+          TextFormField(
+            controller: questionController,
+            decoration: const InputDecoration(labelText: 'Aufgabenstellung / Frage', hintText: 'z.B. Welchen Weg schlägst du ein?'),
+            validator: (v) => (v == null || v.isEmpty) ? 'Aufgabenstellung erforderlich' : null,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<RiddleType>(
+            value: riddleType,
+            items: const [
+              DropdownMenuItem(value: RiddleType.TEXT, child: Text('Text-Antwort')),
+              DropdownMenuItem(value: RiddleType.MULTIPLE_CHOICE, child: Text('Multiple-Choice')),
+              DropdownMenuItem(value: RiddleType.DECISION, child: Text('Entscheidung (Verzweigung)')),
+              DropdownMenuItem(value: RiddleType.GPS, child: Text('GPS-Ort finden')),
+            ],
+            onChanged: onRiddleTypeChanged,
+            decoration: const InputDecoration(labelText: 'Art des Rätsels'),
+          ),
+          const SizedBox(height: 16),
+          if (riddleType == RiddleType.GPS)
+            _buildGpsRiddleFields(context)
+          else if (riddleType == RiddleType.DECISION)
+            _buildDecisionRiddleFields(context)
+          else
+            _buildTextRiddleFields(context),
+          const Divider(height: 40, thickness: 1),
+          _buildSectionHeader(context, 'Belohnung & Nächster Schritt'),
+          _buildItemDropdown(
+            label: 'Belohnungs-Item (optional)',
+            hint: 'Spieler erhält dieses Item nach dem Lösen des Rätsels',
+            currentValue: selectedRewardItemId,
+            onChanged: onRewardItemChanged,
+          ),
+          const SizedBox(height: 16),
+          CheckboxListTile(
+            title: const Text('Dies ist der finale Hinweis der Mission'),
+            subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
+            value: isFinalClue,
+            onChanged: onFinalClueChanged,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: rewardTextController,
+            decoration: InputDecoration(
+              labelText: isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text (optional)',
+              hintText: 'z.B. Gut gemacht, Agent!',
+            ),
+            maxLines: 3,
+            validator: (v) {
+              if (isFinalClue && (v == null || v.isEmpty)) {
+                return 'Finaler Text ist für den letzten Hinweis erforderlich.';
+              }
+              return null;
+            },
+          ),
+          if (!isFinalClue && riddleType != RiddleType.DECISION) ...[
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: nextClueCodeController,
+              decoration: const InputDecoration(
+                labelText: 'Code für nächsten Hinweis (optional)',
+                hintText: 'z.B. ADLER3',
+              ),
+            ),
+            CheckboxListTile(
+              title: const Text('Nächsten Hinweis automatisch starten'),
+              subtitle: const Text('Animiert die Eingabe des nächsten Codes.'),
+              value: autoTriggerNextClue,
+              onChanged: onAutoTriggerChanged,
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGpsRiddleFields(BuildContext context) {
+    return Column(
+      children: [
+        TextFormField(
+          controller: latitudeController,
+          decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)'),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (v) => (v == null || v.isEmpty) ? 'Breitengrad erforderlich' : null,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: longitudeController,
+          decoration: const InputDecoration(labelText: 'Längengrad (Longitude)'),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (v) => (v == null || v.isEmpty) ? 'Längengrad erforderlich' : null,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: radiusController,
+          decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20'),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (v) => (v == null || v.isEmpty) ? 'Radius erforderlich' : null,
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: isFetchingLocation
+              ? const CircularProgressIndicator()
+              : ElevatedButton.icon(
+                  icon: const Icon(Icons.my_location),
+                  label: const Text('Aktuellen Standort eintragen'),
+                  onPressed: onGetCurrentLocation,
+                ),
+        ),
+        _buildGpsBackgroundSection(context),
+      ],
+    );
+  }
+
+  Widget _buildGpsBackgroundSection(BuildContext context) {
+    final hasImage = backgroundImagePath != null && backgroundImagePath!.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(top: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+            child: Text(
+              "GPS-Hintergrund (optional)",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          if (hasImage)
+            Center(
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.file(
+                      File(backgroundImagePath!),
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    label: const Text('Bild entfernen', style: TextStyle(color: Colors.redAccent)),
+                    onPressed: onRemoveGpsBackgroundImage,
+                  ),
+                ],
+              ),
+            )
+          else
+            Center(
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: const Text('Hintergrundbild wählen'),
+                onPressed: onPickGpsBackgroundImage,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDecisionRiddleFields(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text('Entscheidungs-Optionen & Ziel-Codes', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Text('Gib bis zu 4 Optionen an. Für jede Option muss ein gültiger Ziel-Code einer anderen Station eingegeben werden.', style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 16),
+        _buildDecisionOptionRow(1, option1Controller, decisionCode1Controller),
+        _buildDecisionOptionRow(2, option2Controller, decisionCode2Controller),
+        _buildDecisionOptionRow(3, option3Controller, decisionCode3Controller),
+        _buildDecisionOptionRow(4, option4Controller, decisionCode4Controller),
+      ],
+    );
+  }
+
+  Widget _buildDecisionOptionRow(int number, TextEditingController optionController, TextEditingController codeController) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              controller: optionController,
+              decoration: InputDecoration(labelText: 'Text für Option $number'),
+              validator: (v) {
+                if (codeController.text.isNotEmpty && (v == null || v.isEmpty)) {
+                  return 'Text erforderlich';
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: TextFormField(
+              controller: codeController,
+              decoration: InputDecoration(labelText: 'Ziel-Code für Option $number'),
+              validator: (v) {
+                if (optionController.text.isNotEmpty && (v == null || v.isEmpty)) {
+                  return 'Ziel-Code erforderlich';
+                }
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextRiddleFields(BuildContext context) {
+    return Column(
+      children: [
+        TextFormField(
+          controller: answerController,
+          decoration: const InputDecoration(labelText: 'Korrekte Antwort'),
+          validator: (v) => (v == null || v.isEmpty) ? 'Antwort erforderlich' : null,
+        ),
+        const SizedBox(height: 16),
+        if (riddleType == RiddleType.MULTIPLE_CHOICE)
+          _buildMultipleChoiceFields(context),
+        const SizedBox(height: 16),
+        _buildSectionHeader(context, 'Gestaffelte Hilfe (Optional)'),
+        TextFormField(controller: hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen')),
+        const SizedBox(height: 8),
+        TextFormField(controller: hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen')),
+      ],
+    );
+  }
+
+  Widget _buildMultipleChoiceFields(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 8),
+      Text('Multiple-Choice Optionen', style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 8),
+      TextFormField(controller: option1Controller, decoration: const InputDecoration(labelText: 'Option 1')),
+      const SizedBox(height: 8),
+      TextFormField(controller: option2Controller, decoration: const InputDecoration(labelText: 'Option 2')),
+      const SizedBox(height: 8),
+      TextFormField(controller: option3Controller, decoration: const InputDecoration(labelText: 'Option 3')),
+      const SizedBox(height: 8),
+      TextFormField(controller: option4Controller, decoration: const InputDecoration(labelText: 'Option 4')),
+    ]);
+  }
+
+  Widget _buildItemDropdown({
+    required String label,
+    required String hint,
+    required String? currentValue,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final items = hunt.items.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    final dropdownItems = [
+      const DropdownMenuItem<String>(
+        value: null,
+        child: Text('Kein Item', style: TextStyle(fontStyle: FontStyle.italic)),
+      ),
+      ...items.map((item) {
+        return DropdownMenuItem<String>(
+          value: item.id,
+          child: Text(item.name),
+        );
+      }),
+    ];
+
+    return DropdownButtonFormField<String>(
+      value: currentValue,
+      items: dropdownItems,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+      child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)),
     );
   }
 }
@@ -4249,6 +4622,9 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 ## lib/features/clue/clue_list_screen.dart
 
 ```
+// lib/features/clue/clue_list_screen.dart
+
+import 'package:clue_master/features/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
@@ -4272,102 +4648,128 @@ class ClueListScreen extends StatefulWidget {
 class _ClueListScreenState extends State<ClueListScreen> {
   @override
   Widget build(BuildContext context) {
-    final viewedEntries =
-        widget.hunt.clues.entries.where((entry) => entry.value.hasBeenViewed).toList()
-          ..sort((a, b) => a.key.compareTo(b.key));
+    final viewedEntries = widget.hunt.clues.entries
+        .where((entry) => entry.value.hasBeenViewed)
+        .toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Missions-Logbuch')),
       body: viewedEntries.isEmpty
           ? const Center(child: Text('Noch keine Hinweise gefunden.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: viewedEntries.length,
-              separatorBuilder: (_, __) => const Divider(),
-              itemBuilder: (context, index) {
-                final code = viewedEntries[index].key;
-                final clue = viewedEntries[index].value;
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    itemCount: viewedEntries.length,
+                    separatorBuilder: (_, __) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final code = viewedEntries[index].key;
+                      final clue = viewedEntries[index].value;
 
-                IconData leadingIcon;
-                switch (clue.type) {
-                  case 'text':
-                    leadingIcon = Icons.description_outlined;
-                    break;
-                  case 'image':
-                    leadingIcon = Icons.image_outlined;
-                    break;
-                  case 'audio':
-                    leadingIcon = Icons.audiotrack_outlined;
-                    break;
-                  case 'video':
-                    leadingIcon = Icons.movie_outlined;
-                    break;
-                  default:
-                    leadingIcon = Icons.visibility_outlined;
-                }
+                      IconData leadingIcon;
+                      switch (clue.type) {
+                        case 'text':
+                          leadingIcon = Icons.description_outlined;
+                          break;
+                        case 'image':
+                          leadingIcon = Icons.image_outlined;
+                          break;
+                        case 'audio':
+                          leadingIcon = Icons.audiotrack_outlined;
+                          break;
+                        case 'video':
+                          leadingIcon = Icons.movie_outlined;
+                          break;
+                        default:
+                          leadingIcon = Icons.visibility_outlined;
+                      }
 
-                if (clue.isGpsRiddle) {
-                  leadingIcon = Icons.location_on_outlined;
-                } else if (clue.isRiddle) {
-                  // ÄNDERUNG: Wir nehmen hier ein passenderes Icon für Rätsel
-                  leadingIcon = Icons.extension_outlined; 
-                }
+                      if (clue.isGpsRiddle) {
+                        leadingIcon = Icons.location_on_outlined;
+                      } else if (clue.isRiddle) {
+                        leadingIcon = Icons.extension_outlined;
+                      }
 
-                // =======================================================
-                // NEU: Logik für den Untertitel
-                // =======================================================
-                Widget subtitleWidget;
-                final originalSubtitleText = Text(
-                  clue.question ?? clue.description ?? clue.content,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                );
+                      // =======================================================
+                      // NEUE LOGIK FÜR DEN UNTERTITEL
+                      // =======================================================
+                      Widget subtitleWidget;
+                      final originalSubtitleText = Text(
+                        clue.question ?? clue.description ?? clue.content,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      );
 
-                if (clue.autoTriggerNextClue && clue.solved) {
-                  subtitleWidget = Row(
-                    children: [
-                      Icon(Icons.double_arrow_rounded, color: Colors.amber[300], size: 16),
-                      const SizedBox(width: 6),
-                      const Expanded(
-                        child: Text(
-                          'Führt automatisch weiter',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      if (clue.solved &&
+                          clue.nextClueCode != null &&
+                          clue.nextClueCode!.isNotEmpty) {
+                        subtitleWidget = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            originalSubtitleText,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Nächster Code: ${clue.nextClueCode}',
+                              style: TextStyle(
+                                  color: Colors.amber[300],
+                                  fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        );
+                      } else {
+                        subtitleWidget = originalSubtitleText;
+                      }
+                      // =======================================================
+
+                      return ListTile(
+                        leading: Icon(
+                          leadingIcon,
+                          color: clue.solved ? Colors.greenAccent : Colors.white,
                         ),
-                      ),
-                    ],
-                  );
-                } else {
-                  subtitleWidget = originalSubtitleText;
-                }
-                // =======================================================
-
-
-                return ListTile(
-                  leading: Icon(
-                    leadingIcon,
-                    color: clue.solved ? Colors.greenAccent : Colors.white,
+                        title: Text('Code: $code'),
+                        subtitle: subtitleWidget, // Hier das neue Widget einfügen
+                        trailing: clue.solved
+                            ? const Icon(Icons.check_circle,
+                                color: Colors.greenAccent)
+                            : (clue.isRiddle
+                                ? const Icon(Icons.lock_open_outlined)
+                                : null),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClueDetailScreen(
+                                hunt: widget.hunt,
+                                clue: clue,
+                                huntProgress: widget.huntProgress,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
-                  title: Text('Code: $code'),
-                  subtitle: subtitleWidget, // Hier das neue Widget einfügen
-                  trailing: clue.solved
-                      ? const Icon(Icons.check_circle, color: Colors.greenAccent)
-                      : (clue.isRiddle ? const Icon(Icons.lock_open_outlined) : null),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ClueDetailScreen(
-                          hunt: widget.hunt,
-                          clue: clue,
-                          huntProgress: widget.huntProgress,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+                ),
+                // =======================================================
+                // NEU: BUTTON AM ENDE DER LISTE
+                // =======================================================
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).popUntil(
+                          ModalRoute.withName(HomeScreen.routeName));
+                    },
+                    icon: const Icon(Icons.keyboard_outlined),
+                    label: const Text('Neuen Code eingeben'),
+                  ),
+                ),
+              ],
             ),
     );
   }
@@ -4684,12 +5086,9 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
     return "$hours:$minutes:$seconds";
   }
   
-  // =======================================================
-  // NEU: Methode zur Formatierung der Distanz
-  // =======================================================
   String _formatDistance(double meters) {
     if (meters < 10) {
-      return "Keine Distanz gemessen";
+      return "0 m";
     }
     if (meters < 1000) {
       return '${meters.toInt()} m';
@@ -4742,19 +5141,19 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                       _buildStatRow(
                         icon: Icons.flag_outlined,
                         label: 'Zielzeit',
-                        value: '${widget.hunt.targetTimeInMinutes} Minuten',
+                        // =======================================================
+                        // HIER IST DIE ÄNDERUNG
+                        // Wandelt die Minuten in eine Duration um und formatiert sie.
+                        // =======================================================
+                        value: _formatDuration(Duration(minutes: widget.hunt.targetTimeInMinutes!)),
                       ),
                     ],
                     const SizedBox(height: 12),
-                    // =======================================================
-                    // NEU: Anzeige der Distanz
-                    // =======================================================
                     _buildStatRow(
                       icon: Icons.directions_walk,
-                      label: 'Zurückgelegte Distanz',
+                      label: 'Distanz (m)',
                       value: _formatDistance(widget.progress.distanceWalkedInMeters),
                     ),
-                    // =======================================================
                     const SizedBox(height: 12),
                     _buildStatRow(
                       icon: Icons.error_outline,
@@ -6367,8 +6766,14 @@ class AboutScreen extends StatelessWidget {
 
 import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/admin/admin_login_screen.dart';
-import 'package:clue_master/features/clue/clue_list_screen.dart';
 import 'package:flutter/material.dart';
+
+// =======================================================
+// NEU & WICHTIG: Dieser Import wird hinzugefügt
+// =======================================================
+import 'package:clue_master/features/home/home_screen.dart'; 
+import 'package:clue_master/features/clue/clue_list_screen.dart';
+
 
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
@@ -6399,19 +6804,13 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       backgroundColor: Colors.black.withOpacity(0.8),
       elevation: 0,
-      // Das flexibleSpace erlaubt uns, ein eigenes Layout zu bauen, das über die
-      // Standard-Titelzeile hinausgeht.
       flexibleSpace: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          // ============================================================
-          // NEUE STRUKTUR: Column für zweizeiliges Layout
-          // ============================================================
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- ZEILE 1: Der Name der Jagd ---
               Text(
                 hunt.name,
                 style: const TextStyle(
@@ -6423,24 +6822,17 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
-
-              // --- ZEILE 2: Die Status-Informationen ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Gruppe 1: Zeit
                   _buildStatusElement(
                     icon: Icons.timer_outlined,
                     text: formattedTime,
                   ),
-                  
-                  // Gruppe 2: Fortschritt
                   _buildStatusElement(
                     icon: Icons.flag_outlined,
                     text: 'Station: $viewedClues/$totalClues',
                   ),
-
-                  // Gruppe 3: Rucksack & Menü
                   Row(
                     children: [
                       _buildInventoryButton(context, itemCount, soundService),
@@ -6456,7 +6848,6 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  /// Eine wiederverwendbare Methode, um ein Status-Element (Icon + Text) zu bauen.
   Widget _buildStatusElement({required IconData icon, required String text}) {
     return Row(
       children: [
@@ -6474,12 +6865,10 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
     );
   }
   
-  /// Baut den Rucksack-Button mit dem dezenteren Badge.
   Widget _buildInventoryButton(BuildContext context, int itemCount, SoundService soundService) {
      return Badge(
       label: Text(itemCount.toString()),
       isLabelVisible: itemCount > 0,
-      // DEZENTERES DESIGN: Kleinere Schrift, andere Farbe
       backgroundColor: Colors.blueGrey,
       textColor: Colors.white,
       smallSize: 8,
@@ -6502,14 +6891,16 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
     );
   }
   
-  /// Baut den Menü-Button.
   Widget _buildMenuButton(BuildContext context, SoundService soundService) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu),
       onSelected: (value) {
         soundService.playSound(SoundEffect.buttonClick);
         if (value == 'code_entry') {
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          // =======================================================
+          // HIER IST DIE ENDGÜLTIGE KORREKTUR
+          // =======================================================
+          Navigator.of(context).popUntil(ModalRoute.withName(HomeScreen.routeName));
         } else if (value == 'list') {
           Navigator.push(
             context,
@@ -6534,7 +6925,7 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
           value: 'code_entry',
           child: ListTile(
             leading: Icon(Icons.keyboard_return_outlined),
-            title: Text('Zur Code-Eingabe'),
+            title: Text('Code eingeben'),
           ),
         ),
         const PopupMenuItem<String>(
@@ -6558,7 +6949,7 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
 
 
   @override
-  Size get preferredSize => const Size.fromHeight(80.0); // Höhe angepasst für zwei Zeilen
+  Size get preferredSize => const Size.fromHeight(80.0);
 }
 ```
 

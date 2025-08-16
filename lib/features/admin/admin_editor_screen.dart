@@ -2,9 +2,7 @@
 
 import 'dart:io';
 import 'package:clue_master/data/models/hunt.dart';
-import 'package:clue_master/data/models/item.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -14,6 +12,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/models/clue.dart';
+import 'widgets/clue_basic_info_section.dart';
+import 'widgets/clue_content_section.dart';
+import 'widgets/clue_riddle_section.dart'; // NEUER IMPORT
 
 class AdminEditorScreen extends StatefulWidget {
   final Hunt hunt;
@@ -65,7 +66,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _rewardTextController = TextEditingController();
   final _nextClueCodeController = TextEditingController();
   bool _autoTriggerNextClue = true;
-  
+
   // --- Item-Controller ---
   String? _selectedRewardItemId;
   String? _selectedRequiredItemId;
@@ -82,7 +83,6 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
   final _radiusController = TextEditingController();
   bool _isFetchingLocation = false;
   String? _backgroundImagePath;
-
 
   @override
   void initState() {
@@ -121,8 +121,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _decisionCode3Controller.text = clue.decisionNextClueCodes!.length > 2 ? clue.decisionNextClueCodes![2] : '';
           _option4Controller.text = clue.options!.length > 3 ? clue.options![3] : '';
           _decisionCode4Controller.text = clue.decisionNextClueCodes!.length > 3 ? clue.decisionNextClueCodes![3] : '';
-        }
-        else { 
+        } else {
           _answerController.text = clue.answer ?? '';
           _hint1Controller.text = clue.hint1 ?? '';
           _hint2Controller.text = clue.hint2 ?? '';
@@ -172,7 +171,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         _option3Controller.text.trim(),
         _option4Controller.text.trim(),
       ].where((o) => o.isNotEmpty).toList();
-      
+
       final decisionCodes = [
         _decisionCode1Controller.text.trim(),
         _decisionCode2Controller.text.trim(),
@@ -188,23 +187,16 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         isFinalClue: _isFinalClue,
         imageEffect: _type == 'image' ? _imageEffect : ImageEffect.NONE,
         textEffect: _type == 'text' ? _textEffect : TextEffect.NONE,
-        
         question: _isRiddle ? _questionController.text.trim() : null,
-        
         rewardText: _isRiddle && _rewardTextController.text.trim().isNotEmpty ? _rewardTextController.text.trim() : null,
         nextClueCode: _isRiddle && _nextClueCodeController.text.trim().isNotEmpty ? _nextClueCodeController.text.trim() : null,
-        
         autoTriggerNextClue: _autoTriggerNextClue,
-        
         rewardItemId: _isRiddle ? _selectedRewardItemId : null,
         requiredItemId: _selectedRequiredItemId,
-
         riddleType: _isRiddle ? _riddleType : RiddleType.TEXT,
         answer: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION ? _answerController.text.trim() : null,
         options: _isRiddle && (_riddleType == RiddleType.MULTIPLE_CHOICE || _riddleType == RiddleType.DECISION) ? options : null,
-        
         decisionNextClueCodes: _isRiddle && _riddleType == RiddleType.DECISION ? decisionCodes : null,
-
         hint1: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION && _hint1Controller.text.trim().isNotEmpty ? _hint1Controller.text.trim() : null,
         hint2: _isRiddle && _riddleType != RiddleType.GPS && _riddleType != RiddleType.DECISION && _hint2Controller.text.trim().isNotEmpty ? _hint2Controller.text.trim() : null,
         latitude: _isRiddle && _riddleType == RiddleType.GPS ? double.tryParse(_latitudeController.text) : null,
@@ -218,7 +210,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       Navigator.pop(context);
     }
   }
-  
+
   Future<void> _getCurrentLocation() async {
     setState(() => _isFetchingLocation = true);
     try {
@@ -230,7 +222,7 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
           _longitudeController.text = position.longitude.toString();
         });
       } else {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Standort-Berechtigung wurde verweigert.'),
             backgroundColor: Colors.red,
@@ -238,14 +230,14 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         }
       }
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Standort konnte nicht abgerufen werden: $e'),
           backgroundColor: Colors.red,
         ));
       }
     } finally {
-      if(mounted) {
+      if (mounted) {
         setState(() => _isFetchingLocation = false);
       }
     }
@@ -269,14 +261,14 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
       if (path != null) {
         await _saveMediaFile(path, 'audio_aufnahme.m4a', _contentController);
       }
-      if(mounted) {
+      if (mounted) {
         setState(() => _isRecording = false);
       }
     } else {
       if (await _audioRecorder.hasPermission()) {
         final dir = await getApplicationDocumentsDirectory();
         await _audioRecorder.start(const RecordConfig(), path: '${dir.path}/temp_audio');
-        if(mounted) {
+        if (mounted) {
           setState(() => _isRecording = true);
         }
       }
@@ -288,13 +280,13 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}_$originalName';
     final newPath = '${dir.path}/$fileName';
     await File(originalPath).copy(newPath);
-    if(mounted) {
+    if (mounted) {
       setState(() {
         controller.text = 'file://$newPath';
       });
     }
   }
-  
+
   Future<void> _pickGpsBackgroundImage() async {
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -311,20 +303,20 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
 
       await File(image.path).copy(savedImagePath);
 
-      if(mounted) {
+      if (mounted) {
         setState(() {
           _backgroundImagePath = savedImagePath;
         });
       }
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Fehler beim Speichern des Bildes: $e')),
         );
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -337,48 +329,35 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildSectionHeader('Basis-Informationen'),
-            TextFormField(
-              controller: _codeController,
-              decoration: const InputDecoration(labelText: 'Eindeutiger Code der Station'),
-              validator: (value) {
-                final code = value?.trim() ?? '';
-                if (code.isEmpty) return 'Der Code ist ein Pflichtfeld.';
-                if (widget.codeToEdit == null && widget.existingCodes.contains(code)) return 'Dieser Code existiert bereits.';
-                if (widget.codeToEdit != null && code != widget.codeToEdit && widget.existingCodes.contains(code)) return 'Dieser Code existiert bereits.';
-                return null;
-              },
-            ),
-             _buildItemDropdown(
-              label: 'Benötigtes Item (optional)',
-              hint: 'Spieler muss dieses Item besitzen, um den Inhalt zu sehen',
-              currentValue: _selectedRequiredItemId,
-              onChanged: (itemId) {
+            ClueBasicInfoSection(
+              codeController: _codeController,
+              codeToEdit: widget.codeToEdit,
+              existingCodes: widget.existingCodes,
+              selectedRequiredItemId: _selectedRequiredItemId,
+              hunt: widget.hunt,
+              onRequiredItemChanged: (itemId) {
                 setState(() {
                   _selectedRequiredItemId = itemId;
                 });
               },
             ),
-
             const Divider(height: 40, thickness: 1),
-            _buildSectionHeader('Stations-Inhalt'),
-            DropdownButtonFormField<String>(
-              value: _type,
-              items: const [
-                DropdownMenuItem(value: 'text', child: Text('Text')),
-                DropdownMenuItem(value: 'image', child: Text('Bild')),
-                DropdownMenuItem(value: 'audio', child: Text('Audio')),
-                DropdownMenuItem(value: 'video', child: Text('Video')),
-              ],
-              onChanged: (value) => setState(() {
+            ClueContentSection(
+              type: _type,
+              onTypeChanged: (value) => setState(() {
                 _type = value!;
                 _contentController.clear();
               }),
-              decoration: const InputDecoration(labelText: 'Typ des Inhalts'),
+              contentController: _contentController,
+              descriptionController: _descriptionController,
+              imageEffect: _imageEffect,
+              onImageEffectChanged: (value) => setState(() => _imageEffect = value!),
+              textEffect: _textEffect,
+              onTextEffectChanged: (value) => setState(() => _textEffect = value!),
+              isRecording: _isRecording,
+              onPickMedia: _pickMedia,
+              onToggleRecording: _toggleRecording,
             ),
-            const SizedBox(height: 8),
-            _buildMediaContentField(),
-            
             const Divider(height: 40, thickness: 1),
             CheckboxListTile(
               title: const Text('Optionales Rätsel hinzufügen'),
@@ -387,415 +366,43 @@ class _AdminEditorScreenState extends State<AdminEditorScreen> {
               onChanged: (value) => setState(() => _isRiddle = value ?? false),
               controlAffinity: ListTileControlAffinity.leading,
             ),
-            if (_isRiddle) _buildRiddleSection(),
+            if (_isRiddle)
+              ClueRiddleSection(
+                questionController: _questionController,
+                answerController: _answerController,
+                hint1Controller: _hint1Controller,
+                hint2Controller: _hint2Controller,
+                option1Controller: _option1Controller,
+                option2Controller: _option2Controller,
+                option3Controller: _option3Controller,
+                option4Controller: _option4Controller,
+                decisionCode1Controller: _decisionCode1Controller,
+                decisionCode2Controller: _decisionCode2Controller,
+                decisionCode3Controller: _decisionCode3Controller,
+                decisionCode4Controller: _decisionCode4Controller,
+                latitudeController: _latitudeController,
+                longitudeController: _longitudeController,
+                radiusController: _radiusController,
+                rewardTextController: _rewardTextController,
+                nextClueCodeController: _nextClueCodeController,
+                riddleType: _riddleType,
+                isFetchingLocation: _isFetchingLocation,
+                backgroundImagePath: _backgroundImagePath,
+                selectedRewardItemId: _selectedRewardItemId,
+                isFinalClue: _isFinalClue,
+                autoTriggerNextClue: _autoTriggerNextClue,
+                hunt: widget.hunt,
+                onRiddleTypeChanged: (value) => setState(() => _riddleType = value!),
+                onGetCurrentLocation: _getCurrentLocation,
+                onPickGpsBackgroundImage: _pickGpsBackgroundImage,
+                onRemoveGpsBackgroundImage: () => setState(() => _backgroundImagePath = null),
+                onRewardItemChanged: (itemId) => setState(() => _selectedRewardItemId = itemId),
+                onFinalClueChanged: (value) => setState(() => _isFinalClue = value ?? false),
+                onAutoTriggerChanged: (value) => setState(() => _autoTriggerNextClue = value ?? true),
+              ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildRiddleSection() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Rätsel-Details'),
-          TextFormField(
-            controller: _questionController,
-            decoration: const InputDecoration(labelText: 'Aufgabenstellung / Frage', hintText: 'z.B. Welchen Weg schlägst du ein?'),
-            validator: (v) => (_isRiddle && (v == null || v.isEmpty)) ? 'Aufgabenstellung erforderlich' : null,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<RiddleType>(
-            value: _riddleType,
-            items: const [
-              DropdownMenuItem(value: RiddleType.TEXT, child: Text('Text-Antwort')),
-              DropdownMenuItem(value: RiddleType.MULTIPLE_CHOICE, child: Text('Multiple-Choice')),
-              DropdownMenuItem(value: RiddleType.DECISION, child: Text('Entscheidung (Verzweigung)')),
-              DropdownMenuItem(value: RiddleType.GPS, child: Text('GPS-Ort finden')),
-            ],
-            onChanged: (value) => setState(() => _riddleType = value!),
-            decoration: const InputDecoration(labelText: 'Art des Rätsels'),
-          ),
-          const SizedBox(height: 16),
-          
-          if (_riddleType == RiddleType.GPS)
-            _buildGpsRiddleFields()
-          else if (_riddleType == RiddleType.DECISION)
-             _buildDecisionRiddleFields()
-          else
-            _buildTextRiddleFields(),
-
-          const Divider(height: 40, thickness: 1),
-          _buildSectionHeader('Belohnung & Nächster Schritt'),
-          
-           _buildItemDropdown(
-            label: 'Belohnungs-Item (optional)',
-            hint: 'Spieler erhält dieses Item nach dem Lösen des Rätsels',
-            currentValue: _selectedRewardItemId,
-            onChanged: (itemId) {
-              setState(() {
-                _selectedRewardItemId = itemId;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          
-          CheckboxListTile(
-            title: const Text('Dies ist der finale Hinweis der Mission'),
-            subtitle: const Text('Löst der Spieler dieses Rätsel, ist die Jagd beendet.'),
-            value: _isFinalClue,
-            onChanged: (value) => setState(() => _isFinalClue = value ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _rewardTextController,
-            decoration: InputDecoration(
-              labelText: _isFinalClue ? 'Finaler Erfolgs-Text' : 'Belohnungs-Text (optional)', 
-              hintText: 'z.B. Gut gemacht, Agent!', 
-            ),
-            maxLines: 3,
-            validator: (v) {
-              if (_isRiddle && _isFinalClue && (v == null || v.isEmpty)) {
-                return 'Finaler Text ist für den letzten Hinweis erforderlich.';
-              }
-              return null;
-            },
-          ),
-          
-          if (!_isFinalClue && _riddleType != RiddleType.DECISION) ...[
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nextClueCodeController,
-              decoration: const InputDecoration(
-                labelText: 'Code für nächsten Hinweis (optional)',
-                hintText: 'z.B. ADLER3',
-              ),
-            ),
-            CheckboxListTile(
-              title: const Text('Nächsten Hinweis automatisch starten'),
-              subtitle: const Text('Animiert die Eingabe des nächsten Codes.'),
-              value: _autoTriggerNextClue,
-              onChanged: (value) {
-                setState(() {
-                  _autoTriggerNextClue = value ?? true;
-                });
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDecisionRiddleFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        Text('Entscheidungs-Optionen & Ziel-Codes', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Text('Gib bis zu 4 Optionen an. Für jede Option muss ein gültiger Ziel-Code einer anderen Station eingegeben werden.', style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 16),
-        _buildDecisionOptionRow(1, _option1Controller, _decisionCode1Controller),
-        _buildDecisionOptionRow(2, _option2Controller, _decisionCode2Controller),
-        _buildDecisionOptionRow(3, _option3Controller, _decisionCode3Controller),
-        _buildDecisionOptionRow(4, _option4Controller, _decisionCode4Controller),
-      ],
-    );
-  }
-
-  Widget _buildDecisionOptionRow(int number, TextEditingController optionController, TextEditingController codeController) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: TextFormField(
-              controller: optionController,
-              decoration: InputDecoration(labelText: 'Text für Option $number'),
-              validator: (v) {
-                if (codeController.text.isNotEmpty && (v == null || v.isEmpty)) {
-                  return 'Text erforderlich';
-                }
-                return null;
-              },
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 3,
-            child: TextFormField(
-              controller: codeController,
-              decoration: InputDecoration(labelText: 'Ziel-Code für Option $number'),
-              validator: (v) {
-                 if (optionController.text.isNotEmpty && (v == null || v.isEmpty)) {
-                  return 'Ziel-Code erforderlich';
-                }
-                return null;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemDropdown({
-    required String label,
-    required String hint,
-    required String? currentValue,
-    required ValueChanged<String?> onChanged,
-  }) {
-    final items = widget.hunt.items.values.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    final dropdownItems = [
-      const DropdownMenuItem<String>(
-        value: null,
-        child: Text('Kein Item', style: TextStyle(fontStyle: FontStyle.italic)),
-      ),
-      ...items.map((item) {
-        return DropdownMenuItem<String>(
-          value: item.id,
-          child: Text(item.name),
-        );
-      }),
-    ];
-
-    return DropdownButtonFormField<String>(
-      value: currentValue,
-      items: dropdownItems,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-      ),
-    );
-  }
-  
-  Widget _buildTextRiddleFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _answerController,
-          decoration: const InputDecoration(labelText: 'Korrekte Antwort'),
-          validator: (v) => (_riddleType != RiddleType.GPS && _isRiddle && (v == null || v.isEmpty)) ? 'Antwort erforderlich' : null,
-        ),
-        const SizedBox(height: 16),
-        if (_riddleType == RiddleType.MULTIPLE_CHOICE)
-          _buildMultipleChoiceFields(),
-        const SizedBox(height: 16),
-        _buildSectionHeader('Gestaffelte Hilfe (Optional)'),
-        TextFormField(controller: _hint1Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 2 Fehlversuchen')),
-        const SizedBox(height: 8),
-        TextFormField(controller: _hint2Controller, decoration: const InputDecoration(labelText: 'Hilfe nach 4 Fehlversuchen')),
-      ],
-    );
-  }
-
-  Widget _buildGpsRiddleFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _latitudeController,
-          decoration: const InputDecoration(labelText: 'Breitengrad (Latitude)'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Breitengrad erforderlich' : null,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _longitudeController,
-          decoration: const InputDecoration(labelText: 'Längengrad (Longitude)'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Längengrad erforderlich' : null,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _radiusController,
-          decoration: const InputDecoration(labelText: 'Radius in Metern', hintText: 'z.B. 20'),
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: (v) => (_riddleType == RiddleType.GPS && (v == null || v.isEmpty)) ? 'Radius erforderlich' : null,
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: _isFetchingLocation 
-            ? const CircularProgressIndicator()
-            : ElevatedButton.icon(
-                icon: const Icon(Icons.my_location),
-                label: const Text('Aktuellen Standort eintragen'),
-                onPressed: _getCurrentLocation,
-              ),
-        ),
-        _buildGpsBackgroundSection(),
-      ],
-    );
-  }
-
-  Widget _buildGpsBackgroundSection() {
-    final hasImage = _backgroundImagePath != null && _backgroundImagePath!.isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
-            child: Text(
-              "GPS-Hintergrund (optional)",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          
-          if (hasImage)
-            Center(
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.file(
-                      File(_backgroundImagePath!),
-                      height: 150,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                    label: const Text('Bild entfernen', style: TextStyle(color: Colors.redAccent)),
-                    onPressed: () {
-                      setState(() {
-                        _backgroundImagePath = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            )
-          else
-            Center(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.add_photo_alternate_outlined),
-                label: const Text('Hintergrundbild wählen'),
-                onPressed: _pickGpsBackgroundImage,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-      child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)),
-    );
-  }
-
-  Widget _buildMediaContentField() {
-    return Column(
-      children: [
-        if (_type == 'text')
-          ...[
-            TextFormField(
-              controller: _contentController,
-              decoration: const InputDecoration(labelText: 'Inhalt (Text)'),
-              maxLines: 3,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Inhalt erforderlich' : null,
-            ),
-            const SizedBox(height: 8),
-            _buildTextEffectField(),
-            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
-          ]
-        else
-          ...[
-            TextFormField(
-              controller: _contentController,
-              readOnly: true,
-              decoration: InputDecoration(labelText: 'Dateipfad (${_type})'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Datei erforderlich' : null,
-            ),
-            const SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              if (_type == 'image' || _type == 'video') ...[
-                ElevatedButton.icon(icon: const Icon(Icons.photo_library), label: const Text('Galerie'), onPressed: () => _pickMedia(ImageSource.gallery)),
-                ElevatedButton.icon(icon: const Icon(Icons.camera_alt), label: const Text('Kamera'), onPressed: () => _pickMedia(ImageSource.camera)),
-              ],
-              if (_type == 'audio')
-                ElevatedButton.icon(
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  label: Text(_isRecording ? 'Stopp' : 'Aufnehmen'),
-                  onPressed: _toggleRecording,
-                  style: ElevatedButton.styleFrom(backgroundColor: _isRecording ? Colors.red : null),
-                ),
-            ]),
-            const SizedBox(height: 8),
-            if (_type == 'image')
-              _buildImageEffectField(),
-            TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Beschreibung (optional)')),
-          ]
-      ],
-    );
-  }
-  
-  Widget _buildImageEffectField() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-      child: DropdownButtonFormField<ImageEffect>(
-        value: _imageEffect,
-        items: const [
-          DropdownMenuItem(value: ImageEffect.NONE, child: Text('Kein Effekt')),
-          DropdownMenuItem(value: ImageEffect.PUZZLE, child: Text('Puzzle (9 Teile)')),
-          DropdownMenuItem(value: ImageEffect.INVERT_COLORS, child: Text('Farben invertieren')),
-          DropdownMenuItem(value: ImageEffect.BLACK_AND_WHITE, child: Text('Schwarz-Weiß')),
-        ],
-        onChanged: (value) => setState(() => _imageEffect = value!),
-        decoration: const InputDecoration(labelText: 'Optionaler Bild-Effekt'),
-      ),
-    );
-  }
-
-  Widget _buildTextEffectField() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-      child: DropdownButtonFormField<TextEffect>(
-        value: _textEffect,
-        items: const [
-          DropdownMenuItem(value: TextEffect.NONE, child: Text('Kein Effekt')),
-          DropdownMenuItem(value: TextEffect.MORSE_CODE, child: Text('Morsecode')),
-          DropdownMenuItem(value: TextEffect.REVERSE, child: Text('Text rückwärts')),
-          DropdownMenuItem(value: TextEffect.NO_VOWELS, child: Text('Ohne Vokale')),
-          DropdownMenuItem(value: TextEffect.MIRROR_WORDS, child: Text('Wörter spiegeln')),
-        ],
-        onChanged: (value) => setState(() => _textEffect = value!),
-        decoration: const InputDecoration(labelText: 'Optionaler Text-Effekt'),
-      ),
-    );
-  }
-
-  Widget _buildMultipleChoiceFields() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 8),
-      Text('Multiple-Choice Optionen', style: Theme.of(context).textTheme.bodySmall),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option1Controller, decoration: const InputDecoration(labelText: 'Option 1')),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option2Controller, decoration: const InputDecoration(labelText: 'Option 2')),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option3Controller, decoration: const InputDecoration(labelText: 'Option 3')),
-      const SizedBox(height: 8),
-      TextFormField(controller: _option4Controller, decoration: const InputDecoration(labelText: 'Option 4')),
-    ]);
   }
 }

@@ -1,4 +1,5 @@
-# Project Tree – 2025-08-16 14:42:59
+# Project Tree – 2025-08-16 15:43:20
+- Git rev: `ca34c5f`
 
 ## .
 - analysis_options.yaml (1448 B)
@@ -76,18 +77,23 @@
 ## lib\features\admin
 - lib/features/admin/admin_change_password_screen.dart (5694 B)
 - lib/features/admin/admin_dashboard_screen.dart (6412 B)
-- lib/features/admin/admin_editor_screen.dart (32597 B)
+- lib/features/admin/admin_editor_screen.dart (17173 B)
 - lib/features/admin/admin_hunt_list_screen.dart (7626 B)
 - lib/features/admin/admin_hunt_settings_screen.dart (9792 B)
-- lib/features/admin/admin_item_editor_screen.dart (6139 B)
+- lib/features/admin/admin_item_editor_screen.dart (11067 B)
 - lib/features/admin/admin_item_list_screen.dart (5420 B)
 - lib/features/admin/admin_login_screen.dart (3703 B)
 
+## lib\features\admin\widgets
+- lib/features/admin/widgets/clue_basic_info_section.dart (2852 B)
+- lib/features/admin/widgets/clue_content_section.dart (5789 B)
+- lib/features/admin/widgets/clue_riddle_section.dart (15457 B)
+
 ## lib\features\clue
 - lib/features/clue/clue_detail_screen.dart (17196 B)
-- lib/features/clue/clue_list_screen.dart (4708 B)
+- lib/features/clue/clue_list_screen.dart (6335 B)
 - lib/features/clue/gps_navigation_screen.dart (7575 B)
-- lib/features/clue/mission_evaluation_screen.dart (8647 B)
+- lib/features/clue/mission_evaluation_screen.dart (8487 B)
 - lib/features/clue/mission_success_screen.dart (8562 B)
 - lib/features/clue/statistics_screen.dart (6125 B)
 
@@ -103,7 +109,7 @@
 
 ## lib\features\shared
 - lib/features/shared/about_screen.dart (1453 B)
-- lib/features/shared/game_header.dart (6684 B)
+- lib/features/shared/game_header.dart (6252 B)
 - lib/features/shared/media_widgets.dart (13263 B)
 - lib/features/shared/qr_scanner_screen.dart (1535 B)
 
