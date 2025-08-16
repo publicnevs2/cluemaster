@@ -2,8 +2,9 @@
 
 import 'package:flutter/material.dart';
 import '../../data/models/item.dart';
-import '../../data/models/clue.dart'; // NEU & WICHTIG: Import für Clue, ImageEffect etc.
+import '../../data/models/clue.dart';
 import '../shared/media_widgets.dart';
+import '../shared/widgets/flashlight_widget.dart'; // WICHTIGER IMPORT
 
 class ItemDetailScreen extends StatelessWidget {
   final Item item;
@@ -78,11 +79,25 @@ class ItemDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Diese Methode ist eine Kopie der Logik aus `media_widgets.dart`,
-  /// aber speziell für `Item`-Objekte angepasst.
+  /// Diese Methode ist der Kern der neuen Logik. Sie entscheidet,
+  /// welches Widget für das jeweilige Item angezeigt wird.
   Widget _buildMediaWidgetForItem(Item item) {
+    // PRÜFUNG 1: Ist es ein interaktives Werkzeug?
+    if (item.itemCategory == ItemCategory.INTERACTIVE) {
+      // Prüfe die Widget-Kennung (den "content"-String)
+      switch (item.content) {
+        case 'taschenlampe':
+          return const FlashlightWidget();
+        // Hier können später weitere Widgets wie 'morse_translator' etc. hinzukommen
+        default:
+          return Text('Unbekanntes interaktives Widget: ${item.content}');
+      }
+    }
+
+    // PRÜFUNG 2: Wenn nicht interaktiv, behandle es wie einen normalen Hinweis
     String clueTypeString = item.contentType.toString().split('.').last;
 
+    // Wir erstellen einen "Dummy"-Hinweis, um unsere bestehende Logik wiederzuverwenden
     final dummyClue = Clue(
       code: 'dummy',
       type: clueTypeString,

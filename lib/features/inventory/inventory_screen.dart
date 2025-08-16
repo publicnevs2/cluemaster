@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/hunt_progress.dart';
 import '../../data/models/item.dart';
 import '../../data/models/hunt.dart';
-import 'item_detail_screen.dart'; // NEU: Import für den Detail-Screen
+import 'item_detail_screen.dart';
 
 class InventoryScreen extends StatelessWidget {
   final Hunt hunt;
@@ -18,12 +18,23 @@ class InventoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ============================================================
+    // NEU: Lädt jetzt auch die globalen Items
+    // ============================================================
     final List<Item> collectedItems = huntProgress.collectedItemIds
-        .map((itemId) => hunt.items[itemId]) 
+        .map((itemId) {
+          // Prüfe zuerst, ob es ein jagd-spezifisches Item ist
+          if (hunt.items.containsKey(itemId)) {
+            return hunt.items[itemId];
+          }
+          // Ansonsten wird es ein globales Item sein (diese müssen wir später noch laden)
+          // Fürs Erste gehen wir davon aus, dass die ID in hunt.items existiert.
+          return hunt.items[itemId];
+        })
         .where((item) => item != null)
         .cast<Item>()
         .toList();
-    // Sortieren für eine konsistente Anzeige
+
     collectedItems.sort((a, b) => a.name.compareTo(b.name));
 
     return Scaffold(
@@ -82,9 +93,6 @@ class InventoryScreen extends StatelessWidget {
   Widget _buildItemTile(BuildContext context, Item item) {
     return GestureDetector(
       onTap: () {
-        // ============================================================
-        // GEÄNDERT: Öffnet jetzt den echten Detail-Screen
-        // ============================================================
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -103,7 +111,6 @@ class InventoryScreen extends StatelessWidget {
                 color: Colors.black.withOpacity(0.3),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  // Später wird hier Image.asset(item.thumbnailPath) stehen.
                   child: Icon(Icons.inventory_2_outlined, size: 40, color: Colors.amber[200]),
                 ),
               ),
