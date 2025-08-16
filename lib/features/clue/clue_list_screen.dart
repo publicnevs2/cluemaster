@@ -27,7 +27,14 @@ class _ClueListScreenState extends State<ClueListScreen> {
     final viewedEntries = widget.hunt.clues.entries
         .where((entry) => entry.value.hasBeenViewed)
         .toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+      // =======================================================
+      // NEUE SORTIERUNG: Nach Zeitstempel statt nach Code
+      // =======================================================
+      ..sort((a, b) {
+        final timeA = a.value.viewedTimestamp ?? DateTime(1970); // Fallback für alte Daten
+        final timeB = b.value.viewedTimestamp ?? DateTime(1970);
+        return timeA.compareTo(timeB);
+      });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Missions-Logbuch')),
@@ -68,9 +75,6 @@ class _ClueListScreenState extends State<ClueListScreen> {
                         leadingIcon = Icons.extension_outlined;
                       }
 
-                      // =======================================================
-                      // NEUE LOGIK FÜR DEN UNTERTITEL
-                      // =======================================================
                       Widget subtitleWidget;
                       final originalSubtitleText = Text(
                         clue.question ?? clue.description ?? clue.content,
@@ -97,7 +101,6 @@ class _ClueListScreenState extends State<ClueListScreen> {
                       } else {
                         subtitleWidget = originalSubtitleText;
                       }
-                      // =======================================================
 
                       return ListTile(
                         leading: Icon(
@@ -105,7 +108,7 @@ class _ClueListScreenState extends State<ClueListScreen> {
                           color: clue.solved ? Colors.greenAccent : Colors.white,
                         ),
                         title: Text('Code: $code'),
-                        subtitle: subtitleWidget, // Hier das neue Widget einfügen
+                        subtitle: subtitleWidget,
                         trailing: clue.solved
                             ? const Icon(Icons.check_circle,
                                 color: Colors.greenAccent)
@@ -128,9 +131,6 @@ class _ClueListScreenState extends State<ClueListScreen> {
                     },
                   ),
                 ),
-                // =======================================================
-                // NEU: BUTTON AM ENDE DER LISTE
-                // =======================================================
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ElevatedButton.icon(

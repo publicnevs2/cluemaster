@@ -6,7 +6,7 @@ import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import 'admin_editor_screen.dart';
 import 'admin_item_list_screen.dart';
-import 'admin_geofence_list_screen.dart'; // NEUER IMPORT
+import 'admin_geofence_list_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final Hunt hunt;
@@ -64,6 +64,42 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       await _saveClueChanges(updatedClues);
     }
   }
+  
+  // ============================================================
+  // NEU: Logik zum Duplizieren einer Station
+  // ============================================================
+  Future<void> _duplicateClue(String codeToDuplicate) async {
+    final originalClue = _currentHunt.clues[codeToDuplicate];
+    if (originalClue == null) return;
+
+    // Finde einen neuen, eindeutigen Code
+    String newCodeBase = '${codeToDuplicate}_COPY';
+    String newCode = newCodeBase;
+    int counter = 1;
+    while (_currentHunt.clues.containsKey(newCode)) {
+      newCode = '${newCodeBase}_$counter';
+      counter++;
+    }
+
+    // Erstelle eine tiefe Kopie des Hinweises
+    final clueJson = originalClue.toJson();
+    final newClue = Clue.fromJson(newCode, clueJson);
+    
+    // Setze den Fortschritt für die Kopie zurück
+    newClue.solved = false;
+    newClue.hasBeenViewed = false;
+    newClue.viewedTimestamp = null;
+
+    final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
+    updatedClues[newCode] = newClue;
+    await _saveClueChanges(updatedClues);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Station als "$newCode" kopiert.')),
+      );
+    }
+  }
 
   Future<void> _openEditor({String? codeToEdit}) async {
     if (!mounted) return;
@@ -91,19 +127,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _resetProgress() async {
-    // Hier wird der Fortschritt der Jagd zurückgesetzt (solved flags)
     final updatedClues = Map<String, Clue>.from(_currentHunt.clues);
     for (var clue in updatedClues.values) {
       clue.solved = false;
       clue.hasBeenViewed = false;
+      clue.viewedTimestamp = null; // Zeitstempel auch zurücksetzen
     }
     
-    // Hier wird der Fortschritt der Geofences zurückgesetzt
     for (var trigger in _currentHunt.geofenceTriggers) {
       trigger.hasBeenTriggered = false;
     }
 
-    await _saveClueChanges(updatedClues); // Diese Methode speichert die gesamte Jagd
+    await _saveClueChanges(updatedClues);
      if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Spielfortschritt wurde zurückgesetzt.'), backgroundColor: Colors.green),
@@ -121,9 +156,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     await _refreshHunt();
   }
   
-  // ============================================================
-  // NEU: Navigation zur Geofence-Verwaltung
-  // ============================================================
   Future<void> _navigateToGeofenceTriggers() async {
     await Navigator.push(
       context,
@@ -167,9 +199,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onTap: _navigateToItemLibrary,
             ),
           ),
-          // ============================================================
-          // NEU: Karte zur Geofence-Verwaltung
-          // ============================================================
            Card(
             margin: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 8.0),
             child: ListTile(
@@ -210,6 +239,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // ============================================================
+                      // NEU: Der Duplizieren-Button
+                      // ============================================================
+                      IconButton(
+                        icon: const Icon(Icons.copy_outlined, color: Colors.blueGrey),
+                        tooltip: 'Station kopieren',
+                        onPressed: () => _duplicateClue(code),
+                      ),
                       IconButton(icon: const Icon(Icons.edit_note), onPressed: () => _openEditor(codeToEdit: code)),
                       IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: () => _deleteClue(code)),
                     ],

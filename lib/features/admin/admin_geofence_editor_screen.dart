@@ -44,7 +44,8 @@ class _AdminGeofenceEditorScreenState extends State<AdminGeofenceEditorScreen> {
   void initState() {
     super.initState();
     final trigger = widget.existingTrigger;
-    _idController = TextEditingController(text: trigger?.id ?? _uuid.v4());
+    // Generiert nur eine neue ID, wenn ein neuer Trigger erstellt wird
+    _idController = TextEditingController(text: trigger?.id ?? _uuid.v4().substring(0, 8));
     _messageController = TextEditingController(text: trigger?.message ?? '');
     _latitudeController =
         TextEditingController(text: trigger?.latitude.toString() ?? '');
@@ -126,12 +127,33 @@ class _AdminGeofenceEditorScreenState extends State<AdminGeofenceEditorScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // ============================================================
+            // GEÄNDERT: ID-Feld ist jetzt bearbeitbar und wird validiert
+            // ============================================================
             TextFormField(
               controller: _idController,
-              readOnly: true,
               decoration: const InputDecoration(
-                labelText: 'Eindeutige ID (automatisch)',
+                labelText: 'Eindeutige ID',
+                hintText: 'z.B. PARK_EINGANG (keine Leerzeichen)',
               ),
+              validator: (value) {
+                final id = value?.trim() ?? '';
+                if (id.isEmpty) {
+                  return 'Die ID darf nicht leer sein.';
+                }
+                if (id.contains(' ')) {
+                  return 'Die ID darf keine Leerzeichen enthalten.';
+                }
+                // Prüft auf Einzigartigkeit, erlaubt aber die eigene ID bei der Bearbeitung
+                final otherIds = List<String>.from(widget.existingTriggerIds);
+                if (_isEditing) {
+                  otherIds.remove(widget.existingTrigger!.id);
+                }
+                if (otherIds.contains(id)) {
+                  return 'Diese ID wird bereits verwendet.';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(

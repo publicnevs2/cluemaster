@@ -12,6 +12,7 @@ import 'package:pinput/pinput.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../core/services/clue_service.dart';
+import '../../data/models/clue.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
 import '../clue/clue_detail_screen.dart';
@@ -146,12 +147,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void _stopStopwatch() {
     _stopwatchTimer?.cancel();
   }
-  
-  // ============================================================
-  // NEUE ZENTRALE SPEICHERMETHODE
-  // ============================================================
+
   Future<void> _saveCurrentState() async {
-    // 1. Speichere den Hunt-Zustand (gelöste Hinweise etc.)
     final allHunts = await _clueService.loadHunts();
     final index = allHunts.indexWhere((h) => h.name == _currentHunt.name);
     if (index != -1) {
@@ -159,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       await _clueService.saveHunts(allHunts);
     }
 
-    // 2. Speichere den Spieler-Fortschritt (Inventar, Zeit etc.)
     final allProgress = await _clueService.loadOngoingProgress();
     allProgress[_huntProgress.huntName] = _huntProgress;
     await _clueService.saveOngoingProgress(allProgress);
@@ -195,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _lastPosition = position;
       
       _checkGeofenceTriggers(position);
-      _saveCurrentState(); // Speichere nach jeder Bewegung
+      _saveCurrentState();
     });
   }
 
@@ -214,6 +210,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
           _soundService.playSound(SoundEffect.clueUnlocked);
           Vibration.vibrate(duration: 300);
+
+          // ============================================================
+          // NEU: Erstelle einen "getarnten" Hinweis für das Logbuch
+          // ============================================================
+          final triggerClue = Clue(
+            code: trigger.id, // Die ID wird zum "Code"
+            type: 'text',
+            content: trigger.message,
+            description: 'Automatischer Hinweis (Geofence)',
+            hasBeenViewed: true,
+            solved: true, // Gilt als sofort gelöst
+            viewedTimestamp: DateTime.now(),
+          );
+          // Füge den getarnten Hinweis zur Jagd hinzu
+          _currentHunt.clues[trigger.id] = triggerClue;
+          // ============================================================
 
           String? rewardMessage;
           if (trigger.rewardItemId != null) {
@@ -316,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       if (!mounted) return;
 
       _stopStopwatch();
-      await _saveCurrentState(); // Speichere vor dem Navigieren
+      await _saveCurrentState();
 
       final nextCodeFromClue = await Navigator.push<String>(
         context,
@@ -354,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       }
     } else {
       _huntProgress.failedAttempts++;
-      await _saveCurrentState(); // Speichere nach Fehlversuch
+      await _saveCurrentState();
       _soundService.playSound(SoundEffect.failure);
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       setState(() {

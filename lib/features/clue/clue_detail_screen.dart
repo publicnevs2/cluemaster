@@ -55,6 +55,10 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
 
     if (_hasAccess && !widget.clue.hasBeenViewed) {
       widget.clue.hasBeenViewed = true;
+      // ============================================================
+      // WICHTIG: Setzt den Zeitstempel beim ersten Betrachten
+      // ============================================================
+      widget.clue.viewedTimestamp = DateTime.now();
       _saveHuntProgressInHuntFile(widget.clue);
     }
 
@@ -184,18 +188,12 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
   
-  // ============================================================
-  // NEU: Logik für die Entscheidung
-  // ============================================================
-  /// Behandelt die Auswahl einer Entscheidung, löst das Rätsel und navigiert weiter.
   Future<void> _makeDecision(int choiceIndex) async {
     if (!mounted || _isSolved) return;
 
-    // Eine Entscheidung zu treffen, gilt als das Lösen des Rätsels.
     Vibration.vibrate(duration: 50);
     _soundService.playSound(SoundEffect.buttonClick);
     
-    // Führe die Standard-Aktionen beim Lösen aus (z.B. Item-Belohnung geben)
     _awardItemReward();
 
     widget.clue.solved = true;
@@ -207,13 +205,11 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
       });
     }
 
-    // Finde den passenden nächsten Code basierend auf der getroffenen Wahl.
     String? nextCode;
     if (widget.clue.decisionNextClueCodes != null && widget.clue.decisionNextClueCodes!.length > choiceIndex) {
       nextCode = widget.clue.decisionNextClueCodes![choiceIndex];
     }
     
-    // Gehe zurück zum HomeScreen und übergebe den neuen Code für die Animation.
     if (mounted) {
       Navigator.of(context).pop(nextCode);
     }
@@ -260,7 +256,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     final bool hasNextCode = _isSolved && (widget.clue.nextClueCode?.isNotEmpty ?? false);
     final String buttonText = hasNextCode ? 'Zur nächsten Station' : 'Nächsten Code eingeben';
     
-    // Der "Weiter"-Button am Ende wird bei Entscheidungs-Rätseln nicht angezeigt.
     final bool showPrimaryButton = !widget.clue.isDecisionRiddle && (!widget.clue.isRiddle || _isSolved);
 
     return SafeArea(
@@ -369,9 +364,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
         return _buildGpsRiddlePrompt();
       case RiddleType.MULTIPLE_CHOICE:
         return _buildTextualRiddleWidget(isMultipleChoice: true);
-      // ============================================================
-      // NEU: Behandelt den neuen Rätseltyp
-      // ============================================================
       case RiddleType.DECISION:
         return _buildDecisionRiddleWidget();
       case RiddleType.TEXT:
@@ -380,9 +372,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
     }
   }
 
-  // ============================================================
-  // NEU: Widget zum Anzeigen der Entscheidungs-Buttons
-  // ============================================================
   Widget _buildDecisionRiddleWidget() {
     return Column(
       children: [
@@ -393,7 +382,6 @@ class _ClueDetailScreenState extends State<ClueDetailScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
-        // Erzeugt für jede definierte Option einen Button
         ...List.generate(widget.clue.options?.length ?? 0, (index) {
           return Container(
             width: double.infinity,

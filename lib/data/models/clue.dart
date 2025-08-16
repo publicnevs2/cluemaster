@@ -1,11 +1,10 @@
 // lib/data/models/clue.dart
 
-// SECTION: Enums für Rätsel-Typen und Effekte
 enum RiddleType {
   TEXT,
   MULTIPLE_CHOICE,
   GPS,
-  DECISION, // NEU: Der Typ für Entscheidungs-Rätsel
+  DECISION,
 }
 
 enum ImageEffect {
@@ -23,22 +22,22 @@ enum TextEffect {
   MIRROR_WORDS,
 }
 
-// SECTION: Clue Klasse
 class Clue {
-  // --- Kerneigenschaften ---
   final String code;
   bool solved;
   bool hasBeenViewed;
+  
+  // ============================================================
+  // NEU: Zeitstempel für die chronologische Sortierung
+  // ============================================================
+  DateTime? viewedTimestamp;
 
-  // --- HINWEIS (Was der Spieler immer sieht) ---
   final String type;
   final String content;
   final String? description;
   final String? backgroundImagePath;
   final ImageEffect imageEffect;
   final TextEffect textEffect;
-
-  // --- OPTIONALES RÄTSEL ---
   final String? question;
   final RiddleType riddleType;
   final String? answer;
@@ -48,36 +47,23 @@ class Clue {
   final double? latitude;
   final double? longitude;
   final double? radius;
-
-  // --- BELOHNUNG & NÄCHSTER SCHRITT ---
   final String? rewardText;
   final String? nextClueCode;
   final bool isFinalClue;
   final bool autoTriggerNextClue;
-  
-  // ============================================================
-  // NEU: Feld für das Entscheidungs-Rätsel
-  // ============================================================
-  /// Speichert die Ziel-Codes für ein Entscheidungs-Rätsel.
-  /// Die Reihenfolge muss der `options`-Liste entsprechen.
   final List<String>? decisionNextClueCodes;
-
-  // --- Inventar-System Felder ---
   final String? rewardItemId;
   final String? requiredItemId;
-
-  // --- Zeitgesteuerte Trigger Felder ---
   final int? timedTriggerAfterSeconds;
   final String? timedTriggerMessage;
   final String? timedTriggerRewardItemId;
   final String? timedTriggerNextClueCode;
 
-
-  // SECTION: Konstruktor
   Clue({
     required this.code,
     this.solved = false,
     this.hasBeenViewed = false,
+    this.viewedTimestamp, // NEU im Konstruktor
     required this.type,
     required this.content,
     this.description,
@@ -103,23 +89,23 @@ class Clue {
     this.timedTriggerMessage,
     this.timedTriggerRewardItemId,
     this.timedTriggerNextClueCode,
-    this.decisionNextClueCodes, // NEU im Konstruktor
+    this.decisionNextClueCodes,
   });
 
-  // SECTION: Hilfs-Methoden (Getters)
   bool get isRiddle => question != null && question!.isNotEmpty;
   bool get isGpsRiddle => isRiddle && riddleType == RiddleType.GPS;
   bool get isMultipleChoice => isRiddle && riddleType == RiddleType.MULTIPLE_CHOICE;
-  // NEU: Getter zur einfachen Identifizierung
   bool get isDecisionRiddle => isRiddle && riddleType == RiddleType.DECISION;
 
-
-  // SECTION: JSON-Konvertierung
   factory Clue.fromJson(String code, Map<String, dynamic> json) {
     return Clue(
       code: code,
       solved: json['solved'] ?? false,
       hasBeenViewed: json['hasBeenViewed'] ?? false,
+      // NEU: Liest den Zeitstempel aus der JSON
+      viewedTimestamp: json['viewedTimestamp'] != null
+          ? DateTime.tryParse(json['viewedTimestamp'])
+          : null,
       type: json['type'],
       content: json['content'],
       description: json['description'],
@@ -140,7 +126,6 @@ class Clue {
       }),
       answer: json['answer'],
       options: json['options'] != null ? List<String>.from(json['options']) : null,
-      // NEU: Liest die Ziel-Codes aus der JSON
       decisionNextClueCodes: json['decisionNextClueCodes'] != null ? List<String>.from(json['decisionNextClueCodes']) : null,
       hint1: json['hint1'],
       hint2: json['hint2'],
@@ -164,6 +149,8 @@ class Clue {
     return {
       'solved': solved,
       'hasBeenViewed': hasBeenViewed,
+      // NEU: Schreibt den Zeitstempel in die JSON
+      if (viewedTimestamp != null) 'viewedTimestamp': viewedTimestamp!.toIso8601String(),
       'type': type,
       'content': content,
       if (description != null) 'description': description,
@@ -174,7 +161,6 @@ class Clue {
       'riddleType': riddleType.toString(),
       if (answer != null) 'answer': answer,
       if (options != null) 'options': options,
-      // NEU: Schreibt die Ziel-Codes in die JSON
       if (decisionNextClueCodes != null) 'decisionNextClueCodes': decisionNextClueCodes,
       if (hint1 != null) 'hint1': hint1,
       if (hint2 != null) 'hint2': hint2,
@@ -193,4 +179,4 @@ class Clue {
       if (timedTriggerNextClueCode != null) 'timedTriggerNextClueCode': timedTriggerNextClueCode,
     };
   }
-}//
+}
