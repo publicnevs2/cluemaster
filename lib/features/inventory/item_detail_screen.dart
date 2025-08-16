@@ -5,8 +5,9 @@ import '../../data/models/item.dart';
 import '../../data/models/clue.dart';
 import '../shared/media_widgets.dart';
 import '../shared/widgets/flashlight_widget.dart';
-import '../shared/widgets/info_item_widgets.dart'; // NEUER IMPORT
-
+import '../shared/widgets/info_item_widgets.dart';
+import '../shared/widgets/caesar_cipher_widget.dart'; // NEUER IMPORT
+//
 class ItemDetailScreen extends StatelessWidget {
   final Item item;
 
@@ -75,19 +76,21 @@ class ItemDetailScreen extends StatelessWidget {
   }
 
   Widget _buildMediaWidgetForItem(Item item) {
-    // ============================================================
-    // ERWEITERUNG: Erkennt jetzt Info-Items und interaktive Werkzeuge
-    // ============================================================
     switch (item.itemCategory) {
       case ItemCategory.INTERACTIVE:
         switch (item.content) {
           case 'taschenlampe':
             return const FlashlightWidget();
+          // ============================================================
+          // NEU: Erkennt die Caesar-Scheibe
+          // ============================================================
+          case 'caesar_cipher':
+            return const CaesarCipherWidget();
           default:
             return Text('Unbekanntes interaktives Widget: ${item.content}');
         }
       case ItemCategory.INFO:
-        switch (item.id) { // Wir prüfen hier die ID, nicht den Content
+        switch (item.id) {
           case 'morse_alphabet':
             return const MorseAlphabetWidget();
           default:
@@ -95,7 +98,6 @@ class ItemDetailScreen extends StatelessWidget {
         }
       case ItemCategory.REGULAR:
       default:
-        // Fallback für normale Items (Bild, Text, etc.)
         String clueTypeString = item.contentType.toString().split('.').last;
         final dummyClue = Clue(
           code: 'dummy',
