@@ -1,3 +1,5 @@
+// lib/features/home/hunt_selection_screen.dart
+
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:auto_size_text/auto_size_text.dart';
@@ -8,8 +10,8 @@ import '../../data/models/hunt.dart';
 import 'home_screen.dart';
 import '../admin/admin_login_screen.dart';
 import 'briefing_screen.dart';
-import 'package:clue_master/features/clue/statistics_screen.dart';
-import 'package:clue_master/features/shared/about_screen.dart';
+import '../clue/statistics_screen.dart';
+import '../shared/about_screen.dart';
 
 class HuntSelectionScreen extends StatefulWidget {
   const HuntSelectionScreen({super.key});
@@ -21,55 +23,69 @@ class HuntSelectionScreen extends StatefulWidget {
 class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
   final ClueService _clueService = ClueService();
   List<Hunt> _hunts = [];
+  
+  // ============================================================
+  // NEU: Speichert die laufenden Spielstände
+  // ============================================================
+  Map<String, HuntProgress> _ongoingProgress = {};
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadHunts();
+    _loadData();
   }
 
-  Future<void> _loadHunts() async {
+  Future<void> _loadData() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
+    // Lade beides: die Jagden und die laufenden Spielstände
     final loadedHunts = await _clueService.loadHunts();
+    final loadedProgress = await _clueService.loadOngoingProgress();
     if (mounted) {
       setState(() {
         _hunts = loadedHunts;
+        _ongoingProgress = loadedProgress;
         _isLoading = false;
       });
     }
   }
 
-  void _navigateToGame(Hunt hunt) async {
+  // ============================================================
+  // ANGEPASST: Nimmt jetzt einen HuntProgress entgegen
+  // ============================================================
+  void _navigateToGame(Hunt hunt, HuntProgress progress) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         settings: const RouteSettings(name: HomeScreen.routeName),
         builder: (_) {
+          // Das Briefing wird nur beim allerersten Start gezeigt
           if (hunt.briefingText != null &&
-              hunt.briefingText!.trim().isNotEmpty) {
+              hunt.briefingText!.trim().isNotEmpty &&
+              progress.startTime == null) {
             return BriefingScreen(hunt: hunt);
           } else {
-            final huntProgress = HuntProgress(
-              huntName: hunt.name,
-              collectedItemIds: Set<String>.from(hunt.startingItemIds),
-            );
             return HomeScreen(
               hunt: hunt,
-              huntProgress: huntProgress,
+              huntProgress: progress,
             );
           }
         },
       ),
     );
-    _loadHunts();
+    // Lade die Daten neu, falls sich der Fortschritt geändert hat
+    _loadData();
   }
 
+  // ============================================================
+  // KOMPLETT ÜBERARBEITET: Die Kernlogik für das Fortsetzen
+  // ============================================================
   void _selectHunt(Hunt hunt) async {
-    final hasProgress = hunt.clues.values.any((clue) => clue.hasBeenViewed);
+    // Prüft, ob ein gespeicherter Spielstand für diese Jagd existiert
+    final savedProgress = _ongoingProgress[hunt.name];
 
-    if (hasProgress) {
+    if (savedProgress != null) {
       final choice = await showDialog<String>(
         context: context,
         builder: (context) => AlertDialog(
@@ -90,15 +106,31 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
       );
 
       if (choice == 'reset') {
+        // Entferne den alten Spielstand
+        _ongoingProgress.remove(hunt.name);
+        await _clueService.saveOngoingProgress(_ongoingProgress);
+        // Setze die Hinweise in der Jagd-Datei zurück
         await _clueService.resetHuntProgress(hunt);
         final allHunts = await _clueService.loadHunts();
         final freshHunt = allHunts.firstWhere((h) => h.name == hunt.name);
-        _navigateToGame(freshHunt);
+        // Erstelle einen komplett neuen, leeren Fortschritt
+        final newProgress = HuntProgress(
+          huntName: freshHunt.name,
+          collectedItemIds: Set<String>.from(freshHunt.startingItemIds),
+        );
+        _navigateToGame(freshHunt, newProgress);
+
       } else if (choice == 'continue') {
-        _navigateToGame(hunt);
+        // Lade den gespeicherten Fortschritt und starte das Spiel
+        _navigateToGame(hunt, savedProgress);
       }
     } else {
-      _navigateToGame(hunt);
+      // Kein Fortschritt vorhanden, starte ein neues Spiel
+      final newProgress = HuntProgress(
+        huntName: hunt.name,
+        collectedItemIds: Set<String>.from(hunt.startingItemIds),
+      );
+      _navigateToGame(hunt, newProgress);
     }
   }
 
@@ -122,7 +154,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
             content: Text('Die Jagd "$result" wurde erfolgreich importiert.'),
             backgroundColor: Colors.green),
       );
-      _loadHunts();
+      _loadData();
     }
   }
 
@@ -133,7 +165,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
     );
 
     if (refreshIsNeeded == true && mounted) {
-      _loadHunts();
+      _loadData();
     }
   }
 
@@ -150,7 +182,7 @@ class _HuntSelectionScreenState extends State<HuntSelectionScreen> {
             icon: const Icon(Icons.refresh),
             tooltip: 'Liste neu laden',
             onPressed: () {
-              _loadHunts();
+              _loadData();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Liste wurde aktualisiert.'),

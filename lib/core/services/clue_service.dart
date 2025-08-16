@@ -1,3 +1,5 @@
+// lib/core/services/clue_service.dart
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -7,7 +9,6 @@ import 'package:archive/archive_io.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 
-// NEUER IMPORT für unser neues Datenmodell
 import '../../data/models/hunt_progress.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/clue.dart';
@@ -15,8 +16,13 @@ import '../../data/models/clue.dart';
 class ClueService {
   static const String _huntsFileName = 'hunts.json';
   static const String _settingsFileName = 'admin_settings.json';
-  // NEUER DATEINAME für die Statistik-Historie
   static const String _progressHistoryFileName = 'progress_history.json';
+  
+  // ============================================================
+  // NEU: Dateiname für laufende Spielstände
+  // ============================================================
+  static const String _ongoingProgressFileName = 'ongoing_progress.json';
+
 
   Future<List<Hunt>> loadHunts() async {
     final dir = await getApplicationDocumentsDirectory();
@@ -30,8 +36,7 @@ class ClueService {
       final List<dynamic> decodedList = jsonDecode(jsonStr);
       return decodedList.map((json) => Hunt.fromJson(json)).toList();
     } catch (e) {
-      // ignore: avoid_print
-      print("❌ Fehler beim Laden der Schnitzeljagden: $e");
+      debugPrint("❌ Fehler beim Laden der Schnitzeljagden: $e");
       return [];
     }
   }
@@ -42,8 +47,7 @@ class ClueService {
     final List<Map<String, dynamic>> jsonList =
         hunts.map((hunt) => hunt.toJson()).toList();
     await file.writeAsString(jsonEncode(jsonList));
-    // ignore: avoid_print
-    print("💾 Alle Schnitzeljagden gespeichert.");
+    debugPrint("💾 Alle Schnitzeljagden gespeichert.");
   }
 
   Future<void> resetHuntProgress(Hunt hunt) async {
@@ -55,31 +59,64 @@ class ClueService {
         clue.solved = false;
         clue.hasBeenViewed = false;
       });
+      // Setze auch die Geofence-Trigger zurück
+      for (var trigger in allHunts[huntIndex].geofenceTriggers) {
+        trigger.hasBeenTriggered = false;
+      }
       await saveHunts(allHunts);
-      // ignore: avoid_print
-      print("🔄 Fortschritt für '${hunt.name}' zurückgesetzt.");
+      debugPrint("🔄 Fortschritt für '${hunt.name}' zurückgesetzt.");
+    }
+  }
+  
+  // ============================================================
+  // NEUE METHODEN: Speichern & Laden von laufenden Spielständen
+  // ============================================================
+
+  /// Lädt eine Map aller laufenden Spielstände. Der Key ist der Hunt-Name.
+  Future<Map<String, HuntProgress>> loadOngoingProgress() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$_ongoingProgressFileName');
+    try {
+      if (!await file.exists() || await file.readAsString() == '') {
+        return {};
+      }
+      final jsonStr = await file.readAsString();
+      final Map<String, dynamic> decodedMap = jsonDecode(jsonStr);
+      return decodedMap.map(
+        (key, value) => MapEntry(key, HuntProgress.fromJson(value)),
+      );
+    } catch (e) {
+      debugPrint("❌ Fehler beim Laden der laufenden Spielstände: $e");
+      return {};
     }
   }
 
-  // =======================================================
-  // NEUE METHODEN für die Statistik-Historie
-  // =======================================================
+  /// Speichert eine Map aller laufenden Spielstände.
+  Future<void> saveOngoingProgress(Map<String, HuntProgress> allProgress) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/$_ongoingProgressFileName');
+    final Map<String, dynamic> jsonMap = allProgress.map(
+      (key, value) => MapEntry(key, value.toJson()),
+    );
+    await file.writeAsString(jsonEncode(jsonMap));
+    debugPrint("💾 Laufende Spielstände gespeichert.");
+  }
 
-  /// **Speichert einen neuen abgeschlossenen Spielfortschritt in der Historie.**
-  Future<void> saveHuntProgress(HuntProgress progress) async {
-    final allProgress = await loadHuntProgress();
+
+  // --- Methoden für die Statistik-Historie (abgeschlossene Spiele) ---
+
+  Future<void> saveHuntProgressToHistory(HuntProgress progress) async {
+    final allProgress = await loadHuntProgressHistory();
     allProgress.add(progress);
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_progressHistoryFileName');
     final List<Map<String, dynamic>> jsonList =
         allProgress.map((p) => p.toJson()).toList();
     await file.writeAsString(jsonEncode(jsonList));
-    // ignore: avoid_print
-    print("🏆 Neuer Erfolg für '${progress.huntName}' in der Ruhmeshalle gespeichert.");
+    debugPrint("🏆 Neuer Erfolg für '${progress.huntName}' in der Ruhmeshalle gespeichert.");
   }
 
-  /// **Lädt die Liste aller bisherigen Spielfortschritte aus der Datei.**
-  Future<List<HuntProgress>> loadHuntProgress() async {
+  Future<List<HuntProgress>> loadHuntProgressHistory() async {
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_progressHistoryFileName');
     try {
@@ -93,13 +130,15 @@ class ClueService {
       final List<dynamic> decodedList = jsonDecode(jsonStr);
       return decodedList.map((json) => HuntProgress.fromJson(json)).toList();
     } catch (e) {
-      // ignore: avoid_print
-      print("❌ Fehler beim Laden der Statistik-Historie: $e");
+      debugPrint("❌ Fehler beim Laden der Statistik-Historie: $e");
       return [];
     }
   }
 
+  // --- Methoden für Import & Export ---
+  
   Future<void> exportHunt(Hunt hunt, BuildContext context) async {
+    // ... (unverändert)
     try {
       final tempDir = await getTemporaryDirectory();
       final archive = Archive();
@@ -118,8 +157,7 @@ class ClueService {
             mediaFilesToPack.add(file);
             newContent = 'media/${file.path.split('/').last}';
           } else {
-            // ignore: avoid_print
-            print("⚠️ Datei nicht gefunden, wird ignoriert: ${file.path}");
+            debugPrint("⚠️ Datei nicht gefunden, wird ignoriert: ${file.path}");
           }
         }
         
@@ -158,13 +196,13 @@ class ClueService {
         sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
       );
     } catch (e) {
-      // ignore: avoid_print
-      print("❌ Fehler beim Exportieren der Jagd: $e");
+      debugPrint("❌ Fehler beim Exportieren der Jagd: $e");
       rethrow;
     }
   }
 
   Future<String?> importHunt() async {
+    // ... (unverändert)
     final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
     );
@@ -229,6 +267,9 @@ class ClueService {
           briefingText: huntToSave.briefingText,
           briefingImageUrl: huntToSave.briefingImageUrl,
           targetTimeInMinutes: huntToSave.targetTimeInMinutes,
+          items: huntToSave.items,
+          startingItemIds: huntToSave.startingItemIds,
+          geofenceTriggers: huntToSave.geofenceTriggers,
         );
       }
 
@@ -237,13 +278,15 @@ class ClueService {
       
       return huntToSave.name;
     } catch (e) {
-      // ignore: avoid_print
-      print("❌ Fehler beim Importieren der Jagd: $e");
+      debugPrint("❌ Fehler beim Importieren der Jagd: $e");
       return "ERROR";
     }
   }
 
+  // --- Methoden für Admin-Passwort ---
+
   Future<String> loadAdminPassword() async {
+    // ... (unverändert)
     try {
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/$_settingsFileName');
@@ -255,18 +298,17 @@ class ClueService {
         return 'admin123';
       }
     } catch (e) {
-      // ignore: avoid_print
-      print("❌ Fehler beim Laden des Admin-Passworts: $e");
+      debugPrint("❌ Fehler beim Laden des Admin-Passworts: $e");
       return 'admin123';
     }
   }
 
   Future<void> saveAdminPassword(String password) async {
+    // ... (unverändert)
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/$_settingsFileName');
     final settings = {'admin_password': password};
     await file.writeAsString(jsonEncode(settings));
-    // ignore: avoid_print 
-    print("🔑 Admin-Passwort aktualisiert.");
+    debugPrint("🔑 Admin-Passwort aktualisiert.");
   }
 }

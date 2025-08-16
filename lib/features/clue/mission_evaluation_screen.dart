@@ -41,7 +41,7 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
     super.dispose();
   }
 
-  void _calculateAndSaveScore() {
+  void _calculateAndSaveScore() async {
     double score = 100.0;
     List<String> deductions = [];
 
@@ -80,7 +80,15 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
       _confettiController.play();
     }
 
-    _clueService.saveHuntProgress(widget.progress);
+    // Speichere den Erfolg in der Statistik-Historie
+    await _clueService.saveHuntProgressToHistory(widget.progress);
+    
+    // ============================================================
+    // NEU: Lösche den jetzt abgeschlossenen, laufenden Spielstand
+    // ============================================================
+    final ongoingProgress = await _clueService.loadOngoingProgress();
+    ongoingProgress.remove(widget.hunt.name);
+    await _clueService.saveOngoingProgress(ongoingProgress);
   }
 
   String _formatDuration(Duration duration) {
@@ -146,10 +154,6 @@ class _MissionEvaluationScreenState extends State<MissionEvaluationScreen> {
                       _buildStatRow(
                         icon: Icons.flag_outlined,
                         label: 'Zielzeit',
-                        // =======================================================
-                        // HIER IST DIE ÄNDERUNG
-                        // Wandelt die Minuten in eine Duration um und formatiert sie.
-                        // =======================================================
                         value: _formatDuration(Duration(minutes: widget.hunt.targetTimeInMinutes!)),
                       ),
                     ],

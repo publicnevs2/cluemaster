@@ -1,3 +1,5 @@
+// lib/features/home/home_screen.dart
+
 import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clue_master/core/services/sound_service.dart';
@@ -144,10 +146,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void _stopStopwatch() {
     _stopwatchTimer?.cancel();
   }
+  
+  // ============================================================
+  // NEUE ZENTRALE SPEICHERMETHODE
+  // ============================================================
+  Future<void> _saveCurrentState() async {
+    // 1. Speichere den Hunt-Zustand (gelöste Hinweise etc.)
+    final allHunts = await _clueService.loadHunts();
+    final index = allHunts.indexWhere((h) => h.name == _currentHunt.name);
+    if (index != -1) {
+      allHunts[index] = _currentHunt;
+      await _clueService.saveHunts(allHunts);
+    }
 
-  // ============================================================
-  // ERWEITERTE METHODE: Prüft jetzt auch Geofences
-  // ============================================================
+    // 2. Speichere den Spieler-Fortschritt (Inventar, Zeit etc.)
+    final allProgress = await _clueService.loadOngoingProgress();
+    allProgress[_huntProgress.huntName] = _huntProgress;
+    await _clueService.saveOngoingProgress(allProgress);
+  }
+
   Future<void> _startDistanceAndGeofenceTracking() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
@@ -161,54 +178,43 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // Aktualisiert alle 10 Meter
+      distanceFilter: 10,
     );
 
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
         (Position position) {
       if (!mounted) return;
 
-      // Distanzmessung
-      setState(() {
-        if (_lastPosition != null) {
-          final distance = Geolocator.distanceBetween(
-            _lastPosition!.latitude, _lastPosition!.longitude,
-            position.latitude, position.longitude,
-          );
-          _huntProgress.distanceWalkedInMeters += distance;
-        }
-        _lastPosition = position;
-      });
-
-      // NEU: Geofence-Prüfung
+      if (_lastPosition != null) {
+        final distance = Geolocator.distanceBetween(
+          _lastPosition!.latitude, _lastPosition!.longitude,
+          position.latitude, position.longitude,
+        );
+        _huntProgress.distanceWalkedInMeters += distance;
+      }
+      _lastPosition = position;
+      
       _checkGeofenceTriggers(position);
+      _saveCurrentState(); // Speichere nach jeder Bewegung
     });
   }
 
-  // ============================================================
-  // NEUE METHODE: Überprüft alle Geofence-Trigger
-  // ============================================================
   Future<void> _checkGeofenceTriggers(Position currentPosition) async {
-    bool huntStateChanged = false;
-
+    bool triggerFired = false;
     for (var trigger in _currentHunt.geofenceTriggers) {
       if (!trigger.hasBeenTriggered) {
         final distance = Geolocator.distanceBetween(
-          currentPosition.latitude,
-          currentPosition.longitude,
-          trigger.latitude,
-          trigger.longitude,
+          currentPosition.latitude, currentPosition.longitude,
+          trigger.latitude, trigger.longitude,
         );
 
         if (distance <= trigger.radius) {
           trigger.hasBeenTriggered = true;
-          huntStateChanged = true;
+          triggerFired = true;
 
-          // Sound & Vibration
           _soundService.playSound(SoundEffect.clueUnlocked);
           Vibration.vibrate(duration: 300);
 
-          // Belohnungs-Item vergeben
           String? rewardMessage;
           if (trigger.rewardItemId != null) {
             if (_huntProgress.collectedItemIds.add(trigger.rewardItemId!)) {
@@ -218,7 +224,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             }
           }
 
-          // Popup anzeigen
           if (mounted) {
             showDialog(
               context: context,
@@ -235,33 +240,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     ]
                   ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
+                actions: [ TextButton( onPressed: () => Navigator.of(context).pop(), child: const Text('OK'),), ],
               ),
             );
           }
         }
       }
     }
-
-    if (huntStateChanged) {
-      await _saveFullHuntState();
-    }
-  }
-  
-  // ============================================================
-  // NEUE METHODE: Speichert den gesamten Zustand der Jagd
-  // ============================================================
-  Future<void> _saveFullHuntState() async {
-    final allHunts = await _clueService.loadHunts();
-    final index = allHunts.indexWhere((h) => h.name == _currentHunt.name);
-    if (index != -1) {
-      allHunts[index] = _currentHunt;
-      await _clueService.saveHunts(allHunts);
+    if (triggerFired) {
+      await _saveCurrentState();
     }
   }
 
@@ -278,19 +265,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         timer.cancel();
         return;
       }
-
       if (charIndex < code.length) {
         _soundService.playSound(SoundEffect.buttonClick);
-        setState(() {
-          _codeController.text += code[charIndex];
-        });
+        setState(() => _codeController.text += code[charIndex]);
         charIndex++;
       } else {
         timer.cancel();
         Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) {
-            _processCode(code);
-          }
+          if (mounted) _processCode(code);
         });
       }
     });
@@ -321,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         setState(() {
           _huntProgress.startTime = DateTime.now();
           _startStopwatch();
-          _startDistanceAndGeofenceTracking(); // Methode umbenannt
+          _startDistanceAndGeofenceTracking();
         });
       }
 
@@ -334,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       if (!mounted) return;
 
       _stopStopwatch();
+      await _saveCurrentState(); // Speichere vor dem Navigieren
 
       final nextCodeFromClue = await Navigator.push<String>(
         context,
@@ -370,7 +353,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         setState(() => _isBusy = false);
       }
     } else {
-      setState(() => _huntProgress.failedAttempts++);
+      _huntProgress.failedAttempts++;
+      await _saveCurrentState(); // Speichere nach Fehlversuch
       _soundService.playSound(SoundEffect.failure);
       Vibration.vibrate(pattern: [0, 200, 100, 200]);
       setState(() {
@@ -413,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: Colors.amber),
     );
-// pin
+
     final errorPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: Colors.redAccent),
     );

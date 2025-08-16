@@ -1,7 +1,6 @@
 // lib/features/clue/statistics_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../core/services/clue_service.dart';
 import '../../data/models/hunt.dart';
 import '../../data/models/hunt_progress.dart';
@@ -20,14 +19,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    // Lade beide Datenquellen gleichzeitig, um Wartezeiten zu optimieren
     _dataFuture = Future.wait([
-      _clueService.loadHuntProgress(),
+      // =======================================================
+      // KORREKTUR: Methode umbenannt
+      // =======================================================
+      _clueService.loadHuntProgressHistory(),
       _clueService.loadHunts(),
     ]);
   }
 
-  // Hilfsfunktion zur Formatierung der Dauer in HH:mm:ss
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = twoDigits(duration.inHours);
@@ -71,7 +71,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             );
           }
 
-          // Gruppiere die Erfolge nach dem Namen der Jagd
           final Map<String, List<HuntProgress>> groupedProgress = {};
           for (var progress in progressHistory) {
             groupedProgress.putIfAbsent(progress.huntName, () => []).add(progress);
@@ -83,13 +82,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               final huntName = entry.key;
               final progresses = entry.value;
 
-              // Finde die beste Leistung (kürzeste Zeit) für diese Jagd
               progresses.sort((a, b) => a.duration.compareTo(b.duration));
               final bestProgress = progresses.first;
               
               final Hunt? huntData = allHunts.firstWhere(
                 (h) => h.name == huntName,
-                orElse: () => Hunt(name: huntName), // Fallback, falls Jagd gelöscht wurde
+                orElse: () => Hunt(name: huntName),
               );
 
               return Card(

@@ -4,9 +4,6 @@ import 'package:clue_master/core/services/sound_service.dart';
 import 'package:clue_master/features/admin/admin_login_screen.dart';
 import 'package:flutter/material.dart';
 
-// =======================================================
-// NEU & WICHTIG: Dieser Import wird hinzugefügt
-// =======================================================
 import 'package:clue_master/features/home/home_screen.dart'; 
 import 'package:clue_master/features/clue/clue_list_screen.dart';
 
@@ -134,9 +131,21 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
         soundService.playSound(SoundEffect.buttonClick);
         if (value == 'code_entry') {
           // =======================================================
-          // HIER IST DIE ENDGÜLTIGE KORREKTUR
+          // HIER IST DIE NEUE, ROBUSTE LOGIK
+          // Wir entfernen alle Spiel-Bildschirme und starten den
+          // HomeScreen sauber neu.
           // =======================================================
-          Navigator.of(context).popUntil(ModalRoute.withName(HomeScreen.routeName));
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              settings: const RouteSettings(name: HomeScreen.routeName),
+              builder: (context) => HomeScreen(
+                hunt: hunt,
+                huntProgress: huntProgress,
+              ),
+            ),
+            (Route<dynamic> route) => route.isFirst,
+          );
         } else if (value == 'list') {
           Navigator.push(
             context,
@@ -182,7 +191,6 @@ class GameHeader extends StatelessWidget implements PreferredSizeWidget {
       ],
     );
   }
-
 
   @override
   Size get preferredSize => const Size.fromHeight(80.0);
