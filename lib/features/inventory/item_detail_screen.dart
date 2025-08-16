@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../../data/models/item.dart';
 import '../../data/models/clue.dart';
 import '../shared/media_widgets.dart';
-import '../shared/widgets/flashlight_widget.dart'; // WICHTIGER IMPORT
+import '../shared/widgets/flashlight_widget.dart';
+import '../shared/widgets/info_item_widgets.dart'; // NEUER IMPORT
 
 class ItemDetailScreen extends StatelessWidget {
   final Item item;
@@ -22,13 +23,10 @@ class ItemDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Sektion 1: Der Hauptinhalt des Items (Bild, Video, etc.)
             Center(
               child: _buildMediaWidgetForItem(item),
             ),
             const SizedBox(height: 24),
-
-            // Sektion 2: Die Beschreibung
             if (item.description != null && item.description!.isNotEmpty) ...[
               _buildSectionHeader(context, 'Beschreibung'),
               const SizedBox(height: 8),
@@ -38,8 +36,6 @@ class ItemDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
             ],
-
-            // Sektion 3: Der "Untersuchen"-Text für versteckte Hinweise
             if (item.examineText != null && item.examineText!.isNotEmpty) ...[
               _buildSectionHeader(context, 'Bei genauerer Betrachtung...'),
               const SizedBox(height: 8),
@@ -68,7 +64,6 @@ class ItemDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Baut eine formatierte Überschrift für eine Sektion.
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title,
@@ -79,33 +74,35 @@ class ItemDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Diese Methode ist der Kern der neuen Logik. Sie entscheidet,
-  /// welches Widget für das jeweilige Item angezeigt wird.
   Widget _buildMediaWidgetForItem(Item item) {
-    // PRÜFUNG 1: Ist es ein interaktives Werkzeug?
-    if (item.itemCategory == ItemCategory.INTERACTIVE) {
-      // Prüfe die Widget-Kennung (den "content"-String)
-      switch (item.content) {
-        case 'taschenlampe':
-          return const FlashlightWidget();
-        // Hier können später weitere Widgets wie 'morse_translator' etc. hinzukommen
-        default:
-          return Text('Unbekanntes interaktives Widget: ${item.content}');
-      }
+    // ============================================================
+    // ERWEITERUNG: Erkennt jetzt Info-Items und interaktive Werkzeuge
+    // ============================================================
+    switch (item.itemCategory) {
+      case ItemCategory.INTERACTIVE:
+        switch (item.content) {
+          case 'taschenlampe':
+            return const FlashlightWidget();
+          default:
+            return Text('Unbekanntes interaktives Widget: ${item.content}');
+        }
+      case ItemCategory.INFO:
+        switch (item.id) { // Wir prüfen hier die ID, nicht den Content
+          case 'morse_alphabet':
+            return const MorseAlphabetWidget();
+          default:
+            return Text('Unbekanntes Info-Item: ${item.id}');
+        }
+      case ItemCategory.REGULAR:
+      default:
+        // Fallback für normale Items (Bild, Text, etc.)
+        String clueTypeString = item.contentType.toString().split('.').last;
+        final dummyClue = Clue(
+          code: 'dummy',
+          type: clueTypeString,
+          content: item.content,
+        );
+        return buildMediaWidgetForClue(clue: dummyClue);
     }
-
-    // PRÜFUNG 2: Wenn nicht interaktiv, behandle es wie einen normalen Hinweis
-    String clueTypeString = item.contentType.toString().split('.').last;
-
-    // Wir erstellen einen "Dummy"-Hinweis, um unsere bestehende Logik wiederzuverwenden
-    final dummyClue = Clue(
-      code: 'dummy',
-      type: clueTypeString,
-      content: item.content,
-      imageEffect: ImageEffect.NONE,
-      textEffect: TextEffect.NONE,
-    );
-
-    return buildMediaWidgetForClue(clue: dummyClue);
   }
 }
